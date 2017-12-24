@@ -137,7 +137,7 @@ namespace GetStarted
             int nte = 100000;
             for (int i = 0; i < nte; i++)
             {
-                int key = rnd.Next(nkeys) + 1;
+                int key = rnd.Next(nkeys);
                 int ifirst = GetFirstIndexOf(0, nelements, keys, key);
                 long offset = (long)pers_ind_off_arr.Root.Element(ifirst).Get();
                 entry.offset = offset;
