@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="PagedFixFlexStreams.cs" />
+    <Compile Remove="PagedStreamStore.cs" />
+    <Compile Remove="Program.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Polar.DB\Polar.DB.csproj" />
+    <ProjectReference Include="..\Polar.Old\Polar.CellIndexes.csproj" />
+  </ItemGroup>
+
+</Project>

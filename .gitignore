@@ -1,0 +1,7 @@
+
+/src/GetStarted/Databases/*.pac
+
+/src/GetStarted/Databases/*.bin
+
+obj
+bin

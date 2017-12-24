@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="PagedStreamStore.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Polar.DB\Polar.DB.csproj" />
+    <ProjectReference Include="..\Polar.Old\Polar.CellIndexes.csproj" />
+    <ProjectReference Include="..\Polar.PagedStreams\Polar.PagedStreams.csproj" />
+  </ItemGroup>
+
+</Project>
