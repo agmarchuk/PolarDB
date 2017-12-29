@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using Polar.DB;
-using PolarDB;
+using Polar.Cells;
 
-namespace UniversalIndex
+namespace Polar.CellIndexes
 {
     public class IndexKeyImmutable<Tkey> : IIndexImmutable<Tkey> where Tkey : IComparable
     {

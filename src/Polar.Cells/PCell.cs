@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using Polar.DB;
 
-namespace PolarDB
+namespace Polar.Cells
 {
     // Структура начала ячейки: 1) 64-разрядный "секретный" код; 2) 64-разрядное значение начала поля данных
     // 3) 64-разрядное значение начала свободного пространства; 
@@ -248,9 +248,10 @@ namespace PolarDB
                 case PTypeEnumeration.sstring:
                     {
                         string str = (string)value;
-                        bw.Write(str.Length);
-                        byte[] info = new UTF8Encoding(true).GetBytes(str);
-                        fs.Write(info, 0, info.Length);
+                        //bw.Write(str.Length);
+                        //byte[] info = new UTF8Encoding(true).GetBytes(str);
+                        //fs.Write(info, 0, info.Length);
+                        bw.Write(str);
                     }
                     break;
                 case PTypeEnumeration.record:
@@ -306,9 +307,10 @@ namespace PolarDB
                 case PTypeEnumeration.@byte: return br.ReadByte();
                 case PTypeEnumeration.sstring:
                     {
-                        int len = br.ReadInt32();
-                        char[] chrs = br.ReadChars(len);
-                        return new string(chrs);
+                        //int len = br.ReadInt32();
+                        //char[] chrs = br.ReadChars(len);
+                        //return new string(chrs);
+                        return br.ReadString();
                     }
                 case PTypeEnumeration.record:
                     {

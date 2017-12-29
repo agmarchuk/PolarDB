@@ -2,16 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using PolarDB;
+using Polar.Cells;
 
-namespace UniversalIndex
+namespace Polar.CellIndexes
 {
     public class IndexDynamic<Tkey, IndexImmut> : IIndex<Tkey> where IndexImmut : IIndexImmutable<Tkey>
     {
         //TODO: Экономнее было бы обойтись длинными offset'ами: Dictionary<Tkey, long>. Но откуда брать тип и ячейку для конструирования? Или надо возвращать также офсеты?
         private Dictionary<Tkey, PaEntry> keyent = new Dictionary<Tkey, PaEntry>(); // для уникального
         private Dictionary<Tkey, List<PaEntry>> keyents = new Dictionary<Tkey, List<PaEntry>>(); // стандартно
-        public void OnAppendElement(PolarDB.PaEntry entry)
+        public void OnAppendElement(PaEntry entry)
         {
             Tkey key = KeyProducer(entry.Get());
             if (_unique) keyent.Add(key, entry); // Надо бы что-то проверить...
@@ -78,7 +78,7 @@ namespace UniversalIndex
         public void Warmup() { IndexArray.Warmup(); }
         public void ActivateCache() { IndexArray.ActivateCache(); }
 
-        public IEnumerable<PolarDB.PaEntry> GetAllByKey(long start, long number, Tkey key)
+        public IEnumerable<PaEntry> GetAllByKey(long start, long number, Tkey key)
         {
             throw new Exception("No implementation (no need) of GetAllByKey(long start, long number, Tkey key)");
         }
@@ -88,7 +88,7 @@ namespace UniversalIndex
         //{
         //    return GetAllByKey(0, IndexArray.Count(), key);
         //}
-        public IEnumerable<PolarDB.PaEntry> GetAllByKey(Tkey key)
+        public IEnumerable<PaEntry> GetAllByKey(Tkey key)
         {
             if (_unique)
             {

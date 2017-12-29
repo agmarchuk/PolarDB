@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Polar.DB;
 
-namespace PolarDB
+namespace Polar.Cells
 {
     public class PaCell : PCell
     {
@@ -60,10 +60,13 @@ namespace PolarDB
         public string ReadString(long off, out long offout)
         {
             this.SetOffset(off);
-            int len = this.br.ReadInt32();
-            char[] chrs = this.br.ReadChars(len);
+            //int len = this.br.ReadInt32();
+            //char[] chrs = this.br.ReadChars(len);
+            //offout = this.GetOffset();
+            //return new string(chrs);
+            string s = br.ReadString();
             offout = this.GetOffset();
-            return new string(chrs);
+            return s;
         }
         public long ReadLong(long off)
         {
@@ -124,9 +127,10 @@ namespace PolarDB
                     }
                 case PTypeEnumeration.sstring:
                     {
-                        int len = br.ReadInt32();
-                        char[] chrs = br.ReadChars(len);
-                        return new string(chrs);
+                        //int len = br.ReadInt32();
+                        //char[] chrs = br.ReadChars(len);
+                        //return new string(chrs);
+                        return br.ReadString();
                     }
                 case PTypeEnumeration.record:
                     {
@@ -207,10 +211,9 @@ namespace PolarDB
                 case PTypeEnumeration.sstring:
                     {
                         string str = (string)valu;
-                        bw.Write(str.Length);
-                        //byte[] info = new System.Text.UTF8Encoding(true).GetBytes(str);
-                        //bw.Write(info);
-                        bw.Write(str.ToCharArray());
+                        //bw.Write(str.Length);
+                        //bw.Write(str.ToCharArray());
+                        bw.Write(str);
                         return;
                     }
                 case PTypeEnumeration.record:

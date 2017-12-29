@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using Polar.DB;
-using PolarDB;
+using Polar.Cells;
 
-namespace UniversalIndex
+namespace Polar.CellIndexes
 {
     public class TableViewImmutable : IBearingTableImmutable
     {
@@ -43,7 +43,7 @@ namespace UniversalIndex
             table_cell.Root.Scan(doit);
         }
 
-        public PolarDB.PaEntry Element(long ind)
+        public PaEntry Element(long ind)
         {
             return table_cell.Root.Element(ind);
         }

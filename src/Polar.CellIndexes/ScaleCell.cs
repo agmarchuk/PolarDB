@@ -1,8 +1,8 @@
 ﻿using System;
 using Polar.DB;
-using PolarDB;
+using Polar.Cells;
 
-namespace UniversalIndex
+namespace Polar.CellIndexes
 {
     public class ScaleCell : IScale
     {

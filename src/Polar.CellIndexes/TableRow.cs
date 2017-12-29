@@ -1,4 +1,4 @@
-﻿namespace UniversalIndex
+﻿namespace Polar.CellIndexes
 {
     public struct TableRow
     {

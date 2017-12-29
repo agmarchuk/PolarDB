@@ -18,7 +18,7 @@ namespace Polar.DB
                 case PTypeEnumeration.character: { tw.Write((char)v); return; }
                 case PTypeEnumeration.integer: { tw.Write((int)v); return; }
                 case PTypeEnumeration.longinteger: { tw.Write((long)v); return; }
-                case PTypeEnumeration.real: { tw.Write((double)v); return; }
+                case PTypeEnumeration.real: { tw.Write(((double)v).ToString("G", System.Globalization.CultureInfo.InvariantCulture)); return; }
                 case PTypeEnumeration.sstring:
                     {
                         tw.Write('\"');
@@ -119,7 +119,7 @@ namespace Polar.DB
         {
             // Наверное, это неправильно, но пока сойдет
             string s = ReadWhile(c => (c >= '0' && c <= '9') || c == '-' || c == 'e' || c == '.');
-            double v = double.Parse(s);
+            double v = double.Parse(s, System.Globalization.CultureInfo.InvariantCulture);
             return v;
         }
         public string ReadString()

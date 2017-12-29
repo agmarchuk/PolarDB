@@ -3,3 +3,17 @@
 
 1. Ќадо вренутьс€ к файлу PagedStream и заменить решение, использующее €чейку, убрать ссылку на PolarDB
 
+ ак создавать NuGet библиотеку
+1. —оздаем источник 
+
+nuget init D:\Home\packages \\mag-pc\Users\mag\.nuget\mypackages -- ѕереписываем пакеты по месту
+
+Nuget sources Add -Name mypackages -Source C:\Users\mag\.nuget\mypackages -- ƒобавл€ем источник под имененем
+Nuget sources -- смотрим что получилось
+Nuget sources Remove -Name mypackages -Source C:\Users\mag\.nuget\mypackages -- убираем источнк
+
+nuget init c:\packages \\myserver\packages -- переписывание пакетов по месту
+
+nuget add Polar.DB.1.0.0.nupkg -source \\mag-pc\Users\mag\.nuget\mypackages -- добавление пакета
+
+

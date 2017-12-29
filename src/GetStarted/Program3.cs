@@ -4,8 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Polar.DB;
-using PolarDB;
-using UniversalIndex;
+using Polar.Cells;
+using Polar.CellIndexes;
 
 namespace GetStarted
 {

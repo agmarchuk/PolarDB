@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Polar.DB;
-using PolarDB;
+using Polar.Cells;
 
-namespace UniversalIndex
+namespace Polar.CellIndexes
 {
     public class IndexViewImmutable<Tkey> : IIndexImmutable<Tkey> where Tkey : IComparable
     {

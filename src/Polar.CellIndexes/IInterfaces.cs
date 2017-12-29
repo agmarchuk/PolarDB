@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using Polar.DB;
-using PolarDB;
+using Polar.Cells;
 
-namespace UniversalIndex
+namespace Polar.CellIndexes
 {
     public interface IBearingTableImmutable
     {

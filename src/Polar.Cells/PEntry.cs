@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Polar.DB;
 
-namespace PolarDB
+namespace Polar.Cells
 {
     /// <summary>
     /// Структура PValue служит для выдачи из входов PaEntry и PxEntry объектных значений, сопровождаемых типом и offset'ом хранения

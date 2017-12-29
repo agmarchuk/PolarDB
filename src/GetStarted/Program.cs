@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.IO;
 using Polar.DB;
-using PolarDB;
+using Polar.Cells;
 
 
 namespace GetStarted
@@ -14,6 +14,7 @@ namespace GetStarted
         public static void Main(string[] args)
         {
             Main9();
+            //Test(args);
         }
         public static void Main1()
         {

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 
@@ -248,9 +249,9 @@ namespace Polar.DB
                 case PTypeEnumeration.character: return "'" + ((char)v).ToString() + "'"; // Нужно учесть специальные символы
                 case PTypeEnumeration.integer: return ((int)v).ToString();
                 case PTypeEnumeration.longinteger: return ((long)v).ToString();
-                case PTypeEnumeration.real: return ((double)v).ToString();
-                case PTypeEnumeration.fstring: return "\"" + ((string)v).ToString() + "\"";
-                case PTypeEnumeration.sstring: return "\"" + ((string)v).ToString() + "\"";
+                case PTypeEnumeration.real: return ((double)v).ToString("G", CultureInfo.InvariantCulture);
+                case PTypeEnumeration.fstring: return "\"" + ((string)v).Replace("\"", "\\\"") + "\"";
+                case PTypeEnumeration.sstring: return "\"" + ((string)v).Replace("\"", "\\\"") + "\"";
                 case PTypeEnumeration.record:
                     {
                         PTypeRecord ptr = (PTypeRecord)this;
