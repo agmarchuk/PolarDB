@@ -394,9 +394,11 @@ namespace Polar.PagedStreams
             //BinaryReader br = new BinaryReader(stream);
             BinaryWriter bw = new BinaryWriter(stream);
             stream.Position = offset_in_stream;
-            PaCell.SetPO(TpHead, bw, new object[] { 0L, _D0Coord==-1L? 0L : 1L, new object[] 
+            object obj = new object[] { 0L, _D0Coord==-1L? 0L : 1L, new object[]
                 { _D0Coord==-1L? -1L : _D0Coord + offset_in_stream, -1L, -1L, -1L, -1L, -1L, -1L, -1L, -1L, -1L, -1L, -1L, -1L },
-                  beginblock_length});
+                  beginblock_length};
+            //PaCell.SetPO(TpHead, bw, obj);
+            ByteFlow.Serialize(bw, obj, TpHead);
             bw.Flush();
         }
     }
