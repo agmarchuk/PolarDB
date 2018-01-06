@@ -89,6 +89,7 @@ namespace Polar.Cells
         }
         public object GetPObject(PType typ, long off, out long offout)
         {
+            //if (toflush) Flush();
             this.SetOffset(off);
             object v = GetPO(typ, this.br);
             offout = this.GetOffset();

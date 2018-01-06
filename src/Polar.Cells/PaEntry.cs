@@ -57,6 +57,7 @@ namespace Polar.Cells
         public long Count()
         {
             if (tp.Vid != PTypeEnumeration.sequence) throw new Exception("Err in TPath formula: Count() can't be applyed to structure of vid " + tp.Vid);
+            if (cell.toflush) cell.Flush();
             return cell.ReadCount(this.offset);
         }
         public PaEntry Element(long index)
@@ -149,6 +150,7 @@ namespace Polar.Cells
         }
         public object Get()
         {
+            if (cell.toflush) cell.Flush();
             return cell.GetPObject(tp, this.offset);
         }
         public void Set(object valu)
@@ -159,6 +161,7 @@ namespace Polar.Cells
         {
             if (this.cell.IsEmpty || this.offset != this.cell.Root.offset || this.Type.Vid != PTypeEnumeration.sequence)
             { throw new Exception("AppendElement for PaCell must be applied to root sequence and nonempty cell"); }
+            cell.toflush = true;
             return cell.AppendPObj(((PTypeSequence)this.Type).ElementType, po);
         }
 

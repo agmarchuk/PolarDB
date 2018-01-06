@@ -81,6 +81,17 @@ namespace UnitTestProject1
             oval = cell.Root.Get();
             Assert.IsTrue(tp_rec.Interpret(oval) == "{7777,\"Pupkin Vasya\",0.0001}", tp_rec.Interpret(oval));
         }
-
+        [TestMethod]
+        public void TestSeqCell()
+        {
+            PType tp_seq = new PTypeSequence(new PType(PTypeEnumeration.integer));
+            PaCell cell_seq = new PaCell(tp_seq, new MemoryStream(), false);
+            cell_seq.Clear();
+            cell_seq.Fill(new object[0]);
+            cell_seq.Root.AppendElement(99);
+            cell_seq.Root.AppendElement(98);
+            cell_seq.Root.AppendElement(97);
+            Assert.IsTrue(tp_seq.Interpret(cell_seq.Root.Get())== "[99,98,97]");
+        }
     }
 }

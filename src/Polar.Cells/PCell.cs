@@ -197,6 +197,9 @@ namespace Polar.Cells
             this.fs.Dispose();
         }
 
+        // Признак того, что последовательность требует Flush()
+        internal bool toflush = false;
+
         public void Flush()
         {
             long pos = fs.Position;
@@ -214,6 +217,7 @@ namespace Polar.Cells
                 fs.Position = this.dataStart;
                 bw.Write(this.nElements);
             }
+            toflush = false;
             fs.Flush();
             fs.Position = pos;
         }
