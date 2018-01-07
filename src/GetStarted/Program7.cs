@@ -148,7 +148,7 @@ namespace GetStarted
             object[] re = (object[])entry.Get();
             Console.WriteLine($"{re[0]} {re[1]} {re[2]}");
 
-            int nte = 100000;
+            int nte = 10000;
             int[] testkeys = Enumerable.Repeat<int>(0, nte).Select(i => rnd.Next(nkeys) + 1).ToArray();
             sw.Restart();
             for (int i = 0; i < nte; i++)

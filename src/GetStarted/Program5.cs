@@ -134,7 +134,7 @@ namespace GetStarted
             sw.Restart();
 
             PaEntry entry = person_seq.Root.Element(0);
-            int nte = 100000;
+            int nte = 10000;
             for (int i = 0; i < nte; i++)
             {
                 int key = rnd.Next(nkeys);
