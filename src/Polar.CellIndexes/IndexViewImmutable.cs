@@ -44,7 +44,21 @@ namespace Polar.CellIndexes
         public IScale Scale { get; set; }
         public IEnumerable<PaEntry> GetAllByLevel(Func<PaEntry, int> levelFunc)
         {
-            throw new NotImplementedException();
+            if (Table == null || Table.Count() == 0) return Enumerable.Empty<PaEntry>();
+            PaEntry entry = Table.Element(0);
+            PaEntry entry1 = entry;
+            var query = index_cell.Root.BinarySearchAll(ent =>
+            {
+                long off = (long)ent.Get();
+                entry.offset = off;
+                //return KeyProducer((object[])entry.Get()).CompareTo(key);
+                return levelFunc(entry);
+            }).ToArray();
+            return query.Select(ent =>
+            {
+                entry1.offset = (long)ent.Get();
+                return entry1;
+            });
         }
 
         private bool _tosort = true;
@@ -72,7 +86,7 @@ namespace Polar.CellIndexes
                 return KeyProducer((object[])ptr.Get());
             });
         }
-        public void Warmup() { foreach (var v in index_cell.Root.ElementValues()); }
+        public void Warmup() { foreach (var v in index_cell.Root.ElementValues()); if (Scale != null) Scale.Warmup(); }
         public void ActivateCache() { index_cell.ActivateCache(); if (Scale != null) Scale.ActivateCache(); }
             
 

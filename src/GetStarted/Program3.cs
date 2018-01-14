@@ -31,7 +31,7 @@ namespace GetStarted
                 KeyProducer = person_code_keyproducer,
                 Scale = null
             };
-            ind_arr_person.Scale = new ScaleCell(path + "person_ind") { IndexCell = ind_arr_person.IndexCell };
+            //ind_arr_person.Scale = new ScaleCell(path + "person_ind") { IndexCell = ind_arr_person.IndexCell };
             IndexDynamic<int, IndexKeyImmutable<int>> index_person = new IndexDynamic<int, IndexKeyImmutable<int>>(true)
             {
                 Table = tab_person,
