@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>1.0.1</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\src\Polar.CellIndexes\Polar.CellIndexes.csproj" />
+    <ProjectReference Include="..\src\Polar.Cells\Polar.Cells.csproj" />
+    <ProjectReference Include="..\src\Polar.DB\Polar.DB.csproj" />
+    <ProjectReference Include="..\src\Polar.PagedStreams\Polar.PagedStreams.csproj" />
+  </ItemGroup>
+
+</Project>

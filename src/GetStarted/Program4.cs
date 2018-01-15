@@ -74,6 +74,8 @@ namespace GetStarted
             };
             tab_person.RegisterIndex(index_person);
 
+            fob.DeactivateCache();
+
             int nelements = 1000000;
             bool toload = true; // Загружать или нет новую базу данных
             if (toload)

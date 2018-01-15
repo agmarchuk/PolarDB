@@ -61,7 +61,7 @@ namespace Polar.CellIndexes
     public interface IIndex<Tkey> : IIndexImmutable<Tkey>, IIndexCommon
     {
         // Найти все, соответствующие нулевому уровню
-        IEnumerable<PaEntry> GetAllByLevel(Func<Tkey,int> LevelFunc);
+        //IEnumerable<PaEntry> GetAllByLevel(Func<Tkey, int> LevelFunc);
     }
     public interface IScale
     {
