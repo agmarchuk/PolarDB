@@ -3,6 +3,11 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>alexander.g.marchuk</Authors>
+    <Company>iis</Company>
+    <Product>PolarDB</Product>
+    <Description>Kernel library of PolarDB product: polar types, binary and text serialization and deserialization, UniversalSequence</Description>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
