@@ -108,16 +108,57 @@ namespace GetStarted
         }
         public void Look()
         {
-            foreach (long offset in index_spo.ElementValues().Take(100))
+            foreach (long offset in index_spo.ElementValues().Take(10))
             {
                 var v = table.GetElement(offset);
                 Console.Write($"{tp_triple.Interpret(v)} ");
             }
             Console.WriteLine();
+            int nprobe = 1000;
+            Random rnd = new Random();
+            System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+
+            sw.Restart();
+            for (int i = 0; i < nprobe; i++)
+            {
+                int subj = rnd.Next((int)(index_spo.Count() / 2));
+                long offset = index_spo.BinarySearchOffsetAny(new object[] { subj, null, null });
+                if (offset == long.MinValue) throw new Exception("not found");
+                var v = table.GetElement(offset);
+                //Console.WriteLine($"subj={subj} triple={tp_triple.Interpret(v)}");
+                
+            }
+            sw.Stop();
+            Console.WriteLine($"{nprobe} GetAny search ok. duration={sw.ElapsedMilliseconds}");
+
+            sw.Restart();
+            for (int i=0; i<nprobe; i++)
+            {
+                int subj = rnd.Next((int)(index_spo.Count() / 2));
+                var res = index_spo.BinarySearchAllInside(0, index_spo.Count(), new object[] { subj, null, null })
+                    .Select(off => table.GetElement(off));
+                if (res.Count() != 2)
+                {
+                    var arr = res.ToArray();
+                    foreach (object ob in res)
+                    {
+                        Console.WriteLine($"ok. {tp_triple.Interpret(ob)}");
+                    }
+                    Console.WriteLine();
+                    var offs = index_spo.BinarySearchAllInside(0, index_spo.Count(), new object[] { subj, null, null }).ToArray();
+                    foreach (var off in offs)
+                    {
+
+                    }
+                }
+            }
+            sw.Stop();
+            Console.WriteLine($"{nprobe} GetAll search ok. duration={sw.ElapsedMilliseconds}");
         }
         public IEnumerable<object> GetTriplesBySubj(int subj)
         {
             object sample = new object[] { subj, null, null };
+            //index_spo;
             return Enumerable.Empty<object>();
         }
     }

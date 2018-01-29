@@ -99,7 +99,7 @@ namespace Polar.DB
             if (off != fs.Position) fs.Position = off;
             return GetElement();
         }
-        public object GetByIndex(int index)
+        public object GetByIndex(long index)
         {
             //if (elem_size <= 0) throw new Exception("Err: method can't be implemented to sequences of unknown element size");
             //if (index < 0 || index >= nelements) throw new IndexOutOfRangeException();

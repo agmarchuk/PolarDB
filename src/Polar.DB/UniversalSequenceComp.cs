@@ -12,8 +12,8 @@ namespace Polar.DB
     /// </summary>
     public class UniversalSequenceComp : UniversalSequenceBase
     {
-        private Comparer<object> comp;
-        private UniversalSequenceBase bearing;
+        protected Comparer<object> comp;
+        protected UniversalSequenceBase bearing;
         //PType tp_elem;
         public UniversalSequenceComp(PType tp_elem, Stream media, Comparer<object> comp, UniversalSequenceBase bearing_table) : base(tp_elem, media)
         {
@@ -21,130 +21,84 @@ namespace Polar.DB
             this.bearing = bearing_table;
         }
 
-        /*
-        
+        // Сначала реализуем более простой поиск - любого
+        public long BinarySearchOffsetAny(object sample)
+        {
+            long off = (long)GetByIndex(0);
+            int depth = comp.Compare(bearing.GetElement(off), sample);
+            if (depth == 0) return off;
+            if (depth > 0) return long.MinValue;
+            return BinarySearchOffsetAny(0, Count(), sample);
+        }
+        // Элемент elementFrom уже проверенный и меньше 0
+        private long BinarySearchOffsetAny(long elementFrom, long number, object sample)
+        {
+            long half = number / 2;
+            if (half == 0) return long.MinValue; // Не найден
+            //var factor = elementFrom.Type.HeadSize;
+            long middle = elementFrom + half;
+            long mid_offset = (long)GetByIndex(middle);
+            var middle_depth = comp.Compare(bearing.GetElement(mid_offset), sample);
+
+            if (middle_depth == 0) return mid_offset;
+            if (middle_depth < 0)
+            {
+                return BinarySearchOffsetAny(middle, number - half, sample);
+            }
+            else
+            {
+                return BinarySearchOffsetAny(elementFrom, half, sample);
+            }
+        }
+        // Теперь по аналогии, сделаем поиск всех
         /// <summary>
-        /// Метод выборки всех триплетов, удовлетворяющих условию компаратора
+        /// Выдает офсеты всех элементов опорной таблицы, удовлетворяющих условию выборки, начальная точка не проверена
         /// </summary>
-        /// <param name=""></param>
+        /// <param name="start"></param>
+        /// <param name="number"></param>
+        /// <param name="sample"></param>
         /// <returns></returns>
-        public IEnumerable<object> BinarySearchAll(object sample)
-        {
-            return BinarySearchAll(0, this.Count(), sample);
-        }
-        public IEnumerable<object> BinarySearchAll(long start, long numb, object sample)
-        {
-            // Пропустим возможные проверки применимости
-            if (numb > 0)
-            {
-                // Начальный элемент
-                var offset = (long)this.GetElement(this.ElementOffset(start));
-                var elementFrom = bearing.GetElement(offset);
-                return BinarySearchInside(elementFrom, numb, sample);
-            }
-            return Enumerable.Empty<object>();
-        }
-
-        // Ищет все решения внутри имея ввиду, что слева за диапазоном уровень меньше нуля, справа за диапазоном больше 
-        private IEnumerable<object> BinarySearchInside(object elementFrom, long number, object sample)
+        public IEnumerable<long> BinarySearchAllInside(long start, long number, object sample)
         {
             long half = number / 2;
-            if (half > 0)
+            if (half == 0)
             {
-                var size = this.elem_size;
-                PaEntry middle = new PaEntry(elementFrom.Type, elementFrom.offset + half * size, elementFrom.cell);
-                PaEntry aftermiddle = new PaEntry(elementFrom.Type, middle.offset + size, elementFrom.cell);
-                var middle_depth = elementDepth(middle);
-
-                if (middle_depth == 0)
-                {
-                    foreach (var pe in BinarySearchLeft(elementFrom, half, elementDepth)) yield return pe;
-                    yield return middle;
-                    foreach (var pe in BinarySearchRight(aftermiddle, number - half - 1, elementDepth)) yield return pe;
-                }
-                else if (middle_depth < 0)
-                {
-                    foreach (var pe in BinarySearchInside(aftermiddle, number - half - 1, elementDepth)) yield return pe;
-                }
-                else // if (middle_depth > 0)
-                {
-                    foreach (var pe in BinarySearchInside(elementFrom, half, elementDepth)) yield return pe;
-                }
+                long moffset = (long)GetByIndex(start);
+                if (comp.Compare(bearing.GetElement(moffset), sample) == 0) return Enumerable.Repeat<long>(moffset, 1);
+                else return Enumerable.Empty<long>(); // Не найден
             }
-            else if (number == 1) // && half == 0) - возможно одно решение или их нет
+                
+            long middle = start + half;
+            long mid_offset = (long)GetByIndex(middle);
+            long rest = number - half - 1;
+            var middle_depth = comp.Compare(bearing.GetElement(mid_offset), sample);
+
+            if (middle_depth == 0)
+            { // Вариант {левый, центральная точка, возможно правый}
+                IEnumerable<long> flow = BinarySearchAllInside(start, half, sample).Concat(Enumerable.Repeat<long>(mid_offset, 1));
+                if (rest > 0) return flow.Concat(BinarySearchAllInside(middle + 1, rest, sample));
+                else return flow;
+            }
+            if (middle_depth < 0)
             {
-                if (elementDepth(elementFrom) == 0) yield return elementFrom;
+                if (rest > 0) return BinarySearchAllInside(middle + 1, rest, sample);
+                else return Enumerable.Empty<long>();
+            }
+            else
+            {
+                return BinarySearchAllInside(start, half, sample);
             }
         }
 
+        //private IEnumerable<long> BinarySearchAllLeft(long start, long number, object sample)
+        //{
+        //    return Enumerable.Empty<long>();
+        //}
 
-        // Ищет все решения имея ввиду, что справа решения есть 
-        private static IEnumerable<PaEntry> BinarySearchLeft(PaEntry elementFrom, long number, Func<PaEntry, int> elementDepth)
-        {
-            long half = number / 2;
-            if (half > 0)
-            {
-                var size = elementFrom.Type.HeadSize;
-                PaEntry middle = new PaEntry(elementFrom.Type, elementFrom.offset + half * size, elementFrom.cell);
-                PaEntry aftermiddle = new PaEntry(elementFrom.Type, middle.offset + size, elementFrom.cell);
-                var middle_depth = elementDepth(middle);
-
-                if (middle_depth == 0)
-                {
-                    foreach (var pe in BinarySearchLeft(elementFrom, half, elementDepth)) yield return pe;
-                    yield return middle;
-                    // Переписать все из второй половины
-                    for (long ii = 0; ii < number - half - 1; ii++)
-                    {
-                        yield return aftermiddle;
-                        aftermiddle = new PaEntry(elementFrom.Type, aftermiddle.offset + size, elementFrom.cell);
-                    }
-                }
-                else if (middle_depth < 0)
-                {
-                    foreach (var pe in BinarySearchLeft(aftermiddle, number - half - 1, elementDepth)) yield return pe;
-                }
-                else throw new Exception("Assert err: 9283");
-            }
-            else if (number == 1) // возможно одно решение или их нет
-            {
-                if (elementDepth(elementFrom) == 0) yield return elementFrom;
-            }
-        }
-        // Ищет все решения имея ввиду, что слева решения есть 
-        private static IEnumerable<PaEntry> BinarySearchRight(PaEntry elementFrom, long number, Func<PaEntry, int> elementDepth)
-        {
-            long half = number / 2;
-            if (half > 0)
-            {
-                var size = elementFrom.Type.HeadSize;
-                PaEntry middle = new PaEntry(elementFrom.Type, elementFrom.offset + half * size, elementFrom.cell);
-                PaEntry aftermiddle = new PaEntry(elementFrom.Type, middle.offset + size, elementFrom.cell);
-                var middle_depth = elementDepth(middle);
-
-                if (middle_depth == 0)
-                {
-                    // Переписать все из первой половины
-                    PaEntry ef = elementFrom;
-                    for (long ii = 0; ii < half; ii++)
-                    {
-                        yield return ef;
-                        ef = new PaEntry(elementFrom.Type, ef.offset + size, elementFrom.cell);
-                    }
-                    yield return middle;
-                    foreach (var pe in BinarySearchRight(aftermiddle, number - half - 1, elementDepth)) yield return pe;
-                }
-                else if (middle_depth > 0)
-                {
-                    foreach (var pe in BinarySearchRight(elementFrom, half, elementDepth)) yield return pe;
-                }
-            }
-            else if (number == 1) // возможно одно решение или их нет
-            {
-                if (elementDepth(elementFrom) == 0) yield return elementFrom;
-            }
-        }
-        */
+        //private IEnumerable<long> BinarySearchAllRight(long start, long number, object sample)
+        //{
+        //    return Enumerable.Empty<long>();
+        //}
 
     }
 }
