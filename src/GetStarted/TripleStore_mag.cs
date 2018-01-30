@@ -90,13 +90,14 @@ namespace GetStarted
                 }
                 else
                 {
-                    LocalSort(arr_offs, arr_triples, index, length);
+                    if (length > 39) LocalSort(arr_offs, arr_triples, index, length);
                     // начинается новый блок
                     index = i;
                     length = 1;
+                    current_key = key;
                 }
             }
-            LocalSort(arr_offs, arr_triples, index, length);
+            if (length > 39) LocalSort(arr_offs, arr_triples, index, length);
 
             // Записываем итог
             index_spo.Clear();
@@ -114,6 +115,18 @@ namespace GetStarted
             for (int j = index; j < index + length; j++) arr_triples[j] = null;
         }
 
+        public void BuildScale()
+        {
+            int nelements = (int)table.Count();
+            int[] keys = new int[nelements];
+            for (int i = 0; i < nelements; i++)
+            {
+                object[] pair = (object[])index_spo.GetByIndex(i);
+                keys[i] = (int)pair[0];
+            }
+
+            scaleFunc = Scale.GetDiaFunc32(keys);
+        }
         public void Look()
         {
             foreach (long offset in index_spo.ElementValues().Select(pair => ((object[])pair)[1]).Take(10))

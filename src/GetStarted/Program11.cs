@@ -17,7 +17,8 @@ namespace GetStarted
             {
                 TripleStore_mag store = new TripleStore_mag(tab_stream, spo_stream, null);
 
-                int ntiples = 1_000_000;
+                int ntiples = 100_000_000;
+                bool toload = false;
                 // Начало таблицы имен 0 - type, 1 - name, 2 - person
                 int b = 3; // Начальный индекс назначаемых идентификаторов сущностей
 
@@ -28,10 +29,20 @@ namespace GetStarted
                     new object[] { ntiples + b - i - 1, 0, new object[] { 1, 2 } },
                     new object[] { ntiples + b - i - 1, 1, new object[] { 2, "pupkin" + (ntiples + b - i - 1) } }
                     }); // по 2 триплета на запись
-                store.Load(query);
-                store.Build();
-                sw.Stop();
-                Console.WriteLine($"load of {ntiples * 2} triples ok. Duration={sw.ElapsedMilliseconds}");
+
+                if (toload)
+                {
+                    store.Load(query);
+                    store.Build();
+                    sw.Stop();
+                    Console.WriteLine($"load of {ntiples * 2} triples ok. Duration={sw.ElapsedMilliseconds}");
+                }
+                else
+                {
+                    store.BuildScale();
+                    sw.Stop();
+                    Console.WriteLine($"build Scale for {ntiples * 2} triples ok. Duration={sw.ElapsedMilliseconds}");
+                }
                 store.Look();
             }
         }
