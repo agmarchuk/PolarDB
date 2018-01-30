@@ -113,6 +113,14 @@ namespace Polar.DB
                 yield return GetElement();
             }
         }
+        public IEnumerable<object> ElementValues(long offset, long number)
+        {
+            fs.Position = offset;
+            for (long i = 0; i < number; i++)
+            {
+                yield return GetElement();
+            }
+        }
 
         // Основной сканер: быстро пробегаем по элементам, обрабатываем пары (offset, pobject), возвращаем true
         public void Scan(Func<long, object, bool> handler)

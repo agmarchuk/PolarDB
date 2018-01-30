@@ -27,6 +27,13 @@ namespace Polar.DB
 
         public IEnumerable<long> BinarySearchAll(long start, long number, int key, object sample)
         {
+            if (number < 40)
+            {
+                return this.ElementValues(ElementOffset(start), number)
+                    .Where(pair => DoubleComp((object[])pair, key, sample) == 0)
+                    .Select(pair => (long)((object[])pair)[1])
+                    ;
+            }
             long half = number / 2;
             if (half == 0)
             {

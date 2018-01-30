@@ -25,8 +25,10 @@ namespace GetStarted
         // Индекс
         private UniversalSequenceCompKey32 index_spo;
         // Компаратор
-        Comparer<object> spo_comparer;
-        Func<object, int> keyFunc;
+        private Comparer<object> spo_comparer;
+        private Func<object, int> keyFunc;
+        private Func<int, Diapason> scaleFunc;
+
         public TripleStore_mag(Stream tab_stream, Stream spo_stream, Comparer<object> comp)
         {
             this.spo_comparer = comp;
@@ -71,6 +73,8 @@ namespace GetStarted
                 keys[i] = keyFunc(v);
             }
             Array.Sort(keys, arr_offs);
+
+            scaleFunc = Scale.GetDiaFunc32(keys);
 
             object[] arr_triples = new object[nelements];
             // Выделяем группы одинаковых ключей и сортируем по компаратору
@@ -141,8 +145,16 @@ namespace GetStarted
                 int subj = rnd.Next((int)(index_spo.Count() / 2));
                 object sample = new object[] { subj, null, null };
                 int key = keyFunc(sample);
-                var res = index_spo.BinarySearchAll(0, index_spo.Count(), key, sample)
-                    //.Select(off => table.GetElement(off))
+
+                long start = 0L, number = index_spo.Count();
+                if (scaleFunc != null)
+                {
+                    Diapason dia = scaleFunc(key);
+                    start = dia.start;
+                    number = dia.numb;
+                }
+                var res = index_spo.BinarySearchAll(start, number, key, sample)
+                    .Select(off => table.GetElement(off))
                     ;
                 if (res.Count() != 2)
                 {
