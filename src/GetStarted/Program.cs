@@ -13,11 +13,12 @@ namespace GetStarted
     {
         public static void Main(string[] args)
         {
-            Main11();
+            Main6();
             //Test(args);
         }
         public static void Main1()
         {
+            Console.WriteLine("Start Main1");
             // Создадим тип записи из трех полей
             PType tp = new PTypeRecord(
                 new NamedType("f1", new PType(PTypeEnumeration.integer)),
