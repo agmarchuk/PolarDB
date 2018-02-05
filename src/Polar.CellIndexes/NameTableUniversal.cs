@@ -27,7 +27,7 @@ namespace Polar.CellIndexes
             {
                 Table = this.table,
                 KeyProducer = pair => (int)((object[])(((object[])pair)[1]))[0], 
-                tosort = false
+                Tosort = false
             };
             offsets = new IndexDynamic<int, IndexViewImmutable<int>>(true)
             {
@@ -146,9 +146,9 @@ namespace Polar.CellIndexes
             foreach (string s in s_flow) hs.Add(s);
 
             //string[] ssa = hs.OrderBy(s => new HashedString() { Str = s }).ToArray(); // Надо сделать более экономно
-            string[] ssa = hs.Select(s => new { s = s, hs = new HashedString() { Str = s } })
+            string[] ssa = hs.Select(s => new { st = s, hs = new HashedString() { Str = s } })
                 .OrderBy(pa => pa.hs)
-                .Select(pa => pa.s).ToArray();
+                .Select(pa => pa.st).ToArray();
                 
             if (ssa.Length == 0) return new Dictionary<string, int>();
 

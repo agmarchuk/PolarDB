@@ -61,8 +61,9 @@ namespace Polar.CellIndexes
             });
         }
 
+        // Иногда не нужно сортировать при построении Build
         private bool _tosort = true;
-        public bool tosort { get { return _tosort; } set { _tosort = value; } }
+        public bool Tosort { get { return _tosort; } set { _tosort = value; } }
         public void Build()
         {
 
@@ -77,7 +78,7 @@ namespace Polar.CellIndexes
             });
             index_cell.Flush();
             if (index_cell.Root.Count() == 0) return; // потому что следующая операция не пройдет
-            if (!tosort) return;
+            if (!Tosort) return;
             var ptr = Table.Element(0);
             index_cell.Root.SortByKey<Tkey>((object v) =>
             {

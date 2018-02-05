@@ -96,7 +96,8 @@ namespace Polar.CellIndexes
             });
             if (Scale != null) Scale.Build();
         }
-        public void Warmup() { foreach (var v in index_cell.Root.ElementValues()); }
+        public void Warmup() { foreach (var v in index_cell.Root.ElementValues()); if (Scale != null) Scale.Warmup(); }
+    
         public void ActivateCache() { index_cell.ActivateCache(); if (Scale != null) Scale.ActivateCache(); }
 
         public IEnumerable<PaEntry> GetAllByKey(long start, long number, Tkey key)
