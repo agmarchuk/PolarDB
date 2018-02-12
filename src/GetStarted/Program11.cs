@@ -17,7 +17,7 @@ namespace GetStarted
             {
                 TripleStore_mag store = new TripleStore_mag(tab_stream, spo_stream, null);
 
-                int ntiples = 100_000_000;
+                int ntiples = 50_000_000;
                 bool toload = false;
                 // Начало таблицы имен 0 - type, 1 - name, 2 - person
                 int b = 3; // Начальный индекс назначаемых идентификаторов сущностей
