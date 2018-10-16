@@ -1,2 +1,9 @@
 
+
 Регистрирую NuGet account marchuk_ag, alexander.g.marchuk@outlook.com - Paut1nka*
+Сегодня в конце спецсимвол, буква, спецсимвол
+
+Проще всего обновлять через сайт https://www.nuget.org
+Находишь пакет, авторизуешься, делаешь Upload
+
+
