@@ -48,6 +48,12 @@ namespace Polar.CellIndexes
             table_cell.Flush();
         }
         public IEnumerable<PaEntry> Elements() { return table_cell.Root.Elements(); }
+        public IEnumerable<object> ElementValues()
+        {
+            return table_cell.Root.ElementValues()
+                .Cast<object[]>()
+                .Where(obs => !(bool)obs[0]).Select(obs => obs[1]);
+        }
 
         // метод для добавления элементов в таблицу.
         /// <summary>
@@ -61,7 +67,7 @@ namespace Polar.CellIndexes
                 .Select(v => new TableRow(v, table_cell.Root.AppendElement(v)));
         }
 
-                public void Warmup() 
+        public void Warmup() 
         {
             foreach (var v in table_cell.Root.ElementValues());
             foreach (IIndexCommon index in indexes)

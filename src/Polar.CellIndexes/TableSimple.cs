@@ -18,7 +18,7 @@ namespace Polar.CellIndexes
             this.getstream = getstream;
             this.cnoms = indexcolumnnoms;
             table = new TableView(getstream(), tp_elem);
-            if (tp_element.Vid != PTypeEnumeration.record) throw new Exception("Err in TableReletional Indexes: Type of element is not record");
+            if (tp_element.Vid != PTypeEnumeration.record) throw new Exception("Err in TableRelational Indexes: Type of element is not record");
             allindexes = new IIndexCommon[cnoms.Length];
             PTypeRecord tp_r = (PTypeRecord)tp_element;
             int i = 0;
@@ -87,7 +87,18 @@ namespace Polar.CellIndexes
                 return ind.GetAllByKey((string)key).Select(ent => ((object[])ent.Get())[1]).Cast<object[]>();
             }
             return Enumerable.Empty<object[]>();
-
+        }
+        public IEnumerable<object[]> ElementValues()
+        {
+            return table.ElementValues().Cast<object[]>();
+        }
+        public long Count()
+        {
+            return table.Count();
+        }
+        public void AppendValue(object[] row)
+        {
+            table.AppendValue(row);
         }
     }
 }

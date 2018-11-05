@@ -11,7 +11,8 @@ namespace Polar.DB
             UInt32 hash = 0;
             foreach (char c in str)
             {
-                hash += Convert.ToByte(c);
+                //hash += Convert.ToByte(c);
+                hash += Convert.ToUInt32(c) & 255; // Это я сделал из-за русского и др. языков
                 hash -= (hash << 13) | (hash >> 19);
             }
             return (int)hash;
