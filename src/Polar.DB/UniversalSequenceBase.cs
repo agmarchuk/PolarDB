@@ -60,6 +60,7 @@ namespace Polar.DB
         public long Count() { return nelements; }
         public long ElementOffset(long ind)
         {
+            if (ind == 0L) return 8;
             if (ind < 0 || ind > nelements || !tp_elem.HasNoTail) throw new Exception("Err in ElementOffset");
             return 8 + ind * elem_size;
         }
