@@ -12,6 +12,7 @@ namespace GetStarted
         //static string path = "Databases/";
         public static void Main12()
         {
+            string path = "";
             Random rnd = new Random();
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
             Console.WriteLine("Start experiment with UniversalSequense");
@@ -20,74 +21,80 @@ namespace GetStarted
                 new NamedType("id", new PType(PTypeEnumeration.integer)),
                 new NamedType("name", new PType(PTypeEnumeration.sstring)),
                 new NamedType("age", new PType(PTypeEnumeration.real)));
-            Stream f1 = File.Open("../../../Databases/f1.bin", FileMode.OpenOrCreate);
+            Stream f1 = File.Open(path+"Databases/f1.bin", FileMode.OpenOrCreate);
             UniversalSequence<int> keyvalue_seq = new UniversalSequence<int>(tp_person, f1);
             // Теперь надо добавить индекс и использовать его
             Func<object[], int> keyFunc = (object[] re) => (int)re[0];
             // вводим индекс
-            Stream f2 = File.Open("../../../Databases/f2.bin", FileMode.OpenOrCreate);
-            Stream f3 = File.Open("../../../Databases/f3.bin", FileMode.OpenOrCreate);
+            Stream f2 = File.Open(path+"Databases/f2.bin", FileMode.OpenOrCreate);
+            Stream f3 = File.Open(path+"Databases/f3.bin", FileMode.OpenOrCreate);
             UniversalSequence<int> keys = new UniversalSequence<int>(new PType(PTypeEnumeration.integer), f2);
             UniversalSequence<long> offsets = new UniversalSequence<long>(new PType(PTypeEnumeration.longinteger), f3);
 
             int nelements = 100_000_000;
+            Console.WriteLine($"Sequence of {nelements} elements");
             bool toload = true;
             int[] k_arr = new int[nelements];
-            long[] o_arr = new long[nelements];
+            long[] o_arr = null;
             if (toload)
             {
+                sw.Restart();
                 keyvalue_seq.Clear();
-                keys.Clear();
-                offsets.Clear();
                 var query = Enumerable.Range(0, nelements).Select(i => new object[] { nelements - i - 1, "" + (nelements - i - 1), 33.3 });
+                o_arr = new long[nelements];
+                int pos = 0;
                 foreach (var el in query)
                 {
                     long off = keyvalue_seq.AppendElement(el);
-                    keys.AppendElement(keyFunc(el));
-                    offsets.AppendElement(off);
+                    k_arr[pos] = keyFunc(el);
+                    o_arr[pos] = off;
+                    pos++;
                 }
                 keyvalue_seq.Flush();
+                // Сортировка
+                Array.Sort(k_arr, o_arr);
+                // Надо записать массивы
+                keys.Clear();
+                offsets.Clear();
+                for (int i = 0; i < nelements; i++)
+                {
+                    keys.AppendElement(k_arr[i]);
+                    offsets.AppendElement(o_arr[i]);
+                }
                 keys.Flush();
                 offsets.Flush();
-                // Формирование массивов
-                //int[] k_arr = new int[nelements];
-                //long[] o_arr = new long[nelements];
+                o_arr = null;
+                sw.Stop();
+                Console.WriteLine($"Load ok. duration={sw.ElapsedMilliseconds}");
+            }
+            else
+            {
+                // Надо прочитать массивы
                 for (int i = 0; i < nelements; i++)
                 {
                     object ob = i == 0 ? keys.GetElement(keys.ElementOffset(0L)) : keys.GetElement();
                     k_arr[i] = (int)ob;
-                    object ob2 = i == 0 ? offsets.GetElement(offsets.ElementOffset(0L)) : offsets.GetElement();
-                    o_arr[i] = (long)ob2;
+                    //object ob2 = i == 0 ? offsets.GetElement(offsets.ElementOffset(0L)) : offsets.GetElement();
+                    //o_arr[i] = (long)ob2;
                 }
-                // Сортировка
-                Array.Sort(k_arr, o_arr);
             }
 
-            sw.Start();
             int k1 = nelements * 2 / 3;
-            // Выборка
-            object ob1 = null;
-            for (int i = 0; i<= k1; i++)
-            {
-                ob1 = i == 0? keyvalue_seq.GetElement(keyvalue_seq.ElementOffset(0L)) : keyvalue_seq.GetElement();
-            }
-            object[] r = (object[])ob1;
-            Console.WriteLine($"{r[0]} {r[1]} {r[2]}");
-            sw.Stop();
-            Console.WriteLine($"duration={sw.ElapsedMilliseconds}");
 
             int nprobe = 10_000;
+
             sw.Restart();
             // Прямая выборка
-            for (int i = 0; i<nprobe; i++)
+            for (int i = 0; i < nprobe; i++)
             {
                 int k2 = rnd.Next(nelements);
                 int ind = Array.BinarySearch(k_arr, k2);
-                long offset = o_arr[ind];
-                r = (object[])keyvalue_seq.GetElement(offset);
+                //long offset = o_arr[ind];
+                long offset = (long)offsets.GetElement(offsets.ElementOffset(ind));
+                var r = (object[])keyvalue_seq.GetElement(offset);
             }
             sw.Stop();
-            Console.WriteLine($"duration={sw.ElapsedMilliseconds}");
+            Console.WriteLine($"BinarySearch and GetElement ({nprobe} times). duration={sw.ElapsedMilliseconds}");
 
             /*
             // Собственно таблица
