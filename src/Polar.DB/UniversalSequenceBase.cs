@@ -104,7 +104,7 @@ namespace Polar.DB
         {
             //if (elem_size <= 0) throw new Exception("Err: method can't be implemented to sequences of unknown element size");
             //if (index < 0 || index >= nelements) throw new IndexOutOfRangeException();
-            return GetElement(ElementOffset(index)); 
+            return GetElement(ElementOffset(index));
         }
         public IEnumerable<object> ElementValues()
         {
@@ -135,6 +135,33 @@ namespace Polar.DB
                 object pobject = GetElement();
                 bool ok = handler(off, pobject);
             }
+        }
+
+        /// Если размер элемента фиксированный и есть функция ключа с целочисленным значением
+
+        public void Sort32(Func<object, int> keyFun)
+        {
+            if (!tp_elem.HasNoTail || keyFun == null) throw new Exception("Err in Sort32:");
+            S32(0, this.Count(), keyFun);
+        }
+        public void S32(long start, long numb, Func<object, int> keyFun)
+        {
+            int[] keys = new int[numb];
+            object[] records = new object[numb];
+            long pos = start;
+            Scan((off, obj) =>
+            {
+                keys[pos] = keyFun(obj);
+                records[pos] = obj;
+                pos++;
+                return true;
+            });
+            Clear();
+            for (long ii = 0; ii < keys.LongLength; ii++)
+            {
+                AppendElement(records[ii]);
+            }
+            this.Flush();
         }
     }
 }

@@ -31,7 +31,7 @@ namespace GetStarted
             UniversalSequence<int> keys = new UniversalSequence<int>(new PType(PTypeEnumeration.integer), f2);
             UniversalSequence<long> offsets = new UniversalSequence<long>(new PType(PTypeEnumeration.longinteger), f3);
 
-            int nelements = 400_000_000;
+            int nelements = 10_000_000;
             Console.WriteLine($"Sequence of {nelements} elements");
             bool toload = true;
             int[] k_arr = new int[nelements];
