@@ -44,7 +44,7 @@ namespace Universal
         }
         public object GetElementByKey(int key)
         {
-            //IndexKeyImmutable<int> kindex = (IndexKeyImmutable<int>)indexes[0];
+            IndexKey32Immutable kindex = (IndexKey32Immutable)indexes[0];
             return null;
         }
     }
