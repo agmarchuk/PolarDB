@@ -42,6 +42,11 @@ namespace Universal
             sequ.Flush();
             foreach (var index in indexes) index.Flush();
         }
+        /// <summary>
+        /// Предполагается, что ключ определен нулевым индексом
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
         public object GetElementByKey(int key)
         {
             IndexKey32Immutable kindex = (IndexKey32Immutable)indexes[0];

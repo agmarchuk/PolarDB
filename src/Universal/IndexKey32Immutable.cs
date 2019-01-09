@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Polar.DB;
 
@@ -34,35 +35,131 @@ namespace Universal
         {
             index_arr.Flush();
         }
-        public void Build32()
+        public void Build()
         {
             index_arr.Sort32(ob => { var k = keyProducer(ob); return (int)k; });
         }
-        //public void Build32_()
-        //{
-        //    int nelements = (int)index_arr.Count(); //TODO: для массивов это не существенно
-        //    int[] keys = new int[nelements];
-        //    long[] offsets = new long[nelements];
 
-        //    int nom = 0;
-        //    index_arr.Scan((off, ob) =>
-        //    {
-        //        object okey = keyProducer(ob);
-        //        int key = (int)okey;
-        //        keys[nom] = key;
-        //        offsets[nom] = off;
-        //        nom++;
-        //        return true;
-        //    });
-        //    Array.Sort(keys, offsets);
-        //    index_arr.Clear();
-
-        //    index_arr.Flush();
-        //}
-
-        public void Build()
+        public IEnumerable<object> GetAllByKey(int key)
         {
-            Build32();
+            return Enumerable.Empty<object>();
+        }
+
+        // ============================ Бинарные поиск ==============================
+
+        public IEnumerable<object> BinarySearchAll(int key)
+        {
+            return BinarySearchAll(0, index_arr.Count(), key);
+        }
+        public IEnumerable<object> BinarySearchAll(long start, long numb, int key)
+        {
+            if (numb == 0) return Enumerable.Empty<object>();
+            object elementFrom = index_arr.GetByIndex(start); // первое значение в сегменте start, start+numb-1
+            //if (llen > 0)
+            //{
+            //    var elementFrom = sequ.Element(start);
+            //    //foreach (var pe in BinarySearchInside(elementFrom, llen, elementDepth)) yield return pe;
+            //    return BinarySearchInside(elementFrom, llen, elementDepth);
+            //}
+            //return Enumerable.Empty<PaEntry>();
+            return BinarySearchInside(elementFrom, start, numb, key);
+        }
+        // Ищет все решения внутри имея ввиду, что слева за диапазоном уровень меньше нуля, справа за диапазоном больше 
+        private static IEnumerable<object> BinarySearchInside(object elementFrom, long start, long number, int key)
+        {
+            long half = number / 2;
+            if (half > 0)
+            {
+                var size = elementFrom.Type.HeadSize;
+                PaEntry middle = new PaEntry(elementFrom.Type, elementFrom.offset + half * size, elementFrom.cell);
+                PaEntry aftermiddle = new PaEntry(elementFrom.Type, middle.offset + size, elementFrom.cell);
+                var middle_depth = elementDepth(middle);
+
+                if (middle_depth == 0)
+                {
+                    foreach (var pe in BinarySearchLeft(elementFrom, half, elementDepth)) yield return pe;
+                    yield return middle;
+                    foreach (var pe in BinarySearchRight(aftermiddle, number - half - 1, elementDepth)) yield return pe;
+                }
+                else if (middle_depth < 0)
+                {
+                    foreach (var pe in BinarySearchInside(aftermiddle, number - half - 1, elementDepth)) yield return pe;
+                }
+                else // if (middle_depth > 0)
+                {
+                    foreach (var pe in BinarySearchInside(elementFrom, half, elementDepth)) yield return pe;
+                }
+            }
+            else if (number == 1) // && half == 0) - возможно одно решение или их нет
+            {
+                if (elementDepth(elementFrom) == 0) yield return elementFrom;
+            }
+        }
+        // Ищет все решения имея ввиду, что справа решения есть 
+        private static IEnumerable<PaEntry> BinarySearchLeft(PaEntry elementFrom, long number, Func<PaEntry, int> elementDepth)
+        {
+            long half = number / 2;
+            if (half > 0)
+            {
+                var size = elementFrom.Type.HeadSize;
+                PaEntry middle = new PaEntry(elementFrom.Type, elementFrom.offset + half * size, elementFrom.cell);
+                PaEntry aftermiddle = new PaEntry(elementFrom.Type, middle.offset + size, elementFrom.cell);
+                var middle_depth = elementDepth(middle);
+
+                if (middle_depth == 0)
+                {
+                    foreach (var pe in BinarySearchLeft(elementFrom, half, elementDepth)) yield return pe;
+                    yield return middle;
+                    // Переписать все из второй половины
+                    for (long ii = 0; ii < number - half - 1; ii++)
+                    {
+                        yield return aftermiddle;
+                        aftermiddle = new PaEntry(elementFrom.Type, aftermiddle.offset + size, elementFrom.cell);
+                    }
+                }
+                else if (middle_depth < 0)
+                {
+                    foreach (var pe in BinarySearchLeft(aftermiddle, number - half - 1, elementDepth)) yield return pe;
+                }
+                else throw new Exception("Assert err: 9283");
+            }
+            else if (number == 1) // возможно одно решение или их нет
+            {
+                if (elementDepth(elementFrom) == 0) yield return elementFrom;
+            }
+        }
+        // Ищет все решения имея ввиду, что слева решения есть 
+        private static IEnumerable<PaEntry> BinarySearchRight(PaEntry elementFrom, long number, Func<PaEntry, int> elementDepth)
+        {
+            long half = number / 2;
+            if (half > 0)
+            {
+                var size = elementFrom.Type.HeadSize;
+                PaEntry middle = new PaEntry(elementFrom.Type, elementFrom.offset + half * size, elementFrom.cell);
+                PaEntry aftermiddle = new PaEntry(elementFrom.Type, middle.offset + size, elementFrom.cell);
+                var middle_depth = elementDepth(middle);
+
+                if (middle_depth == 0)
+                {
+                    // Переписать все из первой половины
+                    PaEntry ef = elementFrom;
+                    for (long ii = 0; ii < half; ii++)
+                    {
+                        yield return ef;
+                        ef = new PaEntry(elementFrom.Type, ef.offset + size, elementFrom.cell);
+                    }
+                    yield return middle;
+                    foreach (var pe in BinarySearchRight(aftermiddle, number - half - 1, elementDepth)) yield return pe;
+                }
+                else if (middle_depth > 0)
+                {
+                    foreach (var pe in BinarySearchRight(elementFrom, half, elementDepth)) yield return pe;
+                }
+            }
+            else if (number == 1) // возможно одно решение или их нет
+            {
+                if (elementDepth(elementFrom) == 0) yield return elementFrom;
+            }
         }
 
     }
