@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Polar.DB;
 
@@ -40,7 +41,7 @@ namespace Universal
                 foreach (var index in indexes) index.AppendPosition(off, el);
             }
             sequ.Flush();
-            foreach (var index in indexes) index.Flush();
+            foreach (var index in indexes) { index.Flush(); index.Build(); }
         }
         /// <summary>
         /// Предполагается, что ключ определен нулевым индексом
@@ -50,7 +51,14 @@ namespace Universal
         public object GetElementByKey(int key)
         {
             IndexKey32Immutable kindex = (IndexKey32Immutable)indexes[0];
-            return null;
+            return kindex.BinarySearchAll(key)
+                .Select(ob =>
+                {
+                    long off = kindex.offsetProducer(ob);
+                    return sequ.GetElement(off);
+                })
+                //.Where()
+                .FirstOrDefault();
         }
     }
 }

@@ -27,6 +27,9 @@ namespace Universal
             Sequence keyvalue_seq = new Sequence(tp_person, gen_stream, new IIndex[]
             {
                 new IndexKey32Immutable(ob => (int)((object[])ob)[0], gen_stream)
+                {
+                    offsetProducer = ob => (long)((object[])ob)[1]
+                }
             });
             Func<object, int> keyFunc = ob => (int)((object[])ob)[0];
 
@@ -43,6 +46,20 @@ namespace Universal
                 Console.WriteLine($"Load ok. duration={sw.ElapsedMilliseconds}");
             }
 
+            int key = nelements * 2 / 3;
+            var val = keyvalue_seq.GetElementByKey(key);
+            Console.WriteLine(val==null? "null" : tp_person.Interpret(val));
+
+            sw.Restart();
+            int nprobe = 10_000;
+            for (int i=0; i < nprobe; i++)
+            {
+                key = rnd.Next(nelements);
+                var v = keyvalue_seq.GetElementByKey(key);
+                if (v==null) Console.WriteLine($"null for {key}");
+            }
+            sw.Stop();
+            Console.WriteLine($"{nprobe} GetElementByKey. duration={sw.ElapsedMilliseconds}");
         }
     }
 }

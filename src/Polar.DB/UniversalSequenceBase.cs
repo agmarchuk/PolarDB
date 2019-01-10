@@ -156,6 +156,7 @@ namespace Polar.DB
                 pos++;
                 return true;
             });
+            Array.Sort(keys, records);
             Clear();
             for (long ii = 0; ii < keys.LongLength; ii++)
             {
