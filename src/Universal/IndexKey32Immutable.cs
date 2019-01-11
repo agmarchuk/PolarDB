@@ -62,35 +62,47 @@ namespace Universal
             if (numb == 0) return Enumerable.Empty<object>();
             return BinarySearch(start, numb, key);
         }
+        private const int maxsegmentsize = 100;
         // Ищет все решения внутри имея ввиду, что слева за диапазоном уровень меньше нуля, справа за диапазоном больше 
         private IEnumerable<object> BinarySearch(long start, long number, int key)
         {
-            long half = number / 2;
-            object middle_obj = index_arr.GetByIndex(start + half);
-            if (half > 0)
+            if (number < maxsegmentsize)
             {
-                int middle_key = keyProducer(middle_obj);
-
-                if (middle_key < key)
+                foreach (var ob in index_arr.ElementValues(index_arr.ElementOffset(start), number))
                 {
-                    foreach (var ob in BinarySearch(start + half + 1, number - half - 1, key)) yield return ob;
-                }
-                else if (middle_key > key)
-                {
-                    foreach (var ob in BinarySearch(start, half, key)) yield return ob;
-                }
-                else // Если равно
-                {
-                    foreach (var ob in BinarySearch(start, half, key)) yield return ob;
-                    yield return middle_obj;
-                    foreach (var ob in BinarySearch(start + half + 1, number - half - 1, key)) yield return ob;
+                    int k = keyProducer(ob);
+                    if (k < key) continue;
+                    else if (k == key) yield return ob;
+                    else break;
                 }
             }
             else
             {
+                long half = number / 2;
+                object middle_obj = index_arr.GetByIndex(start + half);
                 int middle_key = keyProducer(middle_obj);
-                //if (middle_key != key) throw new Exception($"Assert err in BinarySearch key={key} middle_key={middle_key}");
-                if (middle_key == key) yield return middle_obj;
+                if (half > 0)
+                {
+
+                    if (middle_key < key)
+                    {
+                        foreach (var ob in BinarySearch(start + half + 1, number - half - 1, key)) yield return ob;
+                    }
+                    else if (middle_key > key)
+                    {
+                        foreach (var ob in BinarySearch(start, half, key)) yield return ob;
+                    }
+                    else // Если равно
+                    {
+                        foreach (var ob in BinarySearch(start, half, key)) yield return ob;
+                        yield return middle_obj;
+                        foreach (var ob in BinarySearch(start + half + 1, number - half - 1, key)) yield return ob;
+                    }
+                }
+                else
+                {
+                    if (middle_key == key) yield return middle_obj;
+                }
             }
         }
 

@@ -36,7 +36,7 @@ namespace Universal
             
             int nelements = 10_000_000;
             Console.WriteLine($"Sequence of {nelements} elements");
-            bool toload = true;
+            bool toload = false;
             if (toload)
             {
                 sw.Restart();
@@ -51,7 +51,7 @@ namespace Universal
             Console.WriteLine(val==null? "null" : tp_person.Interpret(val));
 
             sw.Restart();
-            int nprobe = 10_000;
+            int nprobe = 100;
             for (int i=0; i < nprobe; i++)
             {
                 key = rnd.Next(nelements);
@@ -60,6 +60,7 @@ namespace Universal
             }
             sw.Stop();
             Console.WriteLine($"{nprobe} GetElementByKey. duration={sw.ElapsedMilliseconds}");
+            //Console.ReadKey();
         }
     }
 }
