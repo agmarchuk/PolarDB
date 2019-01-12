@@ -26,17 +26,14 @@ namespace Universal
 
             Sequence keyvalue_seq = new Sequence(tp_person, gen_stream, new IIndex[]
             {
-                new IndexKey32Immutable(ob => (int)((object[])ob)[0], gen_stream)
-                {
-                    offsetProducer = ob => (long)((object[])ob)[1]
-                }
-            });
-            Func<object, int> keyFunc = ob => (int)((object[])ob)[0];
+                new IndexKey32Immutable(gen_stream, obj => (int)((object[])obj)[0])
+            }.ToList());
+            //Func<object, int> keyFunc = ob => (int)((object[])ob)[0];
 
             
             int nelements = 10_000_000;
             Console.WriteLine($"Sequence of {nelements} elements");
-            bool toload = false;
+            bool toload = true;
             if (toload)
             {
                 sw.Restart();
@@ -45,13 +42,23 @@ namespace Universal
                 sw.Stop();
                 Console.WriteLine($"Load ok. duration={sw.ElapsedMilliseconds}");
             }
+            else
+            {
+                sw.Restart();
+                keyvalue_seq.Prepare();
+                sw.Stop();
+                Console.WriteLine($"Prepare ok. duration={sw.ElapsedMilliseconds}");
+
+            }
 
             int key = nelements * 2 / 3;
             var val = keyvalue_seq.GetElementByKey(key);
             Console.WriteLine(val==null? "null" : tp_person.Interpret(val));
 
+            return;
+
             sw.Restart();
-            int nprobe = 100;
+            int nprobe = 10000;
             for (int i=0; i < nprobe; i++)
             {
                 key = rnd.Next(nelements);

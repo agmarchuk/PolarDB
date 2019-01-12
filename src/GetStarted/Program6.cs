@@ -54,7 +54,7 @@ namespace GetStarted
             tab_person.RegisterIndex(index_id);
 
             int nelements = 1000000;
-            bool toload = true; // Загружать или нет новую базу данных
+            bool toload = false; // Загружать или нет новую базу данных
             if (toload)
             {
                 sw.Restart();

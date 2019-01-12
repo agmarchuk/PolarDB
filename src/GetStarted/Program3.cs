@@ -40,7 +40,7 @@ namespace GetStarted
             };
             tab_person.RegisterIndex(index_person);
 
-            int nelements = 1000000;
+            int nelements = 10_000_000;
             bool toload = true; // Загружать или нет новую базу данных
             if (toload)
             {

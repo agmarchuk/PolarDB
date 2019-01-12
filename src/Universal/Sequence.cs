@@ -14,14 +14,14 @@ namespace Universal
     public class Sequence
     {
         private readonly UniversalSequenceBase sequ;
-        private readonly IIndex[] indexes;
+        private List<IIndex> indexes;
         /// <summary>
         /// Конструктор порождает простую последовательность элементов указанного типа, сериализующуюся на заданном стриме 
         /// </summary>
         /// <param name="tp_elem">поляровский тип элемента</param>
         /// <param name="stream_gen">генератор стримов</param>
         /// <param name="indexes">индексы</param>
-        public Sequence(PType tp_elem, Func<Stream> stream_gen, IIndex[] indexes)
+        public Sequence(PType tp_elem, Func<Stream> stream_gen, List<IIndex> indexes)
         {
             sequ = new UniversalSequenceBase(tp_elem, stream_gen());
             this.indexes = indexes;
@@ -38,10 +38,14 @@ namespace Universal
             foreach (var el in records)
             {
                 long off = sequ.AppendElement(el);
-                foreach (var index in indexes) index.AppendPosition(off, el);
+                //foreach (var index in indexes) index.AppendPosition(off, el);
             }
             sequ.Flush();
             foreach (var index in indexes) { index.Flush(); index.Build(); }
+        }
+        public void Prepare()
+        {
+            foreach (var index in indexes) { index.Prepare(); }
         }
         /// <summary>
         /// Предполагается, что ключ определен нулевым индексом
@@ -50,15 +54,25 @@ namespace Universal
         /// <returns></returns>
         public object GetElementByKey(int key)
         {
+            //IndexKey32Immutable kindex = (IndexKey32Immutable)indexes[0];
+            //return kindex.BinarySearchAll(key)
+            //    .Select(ob =>
+            //    {
+            //        long off = kindex.offsetProducer(ob);
+            //        return sequ.GetElement(off);
+            //    })
+            //    //.Where()
+            //    .FirstOrDefault();
             IndexKey32Immutable kindex = (IndexKey32Immutable)indexes[0];
-            return kindex.BinarySearchAll(key)
-                .Select(ob =>
-                {
-                    long off = kindex.offsetProducer(ob);
-                    return sequ.GetElement(off);
-                })
-                //.Where()
+            var qu = kindex.BinarySearchAll(key)
+                .Select(off => sequ.GetElement(off))
                 .FirstOrDefault();
+            return qu;
         }
+        public void Scan(Func<long, object, bool> handler)
+        {
+            sequ.Scan(handler);
+        }
+        public long Count() { return sequ.Count(); }
     }
 }
