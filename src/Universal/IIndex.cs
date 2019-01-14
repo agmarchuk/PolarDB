@@ -10,7 +10,7 @@ namespace Universal
         //Func<object, object> keyFunc { get; set; }
         //Func<object, int> Hash32 { get; set; }
         void Clear();
-        //void AppendPosition(long offset, object element);
+        void AppendPosition(long offset, object element);
         void Flush();
         void Build();
         void Prepare();

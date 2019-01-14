@@ -27,10 +27,13 @@ namespace Universal
         }
 
         public void Clear() { key_arr.Clear(); off_arr.Clear(); }
-        //public void AppendPosition(long offset, object element)
-        //{
-        //    index_arr.AppendElement(new object[] { keyProducer(element), offset });
-        //}
+        private List<int> keys_l = new List<int>();
+        private List<long> offs_l = new List<long>();
+        public void AppendPosition(long offset, object element)
+        {
+            keys_l.Add(keyProducer(element));
+            offs_l.Add(offset);
+        }
         public void Flush()
         {
             key_arr.Flush(); off_arr.Flush();
@@ -38,18 +41,11 @@ namespace Universal
         public void Build()
         {
             int nelems = (int)BearingSequence.Count();
-            int[] keys = new int[nelems];
-            long[] offs = new long[nelems];
-            int p = 0;
-            BearingSequence.Scan((off, obj) =>
-            {
-                keys[p] = (int)keyProducer(obj);
-                offs[p] = off;
-                p++;
-                return true;
-            });
+            int[] keys = keys_l.ToArray();
+            long[] offs = offs_l.ToArray();
             Array.Sort(keys, offs);
             key_arr.Clear();
+            int p;
             for (p = 0; p < nelems; p++) key_arr.AppendElement(keys[p]);
             key_arr.Flush();
             off_arr.Clear();
@@ -60,11 +56,11 @@ namespace Universal
         }
         public void Prepare()
         {
-            //if (index_arr.Count() < 100) return;
-            //long N = index_arr.Count();
-            //int min = keyProducer(index_arr.GetByIndex(0L));
-            //int max = keyProducer(index_arr.GetByIndex(N - 1));
-            //GetDia = Scale.GetDiaFunc32(index_arr.ElementValues().Select(ob => keyProducer(ob)), min, max, (int)(N / 16));
+            long N = key_arr.Count();
+            if (N < 100) return;
+            int min = (int)key_arr.GetByIndex(0L);
+            int max = (int)key_arr.GetByIndex(N - 1);
+            GetDia = Scale.GetDiaFunc32(key_arr.ElementValues().Cast<int>(), min, max, (int)(N / 16));
         }
 
         // ============================ Бинарные поиск ==============================
@@ -90,7 +86,7 @@ namespace Universal
         // Ищет все решения внутри имея ввиду, что слева за диапазоном уровень меньше нуля, справа за диапазоном больше 
         private IEnumerable<long> BinarySearch(long start, long number, int key)
         {
-            if (true)
+            if (false)
             {
                 long ll = start;
                 int numb = (int)number;
@@ -102,8 +98,8 @@ namespace Universal
                     else break;
                 }
             }
-            //else if (number < maxsegmentsize)
-            //{
+            if (number < maxsegmentsize)
+            {
             //    foreach (var ob in index_arr.ElementValues(index_arr.ElementOffset(start), number))
             //    {
             //        int k = keyProducer(ob);
@@ -111,35 +107,45 @@ namespace Universal
             //        else if (k == key) yield return ob;
             //        else break;
             //    }
-            //}
-            //else
-            //{
-            //    long half = number / 2;
+                long ll = start;
+                int numb = (int)number;
+                for (int i=0; i<numb; i++)
+                {
+                    int ke = (int)key_arr.GetByIndex(ll + i);
+                    if (ke < key) continue;
+                    else if (ke == key) yield return (long)off_arr.GetByIndex(ll+i);
+                    else break;
+                }
+            }
+            else
+            {
+               long half = number / 2;
             //    object middle_obj = index_arr.GetByIndex(start + half);
             //    int middle_key = keyProducer(middle_obj);
-            //    if (half > 0)
-            //    {
-
-            //        if (middle_key < key)
-            //        {
-            //            foreach (var ob in BinarySearch(start + half + 1, number - half - 1, key)) yield return ob;
-            //        }
-            //        else if (middle_key > key)
-            //        {
-            //            foreach (var ob in BinarySearch(start, half, key)) yield return ob;
-            //        }
-            //        else // Если равно
-            //        {
-            //            foreach (var ob in BinarySearch(start, half, key)) yield return ob;
-            //            yield return middle_obj;
-            //            foreach (var ob in BinarySearch(start + half + 1, number - half - 1, key)) yield return ob;
-            //        }
-            //    }
-            //    else
-            //    {
-            //        if (middle_key == key) yield return middle_obj;
-            //    }
-            //}
+                int middle_key = (int)key_arr.GetByIndex(start + half);
+               if (half > 0)
+               {
+                   if (middle_key < key)
+                   {
+                       foreach (var ob in BinarySearch(start + half + 1, number - half - 1, key)) yield return ob;
+                   }
+                   else if (middle_key > key)
+                   {
+                       foreach (var ob in BinarySearch(start, half, key)) yield return ob;
+                   }
+                   else // Если равно
+                   {
+                       foreach (var ob in BinarySearch(start, half, key)) yield return ob;
+                       //yield return middle_obj;
+                       yield return (long)off_arr.GetByIndex(start + half);
+                       foreach (var ob in BinarySearch(start + half + 1, number - half - 1, key)) yield return ob;
+                   }
+               }
+               else
+               {
+                   if (middle_key == key) yield return (long)off_arr.GetByIndex(start + half);
+               }
+            }
         }
 
     }

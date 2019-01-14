@@ -31,7 +31,7 @@ namespace Universal
             //Func<object, int> keyFunc = ob => (int)((object[])ob)[0];
 
             
-            int nelements = 10_000_000;
+            int nelements = 1_000_000;
             Console.WriteLine($"Sequence of {nelements} elements");
             bool toload = true;
             if (toload)
@@ -55,7 +55,6 @@ namespace Universal
             var val = keyvalue_seq.GetElementByKey(key);
             Console.WriteLine(val==null? "null" : tp_person.Interpret(val));
 
-            return;
 
             sw.Restart();
             int nprobe = 10000;

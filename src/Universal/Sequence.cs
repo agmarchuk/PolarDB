@@ -38,10 +38,11 @@ namespace Universal
             foreach (var el in records)
             {
                 long off = sequ.AppendElement(el);
-                //foreach (var index in indexes) index.AppendPosition(off, el);
+                foreach (var index in indexes) index.AppendPosition(off, el);
             }
             sequ.Flush();
             foreach (var index in indexes) { index.Flush(); index.Build(); }
+
         }
         public void Prepare()
         {
