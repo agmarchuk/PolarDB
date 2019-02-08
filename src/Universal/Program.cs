@@ -31,9 +31,9 @@ namespace Universal
             //Func<object, int> keyFunc = ob => (int)((object[])ob)[0];
 
             
-            int nelements = 200_000_000;
+            int nelements = 10_000_000;
             Console.WriteLine($"Sequence of {nelements} elements");
-            bool toload = true;
+            bool toload = false;
             if (toload)
             {
                 sw.Restart();
