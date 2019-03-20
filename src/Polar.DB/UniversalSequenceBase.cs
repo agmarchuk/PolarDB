@@ -36,7 +36,7 @@ namespace Polar.DB
                 nelements = br.ReadInt64();
                 // если длина элементов фиксирована, устанавливаем на условный конец, если нет -устанавливаем на начало пустого
                 if (elem_size > 0) fs.Position = 8 + nelements * elem_size;
-                else fs.Position = fs.Length;
+                else fs.Position = fs.Length; // Этот вариант породит ошибку, если реальный размер файла больше, чем занимают элементы
             }
         }
         /// <summary>
@@ -123,7 +123,7 @@ namespace Polar.DB
             }
         }
 
-        // Основной сканер: быстро пробегаем по элементам, обрабатываем пары (offset, pobject), возвращаем true
+        // Основной сканер: быстро пробегаем по элементам, обрабатываем пары (offset, pobject) хендлером, хендлер возвращает true
         public void Scan(Func<long, object, bool> handler)
         {
             long ll = this.Count();
@@ -134,10 +134,12 @@ namespace Polar.DB
                 long off = fs.Position;
                 object pobject = GetElement();
                 bool ok = handler(off, pobject);
+                if (!ok) break;
             }
         }
 
         /// Если размер элемента фиксированный и есть функция ключа с целочисленным значением
+        /// TODO: Вроде S32 вполне может работать для произвольных записей, но только на полном диапазоне.
 
         public void Sort32(Func<object, int> keyFun)
         {
@@ -157,6 +159,7 @@ namespace Polar.DB
                 return true;
             });
             Array.Sort(keys, records);
+            // TODO: Похоже, метод работает правильно только для полного диапазона. 
             Clear();
             for (long ii = 0; ii < keys.LongLength; ii++)
             {
