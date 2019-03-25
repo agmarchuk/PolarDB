@@ -11,17 +11,15 @@ namespace GetStarted
     {
         public static void Main13()
         {
-            string path = "";
+            string path = "../../../";
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
             Console.WriteLine("Start GetStarted/Main13");
             int cnt = 0;
             TripleStore32 store = new TripleStore32(()=> new FileStream(path + "Databases/f"+(cnt++)+".bin", FileMode.OpenOrCreate, FileAccess.ReadWrite));
-            int nelements = 500_000;
-            bool toload = true;
+            int nelements = 20_000_000;
             // Начало таблицы имен 0 - type, 1 - name, 2 - person
             int b = 3; // Начальный индекс назначаемых идентификаторов сущностей
 
-            sw.Restart();
             var query = Enumerable.Range(0, nelements)
                 .SelectMany(i => new object[]
                 {
@@ -29,62 +27,78 @@ namespace GetStarted
                     new object[] { nelements + b - i - 1, 1, new object[] { 2, "pupkin" + (nelements + b - i - 1) } }
                 }); // по 2 триплета на запись
 
+            bool toload = true;
             if (toload)
             {
+                sw.Restart();
                 store.Load(query);
                 store.Build();
                 sw.Stop();
                 Console.WriteLine($"load of {nelements * 2} triples ok. Duration={sw.ElapsedMilliseconds}");
+
+                sw.Restart();
+                store.BuildTest();
+                sw.Stop();
+                Console.WriteLine($"Test ===== Sorting of {nelements * 2} triples ok. Duration={sw.ElapsedMilliseconds}");
+
             }
             else
             {
-                store.BuildScale();
-                sw.Stop();
-                Console.WriteLine($"build Scale for {nelements * 2} triples ok. Duration={sw.ElapsedMilliseconds}");
+                //store.BuildScale();
+                //sw.Stop();
+                //Console.WriteLine($"build Scale for {nelements * 2} triples ok. Duration={sw.ElapsedMilliseconds}");
             }
 
             // Для проверки работы запрошу запись с ключом nelements * 2 / 3
-            int key = nelements * 2 / 3;
+            int ke = nelements * 2 / 3 + 2;
+            var qu = store.GetBySubject(ke);
+            foreach (object[] t in qu)
+            {
+                Console.WriteLine($"{t[0]} {t[1]}");
+            }
+            var qu1 = store.GetTest(ke);
+            foreach (object[] t in qu)
+            {
+                Console.WriteLine($"test ====== {t[0]} {t[1]}");
+            }
+
 
 
             int nprobe = 1000;
             Random rnd = new Random();
 
-            //sw.Restart();
-            //for (int i = 0; i < nprobe; i++)
-            //{
-            //    int subj = rnd.Next((int)(index_spo.Count() / 2));
-            //    object sample = new object[] { subj, null, null };
-            //    int key = keyFunc(sample);
+            sw.Restart();
+            for (int i = 0; i < nprobe; i++)
+            {
+                int subj = rnd.Next(nelements);
+                var quer = store.GetBySubject(subj);
+                if (quer.Count() != 2)
+                {
+                    foreach (object[] t in quer)
+                    {
+                        Console.WriteLine($"{t[0]} {t[1]}");
+                    }
+                }
+            }
+            sw.Stop();
+            Console.WriteLine($"{nprobe} GetAll search ok. duration={sw.ElapsedMilliseconds}");
 
-            //    long start = 0L, number = index_spo.Count();
-            //    if (scaleFunc != null)
-            //    {
-            //        Diapason dia = scaleFunc(key);
-            //        start = dia.start;
-            //        number = dia.numb;
-            //    }
-            //    var res = index_spo.BinarySearchAll(start, number, key, sample)
-            //        .Select(off => table.GetElement(off))
-            //        ;
-            //    if (res.Count() != 2)
-            //    {
-            //        //var arr = res.ToArray();
-            //        //foreach (object ob in res)
-            //        //{
-            //        //    Console.WriteLine($"ok. {tp_triple.Interpret(ob)}");
-            //        //}
-            //        //Console.WriteLine();
-            //        //var offs = index_spo.BinarySearchAllInside(0, index_spo.Count(), new object[] { subj, null, null }).ToArray();
-            //        //foreach (var off in offs)
-            //        //{
-
-            //        //}
-            //        Console.WriteLine($"res.Count()={res.Count()}");
-            //    }
-            //}
-            //sw.Stop();
-            //Console.WriteLine($"{nprobe} GetAll search ok. duration={sw.ElapsedMilliseconds}");
+            nprobe = 10000;
+            sw.Restart();
+            for (int i = 0; i < nprobe; i++)
+            {
+                int subj = rnd.Next(nelements);
+                var quer = store.GetTest(subj);
+                if (quer.Count() != 2)
+                {
+                    foreach (object[] t in quer)
+                    {
+                        Console.WriteLine($"{t[0]} {t[1]}");
+                    }
+                }
+            }
+            sw.Stop();
+            Console.WriteLine($"Test ========= {nprobe} GetAll search ok. duration={sw.ElapsedMilliseconds}");
 
         }
 
@@ -107,6 +121,7 @@ namespace GetStarted
         private Func<object, int> keyFunc;
         private Func<int, Diapason> scaleFunc;
 
+        private IndexViewImm indexTest;
         public TripleStore32(Func<Stream> stream_gen)
         {
             // Тип Object Variants
@@ -127,7 +142,14 @@ namespace GetStarted
             }));
             keyFunc = tri => (int)((object[])tri)[0];
             index_spo = new UniversalSequenceCompKey32(stream_gen(), keyFunc, spo_comparer, table);
-
+            indexTest = new IndexViewImm(stream_gen, table,
+                Comparer<object>.Create(new Comparison<object>((object a, object b) =>
+                {
+                    object[] aa = (object[])a; object[] bb = (object[])b;
+                    int cmp = ((int)aa[0]).CompareTo((int)bb[0]);
+                    return cmp;
+                }))
+                );
         }
         public void Load(IEnumerable<object> triples)
         {
@@ -158,34 +180,15 @@ namespace GetStarted
 
             scaleFunc = Scale.GetDiaFunc32(keys);
 
-            // Это сейчас делать не буду
-            //object[] arr_triples = new object[nelements];
-            //// Выделяем группы одинаковых ключей и сортируем по компаратору
-            //int index = 0;
-            //int length = 0;
-            //int current_key = keys[index];
-            //for (int i = 0; i < nelements; i++)
-            //{
-            //    int key = keys[i];
-            //    if (key == current_key)
-            //    {
-            //        length++;
-            //    }
-            //    else
-            //    {
-            //        if (length > 39) LocalSort(arr_offs, arr_triples, index, length);
-            //        // начинается новый блок
-            //        index = i;
-            //        length = 1;
-            //        current_key = key;
-            //    }
-            //}
-            //if (length > 39) LocalSort(arr_offs, arr_triples, index, length);
-
             // Записываем итог
             index_spo.Clear();
             for (int i = 0; i < nelements; i++) index_spo.AppendElement(new object[] { keys[i], arr_offs[i] });
             index_spo.Flush();
+        }
+        public void BuildTest()
+        { 
+            // Другой ва тестирование
+            indexTest.Build();
         }
 
         //private void LocalSort(long[] arr_offs, object[] arr_triples, int index, int length)
@@ -211,6 +214,21 @@ namespace GetStarted
             scaleFunc = Scale.GetDiaFunc32(keys);
         }
 
+        public IEnumerable<object> GetBySubject(int subj)
+        {
+            long start = 0;
+            long number = index_spo.Count();
+            var res = index_spo.BinarySearchAll(start, number, subj, new object[] { subj, null, null })
+                .Select(off => table.GetElement(off))
+                .ToArray()
+            ;
+            return res;
+        }
+
+        public IEnumerable<object> GetTest(int subj)
+        {
+            return indexTest.BinarySearchAll(new object[] { subj, null, null });
+        }
 
     }
 }

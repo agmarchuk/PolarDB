@@ -57,6 +57,19 @@ namespace Polar.DB
             bw.Write(nelements);
             fs.Position = pos;
         }
+        public void Refresh()
+        {
+            fs.Position = 0L;
+
+            fs.CopyTo(Stream.Null);
+            //fs.CopyToAsync(Stream.Null);
+
+            //byte[] buff = new byte[1000000];
+            //int nb;
+            //while ((nb = fs.Read(buff, 0, buff.Length)) > 0);
+
+            //Scan((off, obj) => true);
+        }
         public long Count() { return nelements; }
         public long ElementOffset(long ind)
         {
