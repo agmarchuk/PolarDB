@@ -33,7 +33,7 @@ namespace Universal
             
             int nelements = 10_000_000;
             Console.WriteLine($"Sequence of {nelements} elements");
-            bool toload = false;
+            bool toload = true;
             if (toload)
             {
                 sw.Restart();
