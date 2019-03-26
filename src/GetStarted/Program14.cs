@@ -148,7 +148,16 @@ namespace GetStarted
                 throw new Exception("Err: 292333");
             };
             Test_keyfun = halfKeyFun;
-            o_index = new IndexKey32CompImm(stream_gen, table, halfKeyFun, null);
+            Comparer<object> comp = Comparer<object>.Create(new Comparison<object>((object a, object b) =>
+            {
+                object[] aa = (object[])a;
+                object[] bb = (object[])b;
+                int a1 = (int)aa[0];
+                int b1 = (int)bb[0];
+                return a1.CompareTo(b1);
+            }));
+
+            o_index = new IndexKey32CompImm(stream_gen, table, halfKeyFun, comp);
         }
         public void Build(IEnumerable<object> triples)
         {

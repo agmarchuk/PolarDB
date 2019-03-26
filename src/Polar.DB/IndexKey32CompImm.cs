@@ -46,11 +46,11 @@ namespace Polar.DB
                 return true;
             });
             // Вычисляем компаратор
-            bool detail_sorting = false; // пока будем сортировать "грубо"
+            bool detail_sorting = true; // пока будем сортировать "грубо"
             comparer = Comparer<KeyOffPair>.Create(new Comparison<KeyOffPair>((KeyOffPair a, KeyOffPair b) =>
             {
                 int cmp = a.key.CompareTo(b.key);
-                if (cmp != 0 || !detail_sorting) return cmp;
+                if (comp == null || cmp != 0 || !detail_sorting) return cmp;
                 object obja = keyoffsets.GetElement(a.off);
                 object objb = keyoffsets.GetElement(b.off);
                 return comp.Compare(obja, objb);
