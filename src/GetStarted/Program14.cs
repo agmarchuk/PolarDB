@@ -11,12 +11,12 @@ namespace GetStarted
     {
         public static void Main14()
         {
-            string path = "";// "../../../";
+            string path = "../../../";
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
             Console.WriteLine("Start GetStarted/Main14");
             int cnt = 0;
             TripleStoreInt32 store = new TripleStoreInt32(() => new FileStream(path + "Databases/f" + (cnt++) + ".bin", FileMode.OpenOrCreate, FileAccess.ReadWrite));
-            int nelements = 5_000_000;
+            int nelements = 500_000;
             // Начало таблицы имен 0 - type, 1 - name, 2 - person
             int b = 3; // Начальный индекс назначаемых идентификаторов сущностей
 
@@ -24,10 +24,10 @@ namespace GetStarted
                 .SelectMany(i => new object[]
                 {
                     new object[] { nelements + b - i - 1, 0, new object[] { 1, 2 } },
-                    new object[] { nelements + b - i - 1, 1, new object[] { 2, "pupkin" + (nelements + b - i - 1) } }
+                    new object[] { nelements + b - i - 1, 1, new object[] { 2, "p" + (nelements + b - i - 1) } }
                 }); // по 2 триплета на запись
 
-            bool toload = false;
+            bool toload = true;
             if (toload)
             {
                 sw.Restart();
@@ -48,6 +48,13 @@ namespace GetStarted
             int ke = nelements * 2 / 3 + 2;
             var qu = store.GetBySubj(ke);
             foreach (object[] t in qu)
+            {
+                Console.WriteLine($"{t[0]} {t[1]}");
+            }
+
+            ke = TripleStoreInt32.Test_keyfun(new object[] { -1, -1, new object[] { 2, "p" + 12345 } });
+            var qu2 = store.GetByObj(ke);
+            foreach (object[] t in qu2)
             {
                 Console.WriteLine($"{t[0]} {t[1]}");
             }
@@ -98,6 +105,8 @@ namespace GetStarted
     {
         private UniversalSequenceBase table;
         private IndexKey32CompImm s_index;
+        private IndexKey32CompImm o_index;
+        public static Func<object, int> Test_keyfun = null; 
         public TripleStoreInt32(Func<Stream> stream_gen)
         {
             // Тип Object Variants
@@ -110,12 +119,42 @@ namespace GetStarted
                 new NamedType("pred", new PType(PTypeEnumeration.integer)),
                 new NamedType("obj", tp_ov));
             table = new UniversalSequenceBase(tp_triple, stream_gen());
-            s_index = new IndexKey32CompImm(stream_gen, table, ob => (int)((object[])ob)[0], null); 
+            s_index = new IndexKey32CompImm(stream_gen, table, ob => (int)((object[])ob)[0], null);
+            string selected_chars = "!\"#$%&\'()*+,-./0123456789:;<=>?@abcdefghjklmnopqrstuwxyz{|}~абвгдежзийклмнопрстуфхцчшщъыьэюяё";
+            Func<object, int> halfKeyFun = ob =>
+            {
+                object[] tri = (object[])ob;
+                object[] pair = (object[])tri[2];
+                int tg = (int)pair[0];
+                if (tg == 1) // iri
+                {
+                    return (int)pair[1];
+                }
+                else if (tg == 2) // str
+                {
+                    string s = (string)pair[1];
+                    int len = s.Length;
+                    var chs = s.ToCharArray()
+                        .Concat(Enumerable.Repeat(' ', len < 4 ? 4 - len : 0))
+                        .Take(4)
+                        .Select(ch =>
+                        {
+                            int ind = selected_chars.IndexOf(ch);
+                            if (ind == -1) ind = 0; // неизвестный символ помечается как '!'
+                            return ind;
+                        }).ToArray();
+                    return (1 << 31) | (chs[0] << 24) | (chs[1] << 16) | (chs[2] << 8) | chs[3]; 
+                }
+                throw new Exception("Err: 292333");
+            };
+            Test_keyfun = halfKeyFun;
+            o_index = new IndexKey32CompImm(stream_gen, table, halfKeyFun, null);
         }
         public void Build(IEnumerable<object> triples)
         {
             Load(triples);
             s_index.Build();
+            o_index.Build();
         }
         private void Load(IEnumerable<object> triples)
         {
@@ -130,10 +169,15 @@ namespace GetStarted
         {
             s_index.Refresh();
             table.Refresh();
+            o_index.Refresh();
         }
         public IEnumerable<object> GetBySubj(int subj)
         {
             return s_index.GetBySubj(subj);
+        }
+        public IEnumerable<object> GetByObj(int obj)
+        {
+            return o_index.GetBySubj(obj);
         }
 
     }
