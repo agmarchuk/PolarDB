@@ -16,21 +16,20 @@ namespace GetStarted
             Console.WriteLine("Start GetStarted/Main14");
             int cnt = 0;
             TripleStoreInt32 store = new TripleStoreInt32(() => new FileStream(path + "Databases/f" + (cnt++) + ".bin", FileMode.OpenOrCreate, FileAccess.ReadWrite));
-            int nelements = 500_000;
+            int nelements = 50_000_000;
             // Начало таблицы имен 0 - type, 1 - name, 2 - person
             int b = 3; // Начальный индекс назначаемых идентификаторов сущностей
-
-            var query = Enumerable.Range(0, nelements)
-                .SelectMany(i => new object[]
-                {
-                    new object[] { nelements + b - i - 1, 0, new object[] { 1, 2 } },
-                    new object[] { nelements + b - i - 1, 1, new object[] { 2, "p" + (nelements + b - i - 1) } }
-                }); // по 2 триплета на запись
 
             bool toload = true;
             if (toload)
             {
                 sw.Restart();
+                var query = Enumerable.Range(0, nelements)
+                    .SelectMany(i => new object[]
+                    {
+                    new object[] { nelements + b - i - 1, 0, new object[] { 1, 2 } },
+                    new object[] { nelements + b - i - 1, 1, new object[] { 2, "" + (nelements + b - i - 1) } }
+                    }); // по 2 триплета на запись
                 store.Build(query);
                 sw.Stop();
                 Console.WriteLine($"load of {nelements * 2} triples ok. Duration={sw.ElapsedMilliseconds}");
@@ -46,14 +45,13 @@ namespace GetStarted
 
             // Для проверки работы запрошу запись с ключом nelements * 2 / 3
             int ke = nelements * 2 / 3 + 2;
-            var qu = store.GetBySubj(ke);
-            foreach (object[] t in qu)
-            {
-                Console.WriteLine($"{t[0]} {t[1]}");
-            }
+            //var qu = store.GetBySubj(ke);
+            //foreach (object[] t in qu)
+            //{
+            //    Console.WriteLine($"{t[0]} {t[1]}");
+            //}
 
-            ke = TripleStoreInt32.Test_keyfun(new object[] { -1, -1, new object[] { 2, "p" + 12345 } });
-            var qu2 = store.GetByObj(ke);
+            var qu2 = store.GetByObjString("p12345");
             foreach (object[] t in qu2)
             {
                 Console.WriteLine($"{t[0]} {t[1]}");
@@ -78,26 +76,16 @@ namespace GetStarted
             sw.Stop();
             Console.WriteLine($"{nprobe} GetAll search ok. duration={sw.ElapsedMilliseconds}");
 
-            /*
-
-
-            nprobe = 10000;
+            nprobe = 1000;
             sw.Restart();
+            int total = 0;
             for (int i = 0; i < nprobe; i++)
             {
-                int subj = rnd.Next(nelements);
-                var quer = store.GetTest(subj);
-                if (quer.Count() != 2)
-                {
-                    foreach (object[] t in quer)
-                    {
-                        Console.WriteLine($"{t[0]} {t[1]}");
-                    }
-                }
+                var quer = store.GetByObjString("" + rnd.Next(nelements));
+                total += quer.Count();
             }
             sw.Stop();
-            Console.WriteLine($"Test ========= {nprobe} GetAll search ok. duration={sw.ElapsedMilliseconds}");
-            */
+            Console.WriteLine($"Test === OBJECT===== {nprobe} queries for {total} elements. duration={sw.ElapsedMilliseconds}");
         }
 
     }
@@ -128,7 +116,7 @@ namespace GetStarted
                 int tg = (int)pair[0];
                 if (tg == 1) // iri
                 {
-                    return (int)pair[1];
+                    return 1 - (int)pair[1];
                 }
                 else if (tg == 2) // str
                 {
@@ -143,18 +131,21 @@ namespace GetStarted
                             if (ind == -1) ind = 0; // неизвестный символ помечается как '!'
                             return ind;
                         }).ToArray();
-                    return (1 << 31) | (chs[0] << 24) | (chs[1] << 16) | (chs[2] << 8) | chs[3]; 
+                    return (chs[0] << 24) | (chs[1] << 16) | (chs[2] << 8) | chs[3]; 
                 }
                 throw new Exception("Err: 292333");
             };
             Test_keyfun = halfKeyFun;
             Comparer<object> comp = Comparer<object>.Create(new Comparison<object>((object a, object b) =>
             {
-                object[] aa = (object[])a;
-                object[] bb = (object[])b;
+                object[] aa = (object[])((object[])a)[2];
+                object[] bb = (object[])((object[])b)[2];
                 int a1 = (int)aa[0];
                 int b1 = (int)bb[0];
-                return a1.CompareTo(b1);
+                int cmp = a1.CompareTo(b1);
+                if (cmp != 0) return cmp;
+                if (a1 == 1) return ((int)aa[1]).CompareTo(((int)bb[1]));
+                return ((string)aa[1]).CompareTo(((string)bb[1]));
             }));
 
             o_index = new IndexKey32CompImm(stream_gen, table, halfKeyFun, comp);
@@ -182,11 +173,12 @@ namespace GetStarted
         }
         public IEnumerable<object> GetBySubj(int subj)
         {
-            return s_index.GetBySubj(subj);
+            //return s_index.GetAllByKeyRAM(subj);
+            return s_index.GetAllBySample(new object[] { subj, -1, null });
         }
-        public IEnumerable<object> GetByObj(int obj)
+        public IEnumerable<object> GetByObjString(string s)
         {
-            return o_index.GetBySubj(obj);
+            return o_index.GetAllBySample(new object[] { -1, -1, new object[] { 2, s } });
         }
 
     }

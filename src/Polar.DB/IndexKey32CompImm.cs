@@ -15,7 +15,7 @@ namespace Polar.DB
         private UniversalSequenceBase bearing;
         private Func<object, int> keyFun;
         private Comparer<object> comp;
-        private Scale scale;
+        private Scale scale = null;
         public IndexKey32CompImm(Func<Stream> streamGen, UniversalSequenceBase bearing, Func<object, int> keyFun, Comparer<object> comp)
         {
             this.bearing = bearing;
@@ -26,97 +26,102 @@ namespace Polar.DB
                     new NamedType("key", new PType(PTypeEnumeration.integer)),
                     new NamedType("off", new PType(PTypeEnumeration.longinteger))),
                 streamGen());
-            scale = new Scale(streamGen());
+            // Шкалу надо вычислять не всегда
+            if (comp == null) scale = new Scale(streamGen());
         }
         struct KeyOffPair { public int key; public long off; }
-        KeyOffPair[] keyoff_arr;
-        Comparer<KeyOffPair> comparer;
-        private Func<int, Diapason> scaleFunc = null;
+        //private Func<int, Diapason> scaleFunc = null;
         public void Build()
         {
-            // формируем два массива
+            // формируем массив пар
             int ne = (int)bearing.Count();
-            keyoff_arr = new KeyOffPair[ne];
+            //KeyOffPair[] keyoff_arr = new KeyOffPair[ne];
+            int[] keys = new int[ne];
+            long[] offsets = new long[ne];
+
             int ind = 0;
             bearing.Scan((off, obj) =>
             {
-                keyoff_arr[ind].off = off;
-                keyoff_arr[ind].key = keyFun(obj);
+                offsets[ind] = off;
+                keys[ind] = keyFun(obj);
                 ind++;
                 return true;
             });
-            // Вычисляем компаратор
-            bool detail_sorting = true; // пока будем сортировать "грубо"
-            comparer = Comparer<KeyOffPair>.Create(new Comparison<KeyOffPair>((KeyOffPair a, KeyOffPair b) =>
-            {
-                int cmp = a.key.CompareTo(b.key);
-                if (comp == null || cmp != 0 || !detail_sorting) return cmp;
-                object obja = keyoffsets.GetElement(a.off);
-                object objb = keyoffsets.GetElement(b.off);
-                return comp.Compare(obja, objb);
-            }));
+            // Сортируем по ключу
+            Array.Sort(keys, offsets);
 
-            // Сортируем
-            Array.Sort(keyoff_arr, comparer);
+            // Эта часть делается если компаратор объектов comp задан
+            if (comp != null)
+            {
+                // массив объектов
+                List<object> objs = new List<object>();
+                // проходим по массиву ключей, в группах одинаковых ключей выделяем массив объектов
+                int key, start = -1; // начало интервала и количество с одинаковым ключом  
+                key = Int32.MinValue;
+                Action fixgroup = () =>
+                {
+                    int number = objs.Count;
+                    if (number > 1)
+                    {
+                        long[] offs_small = new long[number];
+                        for (int j = 0; j < number; j++)
+                            offs_small[j] = offsets[start + j];
+                        // Сортировка отрезка
+                        Array.Sort(objs.ToArray(), offs_small, comp);
+                        // вернуть отсортированные офсеты на место
+                        for (int j = 0; j < number; j++)
+                            offsets[start + j] = offs_small[j];
+                    }
+                };
+                for (int i = 0; i<ne; i++)
+                {
+                    object ob = bearing.GetElement(offsets[i]);
+                    int k = keyFun(ob);
+                    // смена ключа
+                    if (i == 0 || k != key)
+                    {
+                        // фиксируем предыдущий отрезок (key, start, number)
+                        //FixGroup(offsets, objs, start);
+                        fixgroup();
+                        // Начать новый отрезок
+                        key = k;
+                        start = i;
+                        objs.Clear();
+                    }
+                    // основное действие
+                    objs.Add(ob);
+                }
+                if (objs.Count > 1) fixgroup();
+            }
 
             // Записываем
             keyoffsets.Clear(); // очищаем
-            for (int i=0; i<keyoff_arr.Length; i++)
+            for (int i=0; i<keys.Length; i++)
             {
-                keyoffsets.AppendElement(new object[] { keyoff_arr[i].key, keyoff_arr[i].off });
+                keyoffsets.AppendElement(new object[] { keys[i], offsets[i] });
             }
             keyoffsets.Flush();
 
-            scaleFunc = Scale.GetDiaFunc32(keyoff_arr.Select(ko => ko.key).ToArray());
-            scale.Load(keyoff_arr.Select(ko => ko.key).ToArray());
+            if (scale != null) scale.Load(keys);
         }
+
         public void Refresh()
         {
             keyoffsets.Refresh();
         }
 
-        public IEnumerable<object> GetAllByKey(int key)
+        public IEnumerable<object> GetAllBySample(object sample)
         {
-            var comparer_simple = Comparer<KeyOffPair>.Create(new Comparison<KeyOffPair>((KeyOffPair a, KeyOffPair b) =>
-            {
-                int cmp = a.key.CompareTo(b.key);
-                return cmp;
-            }));
-            KeyOffPair sample = new KeyOffPair() { key = key };
-            int pos = Array.BinarySearch<KeyOffPair>(keyoff_arr, sample, comparer_simple);
-            if (pos == -1) return Enumerable.Empty<object>();
-            // Отступаем назад так, чтобы на элементах был тот же ключ и чтобы "срабатывал" компаратор comp
-            while (pos - 1 >= 0 && keyoff_arr[pos - 1].key == key) pos = pos - 1;
-            var res = keyoff_arr.Skip(pos)
-                .TakeWhile(pair => pair.key == key)
-                .Select(pair =>
-                {
-                    long o = pair.off;
-                    return bearing.GetElement(o);
-                });
-            return res;
-        }
-
-
-        public IEnumerable<object> GetBySubj(int subj)
-        {
-            bool inmemory = false;
-            if (inmemory) return GetAllByKey(subj);
             long start = 0;
             long number = keyoffsets.Count();
-            //if (scaleFunc != null)
-            //{
-            //    Diapason dia = scaleFunc(subj);
-            //    start = dia.start;
-            //    number = dia.numb;
-            //}
-            if (scale.GetDia != null)
+            int key = keyFun(sample);
+            if (scale != null && scale.GetDia != null)
             {
-                Diapason dia = scale.GetDia(subj);
+                Diapason dia = scale.GetDia(key);
                 start = dia.start;
                 number = dia.numb;
             }
-            return BinarySearchAll(start, number, subj, new object[] { subj, -1, null })
+            return BinarySearchAll(start, number, key, sample)
                 .Select(off => bearing.GetElement(off));
         }
 
