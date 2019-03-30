@@ -20,7 +20,7 @@ namespace GetStarted
             // Начало таблицы имен 0 - type, 1 - name, 2 - person
             int b = 3; // Начальный индекс назначаемых идентификаторов сущностей
 
-            bool toload = true;
+            bool toload = false;
             if (toload)
             {
                 sw.Restart();
