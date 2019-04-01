@@ -142,7 +142,7 @@ namespace GetStarted
             }));
             keyFunc = tri => (int)((object[])tri)[0];
             index_spo = new UniversalSequenceCompKey32(stream_gen(), keyFunc, spo_comparer, table);
-            indexTest = new IndexViewImm(stream_gen, table,
+            indexTest = new IndexViewImm(stream_gen(), table,
                 Comparer<object>.Create(new Comparison<object>((object a, object b) =>
                 {
                     object[] aa = (object[])a; object[] bb = (object[])b;

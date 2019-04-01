@@ -127,7 +127,7 @@ namespace Polar.DB
 
 
         const int plain = 20;
-        public IEnumerable<long> BinarySearchAll(long start, long number, int key, object sample)
+        private IEnumerable<long> BinarySearchAll(long start, long number, int key, object sample)
         {
             if (number < plain)
             {

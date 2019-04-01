@@ -16,11 +16,11 @@ namespace GetStarted
             Console.WriteLine("Start GetStarted/Main14");
             int cnt = 0;
             TripleStoreInt32 store = new TripleStoreInt32(() => new FileStream(path + "Databases/f" + (cnt++) + ".bin", FileMode.OpenOrCreate, FileAccess.ReadWrite));
-            int nelements = 50_000_000;
+            int nelements = 500_000;
             // Начало таблицы имен 0 - type, 1 - name, 2 - person
             int b = 3; // Начальный индекс назначаемых идентификаторов сущностей
 
-            bool toload = false;
+            bool toload = true;
             if (toload)
             {
                 sw.Restart();
