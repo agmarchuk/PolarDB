@@ -12,16 +12,150 @@ namespace Polar.DB
         private UniversalSequenceBase bearing;
         private UniversalSequenceBase offset_sequ;
         private Comparer<object> comp;
+        private Func<Stream> streamGen;
+        private string tmpdir;
         // создаем объект, подсоединяемся к носителям или создаем носители
-        public IndexViewImm(Stream stream, UniversalSequenceBase bearing, Comparer<object> comp)
+        public IndexViewImm(Func<Stream> streamGen, UniversalSequenceBase bearing, Comparer<object> comp, string tmpdir)
         {
+            this.streamGen = streamGen;
             this.bearing = bearing;
             this.comp = comp;
-            offset_sequ = new UniversalSequenceBase(new PType(PTypeEnumeration.longinteger), stream);
+            this.tmpdir = tmpdir;
+            offset_sequ = new UniversalSequenceBase(new PType(PTypeEnumeration.longinteger), streamGen());
         }
         // Что нужно? Создать и использовать
         private object[] rare_elements = null; // --
+
+        private long volume_of_offset_array = 500_000;
+
         public void Build()
+        {
+            // Формируем последовательность offset_sequ
+            offset_sequ.Clear();
+            bearing.Scan((off, obj) =>
+            {
+                offset_sequ.AppendElement(off);
+                return true;
+            });
+            offset_sequ.Flush();
+            // Возможно, нам понадобятся два дополнительных стрима
+            FileStream tmp_stream1 = null;
+            FileStream tmp_stream2 = null;
+            // Определяем рекурсивный метод построения Bld(long start_ind, long number) который в итоге переупорядочивает 
+            // отрезок последовательности offset_sequ так, что ссылаемые элементы становятся отсортированными.
+            Action<long, long> Bld = null;
+            Bld = (start_ind, number) =>
+            {
+                if (number <= volume_of_offset_array)
+                {
+                    long[] offsets = new long[number];
+                    object[] elements = new object[number];
+                    // берем в массивы
+                    for (long i=0; i < number; i++)
+                    {
+                        long off = (long)offset_sequ.GetByIndex(start_ind + i);
+                        offsets[i] = off;
+                        elements[i] = bearing.GetElement(off);
+                    }
+                    // Сортируем
+                    Array.Sort(elements, offsets, comp);
+                    // кладем из массивов в последовательность
+                    for (long i = 0; i < number; i++)
+                    {
+                        if (i == 0) offset_sequ.SetElement(offsets[i], start_ind);
+                        else        offset_sequ.SetElement(offsets[i]);
+                    }
+
+                }
+                else
+                {
+                    // надо разбить отрезок на два, в каждом сделать сортировку, а результаты слить.
+                    long firsthalf_start = start_ind;
+                    long firsthalf_number = number / 2;
+                    long secondhalf_start = start_ind + firsthalf_number;
+                    long secondhalf_number = number - firsthalf_number;
+                    if (tmp_stream1 == null) tmp_stream1 = File.Open(tmpdir + "tmp1.$$$", FileMode.OpenOrCreate, FileAccess.ReadWrite);
+                    if (tmp_stream2 == null) tmp_stream2 = File.Open(tmpdir + "tmp2.$$$", FileMode.OpenOrCreate, FileAccess.ReadWrite);
+                    tmp_stream1.Position = 0L;
+                    tmp_stream2.Position = 0L;
+
+                    byte[] buffer = new byte[1024 * 1024 * 64];
+
+                    Stream source1 = offset_sequ.Media;
+                    source1.Position = 8 + firsthalf_start * 8;
+                    long nbytes1 = firsthalf_number * 8;
+                    while (nbytes1 > 0)
+                    {
+                        int nb = source1.Read(buffer, 0, nbytes1 >= buffer.Length ? buffer.Length : (int)nbytes1);
+                        tmp_stream1.Write(buffer, 0, nb); 
+                        nbytes1 -= nb;
+                    }
+                    Stream source2 = offset_sequ.Media;
+                    source2.Position = 8 + secondhalf_start * 8;
+                    long nbytes2 = secondhalf_number * 8;
+                    while (nbytes2 > 0)
+                    {
+                        int nb = source2.Read(buffer, 0, nbytes2 >= buffer.Length ? buffer.Length : (int)nbytes2);
+                        tmp_stream2.Write(buffer, 0, nb);
+                        nbytes2 -= nb;
+                    }
+                    tmp_stream1.Position = 0L;
+                    BinaryReader br1 = new BinaryReader(tmp_stream1);
+                    long off1 = br1.ReadInt64();
+                    object obj1 = bearing.GetElement(off1);
+                    long nom1 = 0; // номер обрабатываемого элемента
+                    tmp_stream2.Position = 0L;
+                    BinaryReader br2 = new BinaryReader(tmp_stream2);
+                    long off2 = br2.ReadInt64();
+                    object obj2 = bearing.GetElement(off2);
+                    long nom2 = 0; // номер обрабатываемого элемента
+                    long out_ind = start_ind;
+                    while (nom1 <= firsthalf_number && nom2 <= secondhalf_number)
+                    {
+                        if (comp.Compare(obj1, obj2) <= 0)
+                        {
+                            offset_sequ.SetElement(off1, offset_sequ.ElementOffset(out_ind));
+                            off1 = br1.ReadInt64();
+                            obj1 = bearing.GetElement(off1);
+                            nom1++;
+                        }
+                        else
+                        {
+                            offset_sequ.SetElement(off2, offset_sequ.ElementOffset(out_ind));
+                            off2 = br2.ReadInt64();
+                            obj2 = bearing.GetElement(off2);
+                            nom2++;
+                        }
+                        out_ind++;
+                    }
+                    // Перепись остатков
+                    if (nom1 < firsthalf_number)
+                    {
+                        for (long ii=nom1; ii<firsthalf_number; ii++)
+                        {
+                            if (ii != 0) off1 = br1.ReadInt64();
+                            offset_sequ.SetElement(off1, offset_sequ.ElementOffset(out_ind));
+                            out_ind++;
+                        }
+                    }
+                    else if (nom2 < secondhalf_number)
+                    {
+                        for (long ii = nom1; ii < firsthalf_number; ii++)
+                        {
+                            if (ii != 0) off1 = br1.ReadInt64();
+                            offset_sequ.SetElement(off1, offset_sequ.ElementOffset(out_ind));
+                            out_ind++;
+                        }
+                    }
+                }
+            };
+            // Исполним
+            Bld(0L, bearing.Count());
+            // построим прореженный массив
+            rare_elements = offset_sequ.ElementValues().Where((off, i) => (i % Nfactor == 0))
+                .Select(off => bearing.GetElement((long)off)).ToArray();
+        }
+        public void Build0()
         {
             long[] offsets; // временное решение
             object[] elements; // --

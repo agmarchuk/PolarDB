@@ -33,7 +33,7 @@ namespace GetStarted
             //    ob => Hashfunctions.HashRot13((string)((object[])ob)[1]), null);
             //IndexKey32CompImm namehash_index_full = new IndexKey32CompImm(streamGen, table,
             //    ob => Hashfunctions.HashRot13((string)((object[])ob)[1]), comp_string);
-            IndexViewImm nameview_index = new IndexViewImm(streamGen(), table, comp_string);
+            IndexViewImm nameview_index = new IndexViewImm(streamGen, table, comp_string, path);
 
             int nelements = 1_000_000;
 

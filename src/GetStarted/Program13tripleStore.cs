@@ -15,8 +15,8 @@ namespace GetStarted
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
             Console.WriteLine("Start GetStarted/Main13");
             int cnt = 0;
-            TripleStore32 store = new TripleStore32(()=> new FileStream(path + "Databases/f"+(cnt++)+".bin", FileMode.OpenOrCreate, FileAccess.ReadWrite));
-            int nelements = 20_000_000;
+            TripleStore32 store = new TripleStore32(()=> new FileStream(path + "Databases/f"+(cnt++)+".bin", FileMode.OpenOrCreate, FileAccess.ReadWrite), path);
+            int nelements = 1_000_000;
             // Начало таблицы имен 0 - type, 1 - name, 2 - person
             int b = 3; // Начальный индекс назначаемых идентификаторов сущностей
 
@@ -122,7 +122,7 @@ namespace GetStarted
         private Func<int, Diapason> scaleFunc;
 
         private IndexViewImm indexTest;
-        public TripleStore32(Func<Stream> stream_gen)
+        public TripleStore32(Func<Stream> stream_gen, string tmp_dir)
         {
             // Тип Object Variants
             PType tp_ov = new PTypeUnion(
@@ -142,13 +142,13 @@ namespace GetStarted
             }));
             keyFunc = tri => (int)((object[])tri)[0];
             index_spo = new UniversalSequenceCompKey32(stream_gen(), keyFunc, spo_comparer, table);
-            indexTest = new IndexViewImm(stream_gen(), table,
+            indexTest = new IndexViewImm(stream_gen, table,
                 Comparer<object>.Create(new Comparison<object>((object a, object b) =>
                 {
                     object[] aa = (object[])a; object[] bb = (object[])b;
                     int cmp = ((int)aa[0]).CompareTo((int)bb[0]);
                     return cmp;
-                }))
+                })), tmp_dir
                 );
         }
         public void Load(IEnumerable<object> triples)
