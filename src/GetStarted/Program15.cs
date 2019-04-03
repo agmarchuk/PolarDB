@@ -11,10 +11,12 @@ namespace GetStarted
     {
         public static void Main15()
         {
-            string path = "../../../";
+            string path = ""; //"../../../";
             Random rnd = new Random();
             int cnt = 0;
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+            Console.WriteLine("Start Main15");
+
             Func<Stream> streamGen = () => new FileStream(path + "Databases/g" + (cnt++) + ".bin",
                 FileMode.OpenOrCreate, FileAccess.ReadWrite);
             PType tp_person = new PTypeRecord(
@@ -33,9 +35,10 @@ namespace GetStarted
             //    ob => Hashfunctions.HashRot13((string)((object[])ob)[1]), null);
             //IndexKey32CompImm namehash_index_full = new IndexKey32CompImm(streamGen, table,
             //    ob => Hashfunctions.HashRot13((string)((object[])ob)[1]), comp_string);
-            IndexViewImm nameview_index = new IndexViewImm(streamGen, table, comp_string, path + "Databases/");
+            IndexViewImm nameview_index = new IndexViewImm(streamGen, table, comp_string, path + "Databases/", 50_000_000);
 
-            int nelements = 10_000_000;
+            int nelements = 400_000_000;
+            Console.WriteLine($"nelements={nelements}");
 
             // Загрузка
             bool toload = false;
