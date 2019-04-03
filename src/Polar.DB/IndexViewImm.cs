@@ -26,7 +26,7 @@ namespace Polar.DB
         // Что нужно? Создать и использовать
         private object[] rare_elements = null; // --
 
-        private long volume_of_offset_array = 500_000;
+        private long volume_of_offset_array = 20_000_000;
 
         public void Build()
         {
@@ -43,8 +43,7 @@ namespace Polar.DB
             FileStream tmp_stream2 = null;
             // Определяем рекурсивный метод построения Bld(long start_ind, long number) который в итоге переупорядочивает 
             // отрезок последовательности offset_sequ так, что ссылаемые элементы становятся отсортированными.
-            Action<long, long> Bld = null;
-            Bld = (start_ind, number) =>
+            void Bld(long start_ind, long number) 
             {
                 if (number <= volume_of_offset_array)
                 {
@@ -62,7 +61,7 @@ namespace Polar.DB
                     // кладем из массивов в последовательность
                     for (long i = 0; i < number; i++)
                     {
-                        if (i == 0) offset_sequ.SetElement(offsets[i], start_ind);
+                        if (i == 0) offset_sequ.SetElement(offsets[i], offset_sequ.ElementOffset(start_ind));
                         else        offset_sequ.SetElement(offsets[i]);
                     }
 
@@ -74,6 +73,10 @@ namespace Polar.DB
                     long firsthalf_number = number / 2;
                     long secondhalf_start = start_ind + firsthalf_number;
                     long secondhalf_number = number - firsthalf_number;
+
+                    Bld(firsthalf_start, firsthalf_number);
+                    Bld(secondhalf_start, secondhalf_number);
+
                     if (tmp_stream1 == null) tmp_stream1 = File.Open(tmpdir + "tmp1.$$$", FileMode.OpenOrCreate, FileAccess.ReadWrite);
                     if (tmp_stream2 == null) tmp_stream2 = File.Open(tmpdir + "tmp2.$$$", FileMode.OpenOrCreate, FileAccess.ReadWrite);
                     tmp_stream1.Position = 0L;
@@ -110,21 +113,27 @@ namespace Polar.DB
                     object obj2 = bearing.GetElement(off2);
                     long nom2 = 0; // номер обрабатываемого элемента
                     long out_ind = start_ind;
-                    while (nom1 <= firsthalf_number && nom2 <= secondhalf_number)
+                    while (nom1 < firsthalf_number && nom2 < secondhalf_number)
                     {
                         if (comp.Compare(obj1, obj2) <= 0)
                         {
                             offset_sequ.SetElement(off1, offset_sequ.ElementOffset(out_ind));
-                            off1 = br1.ReadInt64();
-                            obj1 = bearing.GetElement(off1);
                             nom1++;
+                            if (nom1 < firsthalf_number)
+                            {
+                                off1 = br1.ReadInt64();
+                                obj1 = bearing.GetElement(off1);
+                            }
                         }
                         else
                         {
                             offset_sequ.SetElement(off2, offset_sequ.ElementOffset(out_ind));
-                            off2 = br2.ReadInt64();
-                            obj2 = bearing.GetElement(off2);
                             nom2++;
+                            if (nom2 < secondhalf_number)
+                            {
+                                off2 = br2.ReadInt64();
+                                obj2 = bearing.GetElement(off2);
+                            }
                         }
                         out_ind++;
                     }
@@ -133,63 +142,47 @@ namespace Polar.DB
                     {
                         for (long ii=nom1; ii<firsthalf_number; ii++)
                         {
-                            if (ii != 0) off1 = br1.ReadInt64();
+                            if (ii != nom1) off1 = br1.ReadInt64();
                             offset_sequ.SetElement(off1, offset_sequ.ElementOffset(out_ind));
                             out_ind++;
                         }
                     }
                     else if (nom2 < secondhalf_number)
                     {
-                        for (long ii = nom1; ii < firsthalf_number; ii++)
+                        for (long ii = nom2; ii < secondhalf_number; ii++)
                         {
-                            if (ii != 0) off1 = br1.ReadInt64();
-                            offset_sequ.SetElement(off1, offset_sequ.ElementOffset(out_ind));
+                            if (ii != nom2) off2 = br2.ReadInt64();
+                            offset_sequ.SetElement(off2, offset_sequ.ElementOffset(out_ind));
                             out_ind++;
                         }
                     }
                 }
             };
+
             // Исполним
             Bld(0L, bearing.Count());
-            // построим прореженный массив
-            rare_elements = offset_sequ.ElementValues().Where((off, i) => (i % Nfactor == 0))
-                .Select(off => bearing.GetElement((long)off)).ToArray();
-        }
-        public void Build0()
-        {
-            long[] offsets; // временное решение
-            object[] elements; // --
-            int ne = (int)bearing.Count();
-            // формируем два массива
-            offsets = new long[ne];
-            elements = new object[ne];
-            int ind = 0;
-            bearing.Scan((off, obj) => 
-            {
-                offsets[ind] = off;
-                elements[ind] = obj;
-                ind++;
-                return true;
-            });
-            // Сортируем
-            Array.Sort(elements, offsets, comp);
 
-            // очищаем индексный массив
-            offset_sequ.Clear();
-            for (int i=0; i<ne; i++)
+            if (tmp_stream1 != null)
             {
-                offset_sequ.AppendElement(offsets[i]);
+                tmp_stream1.Close();
+                File.Delete(tmpdir + "tmp1.$$$");
             }
-            offset_sequ.Flush();
-
-            // Теперь оставим только часть массивов
-            rare_elements = elements.Where((obj, i) => i % Nfactor == 0).ToArray();
-            //offsets = offsets.Where((o, i) => i % Nfactor == 0).ToArray();
-
+            if (tmp_stream2 != null)
+            {
+                tmp_stream2.Close();
+                File.Delete(tmpdir + "tmp2.$$$");
+            }
+            Refresh();
         }
         // Коэффициент прореживания массива elements, подбирался экспериментально. Лучшие по скорости результаты 16-20
         private int Nfactor = 40;
-        public void Refresh() { }
+        public void Refresh()
+        {
+            // построим прореженный массив
+            rare_elements = offset_sequ.ElementValues()
+                .Where((off, i) => (i % Nfactor == 0))
+                .Select(off => bearing.GetElement((long)off)).ToArray();
+        }
 
         // Поиск в последовательностях
         private IEnumerable<object> BinarySearchAll(long start, long number, object sample)
@@ -235,12 +228,14 @@ namespace Polar.DB
         public IEnumerable<object> BinarySearchAll(object obj)
         {
             long start = 0;
-            long numb = offset_sequ.Count();
+            long cnt = offset_sequ.Count();
+            long numb = cnt;
             if (rare_elements != null)
             {
                 var dia = BSDia(0, rare_elements.Length, obj);
                 start = dia.Item1 * Nfactor;
                 numb = dia.Item2 * Nfactor;
+                if (start + numb > cnt) numb = cnt - start;
             }
             var res = BinarySearchAll(start, numb, obj);
             return res;

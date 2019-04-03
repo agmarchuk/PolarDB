@@ -33,12 +33,12 @@ namespace GetStarted
             //    ob => Hashfunctions.HashRot13((string)((object[])ob)[1]), null);
             //IndexKey32CompImm namehash_index_full = new IndexKey32CompImm(streamGen, table,
             //    ob => Hashfunctions.HashRot13((string)((object[])ob)[1]), comp_string);
-            IndexViewImm nameview_index = new IndexViewImm(streamGen, table, comp_string, path);
+            IndexViewImm nameview_index = new IndexViewImm(streamGen, table, comp_string, path + "Databases/");
 
-            int nelements = 1_000_000;
+            int nelements = 10_000_000;
 
             // Загрузка
-            bool toload = true;
+            bool toload = false;
             if (toload)
             {
                 sw.Restart();
@@ -47,9 +47,6 @@ namespace GetStarted
                         rnd.NextDouble() * 100D });
                 table.Clear();
                 foreach (object[] element in dataflow) table.AppendElement(element);
-                table.Flush();
-                Console.WriteLine($"load {nelements} ok. duration={sw.ElapsedMilliseconds}");
-                sw.Restart();
                 //id_index.Build();
                 //namehash_index.Build();
                 //namehash_index_full.Build();
