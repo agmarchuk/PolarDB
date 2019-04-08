@@ -148,7 +148,7 @@ namespace GetStarted
                     object[] aa = (object[])a; object[] bb = (object[])b;
                     int cmp = ((int)aa[0]).CompareTo((int)bb[0]);
                     return cmp;
-                })), tmp_dir
+                })), tmp_dir, 20_000_000
                 );
         }
         public void Load(IEnumerable<object> triples)

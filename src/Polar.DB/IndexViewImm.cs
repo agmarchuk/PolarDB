@@ -15,13 +15,14 @@ namespace Polar.DB
         private Func<Stream> streamGen;
         private string tmpdir;
         // создаем объект, подсоединяемся к носителям или создаем носители
-        public IndexViewImm(Func<Stream> streamGen, UniversalSequenceBase bearing, Comparer<object> comp, string tmpdir)
+        public IndexViewImm(Func<Stream> streamGen, UniversalSequenceBase bearing, Comparer<object> comp, string tmpdir, long volume_of_offset_array)
         {
             this.streamGen = streamGen;
             this.bearing = bearing;
             this.comp = comp;
             this.tmpdir = tmpdir;
             offset_sequ = new UniversalSequenceBase(new PType(PTypeEnumeration.longinteger), streamGen());
+            this.volume_of_offset_array = volume_of_offset_array;
         }
         // Что нужно? Создать и использовать
         private object[] rare_elements = null; // --
