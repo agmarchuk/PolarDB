@@ -35,10 +35,10 @@ namespace GetStarted
             //    ob => Hashfunctions.HashRot13((string)((object[])ob)[1]), comp_string);
             IndexViewImm nameview_index = new IndexViewImm(streamGen, table, comp_string, path + "Databases/");
 
-            int nelements = 10_000_000;
+            int nelements = 1_000_000;
 
             // Загрузка
-            bool toload = false;
+            bool toload = true;
             if (toload)
             {
                 sw.Restart();
