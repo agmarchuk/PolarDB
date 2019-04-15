@@ -26,11 +26,12 @@ namespace Polar.DB
                     new NamedType("key", new PType(PTypeEnumeration.integer)),
                     new NamedType("off", new PType(PTypeEnumeration.longinteger))),
                 streamGen());
-            // Шкалу надо вычислять не всегда
+            // Шкалу надо вычислять не всегда, о реальном условии еще надо подумать
             if (comp == null) scale = new Scale(streamGen());
         }
-        struct KeyOffPair { public int key; public long off; }
+        //struct KeyOffPair { public int key; public long off; }
         //private Func<int, Diapason> scaleFunc = null;
+        public void Clear() { keyoffsets.Clear(); }
         public void Build()
         {
             // формируем массив пар

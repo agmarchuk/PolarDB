@@ -15,7 +15,7 @@ namespace GetStarted
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
             Console.WriteLine("Start GetStarted/Main14");
             int cnt = 0;
-            TripleStoreInt32 store = new TripleStoreInt32(() => new FileStream(path + "Databases/f" + (cnt++) + ".bin", FileMode.OpenOrCreate, FileAccess.ReadWrite));
+            TripleStoreInt32_ store = new TripleStoreInt32_(() => new FileStream(path + "Databases/f" + (cnt++) + ".bin", FileMode.OpenOrCreate, FileAccess.ReadWrite));
             int nelements = 500_000;
             // Начало таблицы имен 0 - type, 1 - name, 2 - person
             int b = 3; // Начальный индекс назначаемых идентификаторов сущностей
@@ -89,13 +89,13 @@ namespace GetStarted
         }
 
     }
-    public class TripleStoreInt32
+    public class TripleStoreInt32_
     {
         private UniversalSequenceBase table;
         private IndexKey32CompImm s_index;
         private IndexKey32CompImm o_index;
         public static Func<object, int> Test_keyfun = null; 
-        public TripleStoreInt32(Func<Stream> stream_gen)
+        public TripleStoreInt32_(Func<Stream> stream_gen)
         {
             // Тип Object Variants
             PType tp_ov = new PTypeUnion(

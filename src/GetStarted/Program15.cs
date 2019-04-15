@@ -11,7 +11,7 @@ namespace GetStarted
     {
         public static void Main15()
         {
-            string path = ""; //"../../../";
+            string path = "../../../";
             Random rnd = new Random();
             int cnt = 0;
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
@@ -37,12 +37,8 @@ namespace GetStarted
             //    ob => Hashfunctions.HashRot13((string)((object[])ob)[1]), comp_string);
             IndexViewImm nameview_index = new IndexViewImm(streamGen, table, comp_string, path + "Databases/", 50_000_000);
 
-<<<<<<< HEAD
             int nelements = 1_000_000;
-=======
-            int nelements = 400_000_000;
-            Console.WriteLine($"nelements={nelements}");
->>>>>>> 830ff795b2cc2702534fcd3c52ee28bfde97824a
+            Console.WriteLine($"    nelements={nelements}");
 
             // Загрузка
             bool toload = true;
@@ -54,6 +50,7 @@ namespace GetStarted
                         rnd.NextDouble() * 100D });
                 table.Clear();
                 foreach (object[] element in dataflow) table.AppendElement(element);
+                table.Flush();
                 //id_index.Build();
                 //namehash_index.Build();
                 //namehash_index_full.Build();
