@@ -21,8 +21,9 @@ namespace GetStarted
 
             // Проверка таблицы имен
             Nametable32 nt = new Nametable32(GenStream);
+            TripleStoreInt32 store = new TripleStoreInt32(GenStream);
 
-            int npersons = 4_000_000;
+            int npersons = 400_000;
             bool toload = true;
 
             if (toload)
@@ -37,7 +38,7 @@ namespace GetStarted
                                         new object[] { "p" + i, "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
                                             new object[] { 1, "http://fogid.net/o/person"}},
                                         new object[] { "p" + i, "http://fogid.net/o/name",
-                                            new object[] { 1, "p"+i}},
+                                            new object[] { 2, "p"+i}},
                                         new object[] { "p" + i, "http://fogid.net/o/age",
                                             new object[] { 2, "33 years"}}
                         };
@@ -66,43 +67,80 @@ namespace GetStarted
                     });
 
                 sw.Restart();
-                foreach (object[] tri in qu_persons.Concat(qu_fotos).Concat(qu_reflections))
-                {
-                    int subj = nt.GetSetStr((string)tri[0]);
-                    int pred = nt.GetSetStr((string)tri[1]);
-                    int tg = (int)((object[])tri[2])[0];
-                    if (tg == 1)
-                    {
-                        int obj = nt.GetSetStr((string)((object[])tri[2])[1]);
-                    }
-                    else
-                    {
-
-                    }
-                    //Console.WriteLine(code);
-                }
+                var ntriples = GenerateTripleFlow(qu_persons.Concat(qu_fotos).Concat(qu_reflections), nt);
+                store.Build(ntriples);
                 nt.Flush();
                 sw.Stop();
-                Console.WriteLine($"Duration={sw.ElapsedMilliseconds}");
+                Console.WriteLine($"store Build ok. Duration={sw.ElapsedMilliseconds}");
+
+
 
                 sw.Restart();
                 nt.Build();
                 sw.Stop();
-                Console.WriteLine($"Duration={sw.ElapsedMilliseconds}");
+                Console.WriteLine($"nametable Build ok. Duration={sw.ElapsedMilliseconds}");
             }
-
-
-
-            for (int i = 77; i < 87; i++)
+            else
             {
-                string id = "p" + i;
-                if (!nt.TryGetCode(id, out int cod)) throw new Exception("292");
-                Console.WriteLine($"id={id} cod={cod}");
+                sw.Restart();
+                nt.Refresh();
+                store.Refresh();
+                sw.Stop();
+                Console.WriteLine($"Refresh for Phototeka {npersons} persons. Duration={sw.ElapsedMilliseconds}");
             }
+
+
+            // Испытываю
+            // Беру персону 
+            string id = "p" + (npersons * 2 / 3);
+            int nid, reflected, indoc, name;
+            if (!nt.TryGetCode(id, out nid)) throw new Exception("338433");
+            if (!nt.TryGetCode("http://fogid.net/o/reflected", out reflected)) throw new Exception("338434");
+            if (!nt.TryGetCode("http://fogid.net/o/indoc", out indoc)) throw new Exception("338435");
+            if (!nt.TryGetCode("http://fogid.net/o/name", out name)) throw new Exception("338436");
+            var query1 = store.GetInverse(nid)
+                .Cast<object[]>()
+                .Where(t => (int)t[1] == reflected)
+                .SelectMany(t => store.GetBySubj((int)t[0])
+                    .Where(tt => (int)((object[])tt)[1] == indoc)
+                    .Select(tt => store.GetBySubj((int)((object[])((object[])tt)[2])[1])
+                        .Where(ttt => (int)((object[])ttt)[1] == name)
+                        .FirstOrDefault()       )
+                    )
+                    
+                ;
+            foreach (object[] t in query1)
+            {
+                Console.WriteLine(DecodeTriple(t, nt));
+            }
+            Console.WriteLine();
+
+
+            int nprobe = 1000;
+            int total = 0;
+            sw.Restart();
+            for (int i=0; i<nprobe; i++)
+            {
+                // Беру случайную персону
+                if (!nt.TryGetCode("p" + rnd.Next(npersons), out nid)) throw new Exception("338437");
+                var fots = store.GetInverse(nid)
+                    .Cast<object[]>()
+                    .Where(t => (int)t[1] == reflected)
+                    .SelectMany(t => store.GetBySubj((int)t[0])
+                        .Where(tt => (int)((object[])tt)[1] == indoc)
+                        .Select(tt => store.GetBySubj((int)((object[])((object[])tt)[2])[1])
+                            .Where(ttt => (int)((object[])ttt)[1] == name)
+                            .FirstOrDefault())
+                        ).ToArray();
+                total += fots.Length;
+            }
+            sw.Stop();
+            Console.WriteLine($"{nprobe} tests ok. Duration={sw.ElapsedMilliseconds}");
+
+
             return;
             // конец проверки
 
-            TripleStoreInt32 store = new TripleStoreInt32(GenStream);
             int nelements = 5_000_000;
             // Начало таблицы имен 0 - type, 1 - name, 2 - person, 3 - parent
             int b = 4; // Начальный индекс назначаемых идентификаторов сущностей
@@ -143,7 +181,7 @@ namespace GetStarted
                 Console.WriteLine($"{t[0]} {t[1]} {((object[])t[2])[1]}");
             }
 
-            int nprobe = 1000;
+            nprobe = 1000;
 
             sw.Restart();
             for (int i = 0; i < nprobe; i++)
@@ -162,7 +200,7 @@ namespace GetStarted
             Console.WriteLine($"{nelements} elements {nprobe} GetAll search ok. duration={sw.ElapsedMilliseconds}");
 
             sw.Restart();
-            int total = 0;
+            total = 0;
             for (int i = 0; i < nprobe; i++)
             {
                 int obj = rnd.Next(nelements);
@@ -193,6 +231,38 @@ namespace GetStarted
             Console.WriteLine($"Test === OBJECT===== {nprobe} queries for {total} elements. duration={sw.ElapsedMilliseconds}");
 
         }
+
+        // Генерация потока триплетов
+        private static IEnumerable<object> GenerateTripleFlow(IEnumerable<object> triples, Nametable32 nt)
+        {
+            foreach (object[] tri in triples)
+            {
+                int subj = nt.GetSetStr((string)tri[0]);
+                int pred = nt.GetSetStr((string)tri[1]);
+                int tg = (int)((object[])tri[2])[0];
+                if (tg == 1)
+                {
+                    int oobj = nt.GetSetStr((string)((object[])tri[2])[1]);
+                    yield return new object[] { subj, pred, new object[] { 1, oobj } };
+                }
+                else
+                {
+                    string dobj = (string)((object[])tri[2])[1];
+                    yield return new object[] { subj, pred, new object[] { 2, dobj } };
+                }
+            }
+        }
+        private static string DecodeTriple(object[] tr, Nametable32 nt)
+        {
+            string subj = nt.Decode((int)tr[0]);
+            string pred = nt.Decode((int)tr[1]);
+            int tg = (int)((object[])tr[2])[0];
+            object v = ((object[])tr[2])[1];
+            return "<"+subj+"> <" + pred + "> " +  
+                (tg == 1 ? "<" + nt.Decode((int)v) + ">" : "\"" + (string)v + "\"") +
+                " .";
+        }
+
     }
 
     /// <summary>
@@ -251,6 +321,12 @@ namespace GetStarted
             dyna_index = new Dictionary<string, int>();
             name_index.Build();
         }
+        public void Refresh()
+        {
+            table.Refresh();
+            str_offsets.Refresh();
+            name_index.Refresh();
+        }
         // ==================== Динамика ===================
         private int SetStr(string s)
         {
@@ -280,6 +356,12 @@ namespace GetStarted
             if (TryGetCode(s, out code)) return code;
             code = SetStr(s);
             return code;
+        }
+        public string Decode(int cod)
+        {
+            //long pos = 8 + (cod * 8);
+            long off = (long)str_offsets.GetByIndex(cod);
+            return (string)((object[])table.GetElement(off))[1];
         }
     }
 
