@@ -36,14 +36,14 @@ namespace Polar.DB
             List<int> keys_list = new List<int>();
             List<long> offsets_list = new List<long>();
 
-            int ind = 0;
+            //int ind = 0;
             bearing.Scan((off, obj) =>
             {
-                offsets_list[ind] = off;
+                offsets_list.Add(off);
                 foreach (int k in keysFun(obj))
                 {
-                    keys_list[ind] = k;
-                    ind++;
+                    keys_list.Add(k);
+                    //ind++;
                 }
                 return true;
             });
@@ -83,12 +83,11 @@ namespace Polar.DB
                 // Сканирование массивов keys, offsets
                 for (int i = 0; i < ne; i++)
                 {
-                    object ob = bearing.GetElement(offsets[i]);
+                    int k = keys[i];
                     // смена ключа
                     if (i == 0)
                     {
                         // фиксируем предыдущий отрезок (key, start, number)
-                        //FixGroup(offsets, objs, start);
                         fixgroup();
                         // Начать новый отрезок
                         key = k;
@@ -96,6 +95,7 @@ namespace Polar.DB
                         objs.Clear();
                     }
                     // основное действие
+                    object ob = bearing.GetElement(offsets[i]);
                     objs.Add(ob);
                 }
                 if (objs.Count > 1) fixgroup();
@@ -121,15 +121,19 @@ namespace Polar.DB
         {
             long start = 0;
             long number = keyoffsets.Count();
-            int key = keyFun(sample);
-            if (scale != null && scale.GetDia != null)
+            foreach (int key in keysFun(sample))
             {
-                Diapason dia = scale.GetDia(key);
-                start = dia.start;
-                number = dia.numb;
+                if (scale != null && scale.GetDia != null)
+                {
+                    Diapason dia = scale.GetDia(key);
+                    start = dia.start;
+                    number = dia.numb;
+                }
+                foreach (var off in BinarySearchAll(start, number, key, sample))
+                {
+                    yield return bearing.GetElement(off);
+                }
             }
-            return BinarySearchAll(start, number, key, sample)
-                .Select(off => bearing.GetElement(off));
         }
 
 

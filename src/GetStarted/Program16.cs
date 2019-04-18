@@ -23,13 +23,14 @@ namespace GetStarted
             Nametable32 nt = new Nametable32(GenStream);
             TripleStoreInt32 store = new TripleStoreInt32(GenStream);
 
-            int npersons = 400_000;
+            int npersons = 40_000;
             bool toload = true;
 
             if (toload)
             {
                 nt.Clear();
                 nt.GetSetStr("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+                int name_cod = nt.GetSetStr("http://fogid.net/o/name");
 
                 IEnumerable<object> qu_persons = Enumerable.Range(0, npersons)
                     .SelectMany(i =>
@@ -370,6 +371,7 @@ namespace GetStarted
         private IndexKey32CompImm s_index;
         private IndexKey32CompImm o_index;
         private IndexKey32Imm i_index;
+        private IndexKey32CompImmutable name_index;
         public static Func<object, int> Test_keyfun = null;
         public TripleStoreInt32(Func<Stream> stream_gen)
         {
@@ -390,7 +392,7 @@ namespace GetStarted
             table = new UniversalSequenceBase(tp_triple, stream_gen());
             s_index = new IndexKey32CompImm(stream_gen, table, ob => (int)((object[])ob)[0], null);
             // Специальное кодирование. В принципе, все расположено почти по естественному порядку. Исключение - группа [\\]^_`
-            string selected_chars = "!\"#$%&\'()*+,-./0123456789:;<=>?@[\\]^_`abcdefghjklmnopqrstuwxyz{|}~абвгдежзийклмнопрстуфхцчшщъыьэюяё";
+            string selected_chars = "!\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHJKLMNOPQRSTUWXYZ[\\]^_`{|}~АБВГДЕЖЗИЙКЛМНОПРСТУФКЦЧШЩЪЫЬЭЮЯЁ";
             // Полуключевая функция. Преобразует объект триплета в 32-разрядное число. код iri сохраняется, предполагается
             // что старший разряд 0. Если не ноль, тогда другие варианты, пока сделаю только строку 
             Func<object, int> halfKeyFun = ob =>
@@ -405,18 +407,7 @@ namespace GetStarted
                 else if (tg == 2) // str
                 {
                     string s = (string)pair[1];
-                    int len = s.Length;
-                    var chs = s.ToCharArray()
-                        .Concat(Enumerable.Repeat(' ', len < 4 ? 4 - len : 0))
-                        .Take(4)
-                        .Select(ch =>
-                        {
-                            int ind = selected_chars.IndexOf(char.ToLower(ch));
-                            if (ind == -1) ind = 0; // неизвестный символ помечается как '!'
-                            return ind;
-                        }).ToArray();
-                    // вместо 0 будет вариант строки
-                    return (1<<31) | (0) | ((((((chs[0] << 7) | chs[1]) << 7) | chs[2]) << 7) | chs[3]);
+                    return First4chars(selected_chars, s);
                 }
                 throw new Exception("Err: 292333");
             };
@@ -441,13 +432,38 @@ namespace GetStarted
                 if (tg != 1) return Enumerable.Empty<int>();
                 return Enumerable.Repeat<int>((int)pair[1], 1);
             }, null);
+            name_index = new IndexKey32CompImmutable(stream_gen, table, obj =>
+            {
+                object[] pair = (object[])((object[])obj)[2];
+                int tg = (int)pair[0];
+                if (tg != 2) return Enumerable.Empty<int>();
+                return Enumerable.Repeat<int>(First4chars(selected_chars, (string)pair[1]), 1);
+            }, comp);
         }
+
+        private static int First4chars(string selected_chars, string s)
+        {
+            int len = s.Length;
+            var chs = s.ToCharArray()
+                .Concat(Enumerable.Repeat(' ', len < 4 ? 4 - len : 0))
+                .Take(4)
+                .Select(ch =>
+                {
+                    int ind = selected_chars.IndexOf(char.ToUpper(ch));
+                    if (ind == -1) ind = 0; // неизвестный символ помечается как '!'
+                    return ind;
+                }).ToArray();
+            // вместо 0 будет вариант строки
+            return (1 << 31) | (0) | ((((((chs[0] << 7) | chs[1]) << 7) | chs[2]) << 7) | chs[3]);
+        }
+
         public void Build(IEnumerable<object> triples)
         {
             Load(triples);
             s_index.Build();
             i_index.Build();
             //o_index.Build();
+            name_index.Build();
         }
         private void Load(IEnumerable<object> triples)
         {
@@ -463,6 +479,7 @@ namespace GetStarted
             s_index.Refresh();
             table.Refresh();
             i_index.Refresh();
+            name_index.Refresh();
         }
         public IEnumerable<object> GetBySubj(int subj)
         {
