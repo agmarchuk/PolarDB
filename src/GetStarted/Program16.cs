@@ -359,7 +359,6 @@ namespace GetStarted
         }
         public string Decode(int cod)
         {
-            //long pos = 8 + (cod * 8);
             long off = (long)str_offsets.GetByIndex(cod);
             return (string)((object[])table.GetElement(off))[1];
         }
@@ -381,8 +380,9 @@ namespace GetStarted
                 new NamedType("str", new PType(PTypeEnumeration.sstring)),
                 new NamedType("int", new PType(PTypeEnumeration.sstring)),
                 new NamedType("date", new PType(PTypeEnumeration.sstring)),
-                new NamedType("langstr", new PType(PTypeEnumeration.sstring))
-                );
+                new NamedType("langstr", new PTypeRecord(
+                    new NamedType("lang", new PType(PTypeEnumeration.sstring)),
+                    new NamedType("str", new PType(PTypeEnumeration.sstring)))));
             PType tp_triple = new PTypeRecord(
                 new NamedType("subj", new PType(PTypeEnumeration.integer)),
                 new NamedType("pred", new PType(PTypeEnumeration.integer)),
@@ -411,7 +411,7 @@ namespace GetStarted
                         .Take(4)
                         .Select(ch =>
                         {
-                            int ind = selected_chars.IndexOf(ch);
+                            int ind = selected_chars.IndexOf(char.ToLower(ch));
                             if (ind == -1) ind = 0; // неизвестный символ помечается как '!'
                             return ind;
                         }).ToArray();
