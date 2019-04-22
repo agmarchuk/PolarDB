@@ -30,7 +30,7 @@ namespace GetStarted
                 return aa.CompareTo(bb);
             }));
             UniversalSequenceBase table = new UniversalSequenceBase(tp_person, streamGen());
-            //IndexKey32CompImm id_index = new IndexKey32CompImm(streamGen, table, ob => (int)((object[])ob)[0], null);
+            IndexKey32CompImm id_index = new IndexKey32CompImm(streamGen, table, ob => (int)((object[])ob)[0], null);
             //IndexKey32CompImm namehash_index = new IndexKey32CompImm(streamGen, table, 
             //    ob => Hashfunctions.HashRot13((string)((object[])ob)[1]), null);
             //IndexKey32CompImm namehash_index_full = new IndexKey32CompImm(streamGen, table,
@@ -51,7 +51,7 @@ namespace GetStarted
                 table.Clear();
                 foreach (object[] element in dataflow) table.AppendElement(element);
                 table.Flush();
-                //id_index.Build();
+                id_index.Build();
                 //namehash_index.Build();
                 //namehash_index_full.Build();
                 nameview_index.Build();
@@ -62,7 +62,7 @@ namespace GetStarted
             {
                 sw.Restart();
                 table.Refresh();
-                //id_index.Refresh();
+                id_index.Refresh();
                 //namehash_index.Refresh();
                 //namehash_index_full.Refresh();
                 nameview_index.Refresh();
@@ -73,17 +73,18 @@ namespace GetStarted
             int id = nelements * 2 / 3;
             int nprobe = 1000;
             int total = 0;
-            //var query1 = id_index.GetAllBySample(new object[] { id, null, -1.0D });
-            //foreach (var obj in query1) Console.WriteLine(tp_person.Interpret(obj));
 
-            //sw.Restart();
-            //for (int i=0; i< nprobe; i++)
-            //{
-            //    id = rnd.Next(nelements);
-            //    total += id_index.GetAllBySample(new object[] { id, null, -1.0D }).Count();
-            //}
-            //sw.Stop();
-            //Console.WriteLine($"GetById {nprobe} probes. duration={sw.ElapsedMilliseconds}");
+            var query1 = id_index.GetAllBySample(new object[] { id, null, -1.0D });
+            foreach (var obj in query1) Console.WriteLine(tp_person.Interpret(obj));
+
+            sw.Restart();
+            for (int i = 0; i < nprobe; i++)
+            {
+                id = rnd.Next(nelements);
+                total += id_index.GetAllBySample(new object[] { id, null, -1.0D }).Count();
+            }
+            sw.Stop();
+            Console.WriteLine($"GetById {nprobe} probes. duration={sw.ElapsedMilliseconds}");
 
             // Работаем с именами
             string name = "" + (nelements * 2 / 3);

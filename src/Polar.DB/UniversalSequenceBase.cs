@@ -49,6 +49,7 @@ namespace Polar.DB
             bw.Write(0L);
             nelements = 0;
             append_offset = 8L;
+            fs.Flush();
         }
         public void Flush()
         {

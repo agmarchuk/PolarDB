@@ -19,18 +19,16 @@ namespace GetStarted
             Func<Stream> GenStream = () => new FileStream(path + "Databases/f" + (cnt++) + ".bin", 
                 FileMode.OpenOrCreate, FileAccess.ReadWrite);
 
-            // Проверка таблицы имен
-            Nametable32 nt = new Nametable32(GenStream);
             TripleStoreInt32 store = new TripleStoreInt32(GenStream);
 
-            int npersons = 40_000;
-            bool toload = true;
+            int npersons = 4_000_000;
+            bool toload = false;
 
             if (toload)
             {
-                nt.Clear();
-                nt.GetSetStr("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
-                int name_cod = nt.GetSetStr("http://fogid.net/o/name");
+                //nt.Clear();
+                //nt.GetSetStr("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+                //int name_cod = nt.GetSetStr("http://fogid.net/o/name");
 
                 IEnumerable<object> qu_persons = Enumerable.Range(0, npersons)
                     .SelectMany(i =>
@@ -68,23 +66,15 @@ namespace GetStarted
                     });
 
                 sw.Restart();
-                var ntriples = GenerateTripleFlow(qu_persons.Concat(qu_fotos).Concat(qu_reflections), nt);
+                var ntriples = store.GenerateTripleFlow(qu_persons.Concat(qu_fotos).Concat(qu_reflections));
+                foreach (var t in ntriples.Skip(98).Take(10)) Console.WriteLine(store.ToStr(t));
                 store.Build(ntriples);
-                nt.Flush();
                 sw.Stop();
                 Console.WriteLine($"store Build ok. Duration={sw.ElapsedMilliseconds}");
-
-
-
-                sw.Restart();
-                nt.Build();
-                sw.Stop();
-                Console.WriteLine($"nametable Build ok. Duration={sw.ElapsedMilliseconds}");
             }
             else
             {
                 sw.Restart();
-                nt.Refresh();
                 store.Refresh();
                 sw.Stop();
                 Console.WriteLine($"Refresh for Phototeka {npersons} persons. Duration={sw.ElapsedMilliseconds}");
@@ -95,10 +85,10 @@ namespace GetStarted
             // Беру персону 
             string id = "p" + (npersons * 2 / 3);
             int nid, reflected, indoc, name;
-            if (!nt.TryGetCode(id, out nid)) throw new Exception("338433");
-            if (!nt.TryGetCode("http://fogid.net/o/reflected", out reflected)) throw new Exception("338434");
-            if (!nt.TryGetCode("http://fogid.net/o/indoc", out indoc)) throw new Exception("338435");
-            if (!nt.TryGetCode("http://fogid.net/o/name", out name)) throw new Exception("338436");
+            if (!store.TryGetCode(id, out nid)) throw new Exception("338433");
+            if (!store.TryGetCode("http://fogid.net/o/reflected", out reflected)) throw new Exception("338434");
+            if (!store.TryGetCode("http://fogid.net/o/indoc", out indoc)) throw new Exception("338435");
+            if (!store.TryGetCode("http://fogid.net/o/name", out name)) throw new Exception("338436");
             var query1 = store.GetInverse(nid)
                 .Cast<object[]>()
                 .Where(t => (int)t[1] == reflected)
@@ -112,7 +102,7 @@ namespace GetStarted
                 ;
             foreach (object[] t in query1)
             {
-                Console.WriteLine(DecodeTriple(t, nt));
+                Console.WriteLine(store.DecodeTriple(t));
             }
             Console.WriteLine();
 
@@ -123,7 +113,7 @@ namespace GetStarted
             for (int i=0; i<nprobe; i++)
             {
                 // Беру случайную персону
-                if (!nt.TryGetCode("p" + rnd.Next(npersons), out nid)) throw new Exception("338437");
+                if (!store.TryGetCode("p" + rnd.Next(npersons), out nid)) throw new Exception("338437");
                 var fots = store.GetInverse(nid)
                     .Cast<object[]>()
                     .Where(t => (int)t[1] == reflected)
@@ -137,6 +127,24 @@ namespace GetStarted
             }
             sw.Stop();
             Console.WriteLine($"{nprobe} tests ok. Duration={sw.ElapsedMilliseconds}");
+            Console.WriteLine("========");
+
+            var que = store.GetByObjName("p2").ToArray();
+            foreach (var tri in que)
+            {
+                Console.WriteLine(store.ToStr(tri));
+            }
+
+            sw.Restart();
+            total = 0;
+            for (int i = 0; i < nprobe; i++)
+            {
+                string scod = "p" + rnd.Next(npersons);
+                total += store.GetByObjName(scod).Where(obj => (string)((object[])((object[])obj)[2])[1] == scod).Count();
+            }
+            sw.Stop();
+            Console.WriteLine($"{nprobe} GetByObjString tests ok. Duration={sw.ElapsedMilliseconds} total={total}");
+            Console.WriteLine();
 
 
             return;
@@ -213,7 +221,7 @@ namespace GetStarted
 
             return;
 
-            var qu2 = store.GetByObjString("p12345");
+            var qu2 = store.GetByObjName("p12345");
             foreach (object[] t in qu2)
             {
                 Console.WriteLine($"{t[0]} {t[1]}");
@@ -225,43 +233,12 @@ namespace GetStarted
             total = 0;
             for (int i = 0; i < nprobe; i++)
             {
-                var quer = store.GetByObjString("" + rnd.Next(nelements));
+                var quer = store.GetByObjName("" + rnd.Next(nelements));
                 total += quer.Count();
             }
             sw.Stop();
             Console.WriteLine($"Test === OBJECT===== {nprobe} queries for {total} elements. duration={sw.ElapsedMilliseconds}");
 
-        }
-
-        // Генерация потока триплетов
-        private static IEnumerable<object> GenerateTripleFlow(IEnumerable<object> triples, Nametable32 nt)
-        {
-            foreach (object[] tri in triples)
-            {
-                int subj = nt.GetSetStr((string)tri[0]);
-                int pred = nt.GetSetStr((string)tri[1]);
-                int tg = (int)((object[])tri[2])[0];
-                if (tg == 1)
-                {
-                    int oobj = nt.GetSetStr((string)((object[])tri[2])[1]);
-                    yield return new object[] { subj, pred, new object[] { 1, oobj } };
-                }
-                else
-                {
-                    string dobj = (string)((object[])tri[2])[1];
-                    yield return new object[] { subj, pred, new object[] { 2, dobj } };
-                }
-            }
-        }
-        private static string DecodeTriple(object[] tr, Nametable32 nt)
-        {
-            string subj = nt.Decode((int)tr[0]);
-            string pred = nt.Decode((int)tr[1]);
-            int tg = (int)((object[])tr[2])[0];
-            object v = ((object[])tr[2])[1];
-            return "<"+subj+"> <" + pred + "> " +  
-                (tg == 1 ? "<" + nt.Decode((int)v) + ">" : "\"" + (string)v + "\"") +
-                " .";
         }
 
     }
@@ -272,8 +249,9 @@ namespace GetStarted
     /// </summary>
     public class Nametable32
     {
-        // Носителем таблицы является последовательность строк. Номер строки - ее код. Это первично. 
+        // Носителем таблицы является последовательность пар {код, строка}. Номер строки - ее код. Это первично. 
         // По коду строка определяется однозначно (как вводили), по строке код может определяться с учетом эквивалентностей.
+        // Вначале таблица пустая, она заполняется 
         private UniversalSequenceBase table;
         private UniversalSequence<long> str_offsets;
         private IndexKey32CompImm name_index;
@@ -303,19 +281,19 @@ namespace GetStarted
             name_index.Clear();
             dyna_index = new Dictionary<string, int>();
         }
-        public void Load(IEnumerable<string> flow)
-        {
-            // а правильно ли без очистки name_index ?
-            int cod = (int)table.Count();
-            foreach (string s in flow)
-            {
-                long off = table.AppendElement(new object[] { cod, s });
-                cod++;
-                str_offsets.AppendElement(off);
-            }
-            table.Flush();
-            str_offsets.Flush();
-        }
+        //public void Load(IEnumerable<string> flow)
+        //{
+        //    // а правильно ли без очистки name_index ?
+        //    int cod = (int)table.Count();
+        //    foreach (string s in flow)
+        //    {
+        //        long off = table.AppendElement(new object[] { cod, s });
+        //        cod++;
+        //        str_offsets.AppendElement(off);
+        //    }
+        //    table.Flush();
+        //    str_offsets.Flush();
+        //}
         public void Build()
         {
             // Про порядок операторов еще надо подумать
@@ -346,7 +324,7 @@ namespace GetStarted
         public bool TryGetCode(string s, out int code)
         {
             if (dyna_index.TryGetValue(s, out code)) return true;
-            var q = name_index.GetAllBySample(new object[] { -1, s }).FirstOrDefault();
+            var q = name_index.GetAllBySample(new object[] { -1, s }).FirstOrDefault(ob => (string)((object[])ob)[1] == s);
             if (q == null) return false;
             code = (int)((object[])q)[0];
             return true;
@@ -363,18 +341,21 @@ namespace GetStarted
             long off = (long)str_offsets.GetByIndex(cod);
             return (string)((object[])table.GetElement(off))[1];
         }
+
+
     }
 
     public class TripleStoreInt32
     {
+        private Nametable32 nt;
         private UniversalSequenceBase table;
-        private IndexKey32CompImm s_index;
-        private IndexKey32CompImm o_index;
+        private IndexKey32CompImmutable s_index;
         private IndexKey32Imm i_index;
         private IndexKey32CompImmutable name_index;
-        public static Func<object, int> Test_keyfun = null;
         public TripleStoreInt32(Func<Stream> stream_gen)
         {
+            // сначала таблица имен
+            nt = new Nametable32(stream_gen);
             // Тип Object Variants
             PType tp_ov = new PTypeUnion(
                 new NamedType("dummy", new PType(PTypeEnumeration.none)),
@@ -389,42 +370,14 @@ namespace GetStarted
                 new NamedType("subj", new PType(PTypeEnumeration.integer)),
                 new NamedType("pred", new PType(PTypeEnumeration.integer)),
                 new NamedType("obj", tp_ov));
+            // Главная последовательность кодированных триплетов
             table = new UniversalSequenceBase(tp_triple, stream_gen());
-            s_index = new IndexKey32CompImm(stream_gen, table, ob => (int)((object[])ob)[0], null);
-            // Специальное кодирование. В принципе, все расположено почти по естественному порядку. Исключение - группа [\\]^_`
-            string selected_chars = "!\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHJKLMNOPQRSTUWXYZ[\\]^_`{|}~АБВГДЕЖЗИЙКЛМНОПРСТУФКЦЧШЩЪЫЬЭЮЯЁ";
-            // Полуключевая функция. Преобразует объект триплета в 32-разрядное число. код iri сохраняется, предполагается
-            // что старший разряд 0. Если не ноль, тогда другие варианты, пока сделаю только строку 
-            Func<object, int> halfKeyFun = ob =>
-            {
-                object[] tri = (object[])ob;
-                object[] pair = (object[])tri[2];
-                int tg = (int)pair[0];
-                if (tg == 1) // iri
-                {
-                    return ((int)pair[1]) & ~(1<<31); 
-                }
-                else if (tg == 2) // str
-                {
-                    string s = (string)pair[1];
-                    return First4chars(selected_chars, s);
-                }
-                throw new Exception("Err: 292333");
-            };
-            Test_keyfun = halfKeyFun;
-            Comparer<object> comp = Comparer<object>.Create(new Comparison<object>((object a, object b) =>
-            {
-                object[] aa = (object[])((object[])a)[2];
-                object[] bb = (object[])((object[])b)[2];
-                int a1 = (int)aa[0];
-                int b1 = (int)bb[0];
-                int cmp = a1.CompareTo(b1);
-                if (cmp != 0) return cmp;
-                if (a1 == 1) return ((int)aa[1]).CompareTo(((int)bb[1]));
-                return ((string)aa[1]).CompareTo(((string)bb[1]));
-            }));
 
-            o_index = new IndexKey32CompImm(stream_gen, table, halfKeyFun, comp);
+            // прямой ссылочный индекс
+            s_index = new IndexKey32CompImmutable(stream_gen, table, 
+                ob => Enumerable.Repeat<int>((int)((object[])ob)[0], 1), null);
+            
+            // Обратный ссылочный индекс
             i_index = new IndexKey32Imm(stream_gen, table, obj =>
             {
                 object[] pair = (object[])((object[])obj)[2];
@@ -432,29 +385,29 @@ namespace GetStarted
                 if (tg != 1) return Enumerable.Empty<int>();
                 return Enumerable.Repeat<int>((int)pair[1], 1);
             }, null);
-            name_index = new IndexKey32CompImmutable(stream_gen, table, obj =>
-            {
-                object[] pair = (object[])((object[])obj)[2];
-                int tg = (int)pair[0];
-                if (tg != 2) return Enumerable.Empty<int>();
-                return Enumerable.Repeat<int>(First4chars(selected_chars, (string)pair[1]), 1);
-            }, comp);
-        }
 
-        private static int First4chars(string selected_chars, string s)
-        {
-            int len = s.Length;
-            var chs = s.ToCharArray()
-                .Concat(Enumerable.Repeat(' ', len < 4 ? 4 - len : 0))
-                .Take(4)
-                .Select(ch =>
+            // Индекс по тексту объектов триплетов с предикатом http://fogid.net/o/name
+            Comparer<object> comp = Comparer<object>.Create(new Comparison<object>((object a, object b) =>
+            {
+                return string.Compare((string)((object[])((object[])a)[2])[1], (string)((object[])((object[])b)[2])[1]);
+            }));
+            int name_code = Int32.MinValue; // nt.GetSetStr("http://fogid.net/o/name"); // Такое предварительное вычисление не работает!!!
+            name_index = new IndexKey32CompImmutable(stream_gen, table, obj =>
                 {
-                    int ind = selected_chars.IndexOf(char.ToUpper(ch));
-                    if (ind == -1) ind = 0; // неизвестный символ помечается как '!'
-                    return ind;
-                }).ToArray();
-            // вместо 0 будет вариант строки
-            return (1 << 31) | (0) | ((((((chs[0] << 7) | chs[1]) << 7) | chs[2]) << 7) | chs[3]);
+                    if (name_code == Int32.MinValue) name_code = nt.GetSetStr("http://fogid.net/o/name");
+                    object[] tri = (object[])obj;
+                    //TODO: кодов имени может быть много...
+                    if ((int)tri[1] != name_code) return Enumerable.Empty<int>();
+                    object[] pair = (object[])tri[2];
+                    int tg = (int)pair[0];
+                    string data = null;
+                    if (tg == 2) data = (string)pair[1];
+                    //else if (tg == 5) data = (string)((object[])pair[1])[1]; // пока будем работать только с простыми строками
+                    if (data != null) return Enumerable.Repeat<int>(Hashfunctions.First4charsRu(data), 1);
+                    return Enumerable.Empty<int>();
+                },
+                //new int[] { Hashfunctions.First4charsRu((string)((object[])obj)[1]) }
+                comp);
         }
 
         public void Build(IEnumerable<object> triples)
@@ -462,17 +415,20 @@ namespace GetStarted
             Load(triples);
             s_index.Build();
             i_index.Build();
-            //o_index.Build();
             name_index.Build();
+            nt.Build();
+            nt.Flush();
         }
         private void Load(IEnumerable<object> triples)
         {
             table.Clear();
+            nt.Clear();
             foreach (object tri in triples)
             {
                 long off = table.AppendElement(tri);
             }
             table.Flush();
+            nt.Flush();
         }
         public void Refresh()
         {
@@ -480,18 +436,65 @@ namespace GetStarted
             table.Refresh();
             i_index.Refresh();
             name_index.Refresh();
+            nt.Refresh();
         }
         public IEnumerable<object> GetBySubj(int subj)
         {
             return s_index.GetAllBySample(new object[] { subj, -1, null });
         }
-        public IEnumerable<object> GetByObjString(string s)
+        public IEnumerable<object> GetByObjName(string s)
         {
-            return o_index.GetAllBySample(new object[] { -1, -1, new object[] { 2, s } });
+            return name_index.GetAllByKey(Hashfunctions.First4charsRu(s));
         }
         public IEnumerable<object> GetInverse(int obj)
         {
             return i_index.GetAllByKey(obj);
+        }
+
+        // ================== Утилиты ====================
+        // Генерация потока триплетов
+        internal IEnumerable<object> GenerateTripleFlow(IEnumerable<object> triples)
+        {
+            foreach (object[] tri in triples)
+            {
+                int subj = nt.GetSetStr((string)tri[0]);
+                int pred = nt.GetSetStr((string)tri[1]);
+                int tg = (int)((object[])tri[2])[0];
+                if (tg == 1)
+                {
+                    int oobj = nt.GetSetStr((string)((object[])tri[2])[1]);
+                    yield return new object[] { subj, pred, new object[] { 1, oobj } };
+                }
+                else
+                {
+                    string dobj = (string)((object[])tri[2])[1];
+                    yield return new object[] { subj, pred, new object[] { 2, dobj } };
+                }
+            }
+        }
+        internal string DecodeTriple(object[] tr)
+        {
+            string subj = nt.Decode((int)tr[0]);
+            string pred = nt.Decode((int)tr[1]);
+            int tg = (int)((object[])tr[2])[0];
+            object v = ((object[])tr[2])[1];
+            return "<" + subj + "> <" + pred + "> " +
+                (tg == 1 ? "<" + nt.Decode((int)v) + ">" : "\"" + (string)v + "\"") +
+                " .";
+        }
+
+        internal string ToStr(object obj)
+        {
+            object[] tri = (object[])obj;
+            object[] ooo = (object[])tri[2];
+            int tg = (int)ooo[0];
+            return "<" + nt.Decode((int)tri[0]) + "> <" + nt.Decode((int)tri[1]) + "> " +
+            (tg == 1 ? "<" + nt.Decode((int)ooo[1]) + ">" : "\"" + ooo[1] + "\"") +
+            ".";
+        }
+        public bool TryGetCode(string s, out int code)
+        {
+            return nt.TryGetCode(s, out code);
         }
 
     }

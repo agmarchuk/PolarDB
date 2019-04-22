@@ -30,20 +30,19 @@ namespace Polar.DB
             if (comp == null) scale = new Scale(streamGen());
         }
         public void Clear() { keyoffsets.Clear(); }
+        public long Count() { return keyoffsets.Count(); }
         public void Build()
         {
             // формируем массив пар
             List<int> keys_list = new List<int>();
             List<long> offsets_list = new List<long>();
 
-            //int ind = 0;
             bearing.Scan((off, obj) =>
             {
-                offsets_list.Add(off);
                 foreach (int k in keysFun(obj))
                 {
                     keys_list.Add(k);
-                    //ind++;
+                    offsets_list.Add(off);
                 }
                 return true;
             });
@@ -85,9 +84,9 @@ namespace Polar.DB
                 {
                     int k = keys[i];
                     // смена ключа
-                    if (i == 0)
+                    if (i == 0 || k != key)
                     {
-                        // фиксируем предыдущий отрезок (key, start, number)
+                        // фиксируем предыдущий отрезок (key, start), начинаем новый
                         fixgroup();
                         // Начать новый отрезок
                         key = k;
@@ -121,7 +120,8 @@ namespace Polar.DB
         {
             long start = 0;
             long number = keyoffsets.Count();
-            foreach (int key in keysFun(sample))
+            var kf = keysFun(sample).ToArray();
+            foreach (int key in kf)
             {
                 if (scale != null && scale.GetDia != null)
                 {
@@ -129,7 +129,8 @@ namespace Polar.DB
                     start = dia.start;
                     number = dia.numb;
                 }
-                foreach (var off in BinarySearchAll(start, number, key, sample))
+                var bsa = BinarySearchAll(start, number, key, sample).ToArray();
+                foreach (var off in bsa)
                 {
                     yield return bearing.GetElement(off);
                 }
@@ -190,5 +191,65 @@ namespace Polar.DB
             return cmp;
         }
 
+        /// <summary>
+        /// Метод осуществляет бинарный поиск ВСЕХ значений офсетов записей, ключи которых совпадают с заданным
+        /// </summary>
+        /// <param name="start">начальная точнка поиска</param>
+        /// <param name="number">количество точек в диапазоне поиска</param>
+        /// <param name="key">заданное значение поискового ключа</param>
+        /// <returns></returns>
+        private IEnumerable<long> BinarySearchByKey(long start, long number, int key)
+        {
+            if (number < plain)
+            {
+                return keyoffsets.ElementValues(keyoffsets.ElementOffset(start), number)
+                    .Where(pair => (int)((object[])pair)[0] == key)
+                    .Select(pair => (long)((object[])pair)[1]);
+            }
+            long half = number / 2;
+            if (half == 0)
+            {
+                // Получаем пару (ключ-офсет)
+                object[] pair = (object[])keyoffsets.GetByIndex(start);
+                int cmp = ((int)pair[0]).CompareTo(key);
+                if (cmp == 0) return Enumerable.Repeat<long>((long)pair[1], 1);
+                else return Enumerable.Empty<long>(); // Не найден
+            }
+
+            long middle = start + half;
+            long rest = number - half - 1;
+            object[] mid_pair = (object[])keyoffsets.GetByIndex(middle);
+            var middle_depth = ((int)mid_pair[0]).CompareTo(key);
+
+            if (middle_depth == 0)
+            { // Вариант {левый, центральная точка, возможно правый}
+                IEnumerable<long> flow = BinarySearchByKey(start, half, key)
+                    .Concat(Enumerable.Repeat<long>((long)mid_pair[1], 1));
+                if (rest > 0) return flow.Concat(BinarySearchByKey(middle + 1, rest, key));
+                else return flow;
+            }
+            if (middle_depth < 0)
+            {
+                if (rest > 0) return BinarySearchByKey(middle + 1, rest, key);
+                else return Enumerable.Empty<long>();
+            }
+            else
+            {
+                return BinarySearchByKey(start, half, key);
+            }
+        }
+        public IEnumerable<object> GetAllByKey(int key)
+        {
+            long start = 0, number = Count();
+            if (scale != null && scale.GetDia != null)
+            {
+                Diapason dia = scale.GetDia(key);
+                start = dia.start;
+                number = dia.numb;
+            }
+            IEnumerable<object> query = BinarySearchByKey(start, number, key)
+                .Select(off => bearing.GetElement(off));
+            return query;
+        }
     }
 }
