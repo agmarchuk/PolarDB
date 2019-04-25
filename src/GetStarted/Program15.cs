@@ -119,7 +119,7 @@ namespace GetStarted
 
             // Работаем с view индексом
             name = "" + (nelements * 2 / 3);
-            var query4 = nameview_index.BinarySearchAll(new object[] { -1, name, -1.0D });
+            var query4 = nameview_index.SearchAll(new object[] { -1, name, -1.0D });
             foreach (var obj in query4) Console.WriteLine(tp_person.Interpret(obj));
 
             nprobe = 1000;
@@ -128,7 +128,7 @@ namespace GetStarted
             for (int i = 0; i < nprobe; i++)
             {
                 name = "" + rnd.Next(nelements);
-                total += nameview_index.BinarySearchAll(new object[] { -1, name, -1.0D }).Count();
+                total += nameview_index.SearchAll(new object[] { -1, name, -1.0D }).Count();
             }
             sw.Stop();
             Console.WriteLine($"IndexView search for {nprobe} probes. duration={sw.ElapsedMilliseconds} total={total}");

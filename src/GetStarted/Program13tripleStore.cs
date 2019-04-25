@@ -227,7 +227,7 @@ namespace GetStarted
 
         public IEnumerable<object> GetTest(int subj)
         {
-            return indexTest.BinarySearchAll(new object[] { subj, null, null });
+            return indexTest.SearchAll(new object[] { subj, null, null });
         }
 
     }

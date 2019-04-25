@@ -11,15 +11,15 @@ namespace Polar.DB
     {
         private UniversalSequenceBase bearing;
         private UniversalSequenceBase offset_sequ;
-        private Comparer<object> comp;
+        private Comparer<object> comp_default;
         private Func<Stream> streamGen;
         private string tmpdir;
         // создаем объект, подсоединяемся к носителям или создаем носители
-        public IndexViewImm(Func<Stream> streamGen, UniversalSequenceBase bearing, Comparer<object> comp, string tmpdir, long volume_of_offset_array)
+        public IndexViewImm(Func<Stream> streamGen, UniversalSequenceBase bearing, Comparer<object> comp_d, string tmpdir, long volume_of_offset_array)
         {
             this.streamGen = streamGen;
             this.bearing = bearing;
-            this.comp = comp;
+            this.comp_default = comp_d;
             this.tmpdir = tmpdir;
             offset_sequ = new UniversalSequenceBase(new PType(PTypeEnumeration.longinteger), streamGen());
             this.volume_of_offset_array = volume_of_offset_array;
@@ -58,7 +58,7 @@ namespace Polar.DB
                         elements[i] = bearing.GetElement(off);
                     }
                     // Сортируем
-                    Array.Sort(elements, offsets, comp);
+                    Array.Sort(elements, offsets, comp_default);
                     // кладем из массивов в последовательность
                     for (long i = 0; i < number; i++)
                     {
@@ -116,7 +116,7 @@ namespace Polar.DB
                     long out_ind = start_ind;
                     while (nom1 < firsthalf_number && nom2 < secondhalf_number)
                     {
-                        if (comp.Compare(obj1, obj2) <= 0)
+                        if (comp_default.Compare(obj1, obj2) <= 0)
                         {
                             offset_sequ.SetElement(off1, offset_sequ.ElementOffset(out_ind));
                             nom1++;
@@ -186,7 +186,7 @@ namespace Polar.DB
         }
 
         // Поиск в последовательностях
-        private IEnumerable<object> BinarySearchAll(long start, long number, object sample)
+        private IEnumerable<object> BinarySearchAll(long start, long number, object sample, Comparer<object> comp)
         {
             long half = number / 2;
             if (half == 0)
@@ -204,41 +204,60 @@ namespace Polar.DB
             //object[] mid_pair = (object[])keyoffsets.GetByIndex(middle);
             long middle_offse = (long)offset_sequ.GetByIndex(middle);
             object middle_obje = bearing.GetElement(middle_offse);
-            //var middle_depth = comp.Compare(mid_pair, key, sample);
             var middle_depth = comp.Compare(middle_obje, sample);
 
             if (middle_depth == 0)
             { // Вариант {левый, центральная точка, возможно правый}
-                IEnumerable<object> flow = BinarySearchAll(start, half, sample)
+                IEnumerable<object> flow = BinarySearchAll(start, half, sample, comp)
                     .Concat(Enumerable.Repeat<object>(middle_obje, 1));
-                if (rest > 0) return flow.Concat(BinarySearchAll(middle + 1, rest, sample));
+                if (rest > 0) return flow.Concat(BinarySearchAll(middle + 1, rest, sample, comp));
                 else return flow;
             }
             if (middle_depth < 0)
             {
-                if (rest > 0) return BinarySearchAll(middle + 1, rest, sample);
+                if (rest > 0) return BinarySearchAll(middle + 1, rest, sample, comp);
                 else return Enumerable.Empty<object>();
             }
             else // middle_depth > 0
             {
-                return BinarySearchAll(start, half, sample);
+                return BinarySearchAll(start, half, sample, comp);
             }
         }
 
+        //// ================= Поиск по массиву elements в ОЗУ ==============
+        //public IEnumerable<object> BinarySearchAll(object obj)
+        //{
+        //    long start = 0;
+        //    long cnt = offset_sequ.Count();
+        //    long numb = cnt;
+        //    if (rare_elements != null)
+        //    {
+        //        var dia = BSDia(0, rare_elements.Length, obj);
+        //        start = dia.Item1 * Nfactor;
+        //        numb = dia.Item2 * Nfactor;
+        //        if (start + numb > cnt) numb = cnt - start;
+        //    }
+        //    var res = BinarySearchAll(start, numb, obj);
+        //    return res;
+        //}
+
         // ================= Поиск по массиву elements в ОЗУ ==============
-        public IEnumerable<object> BinarySearchAll(object obj)
+        public IEnumerable<object> SearchAll(object sample)
+        { return SearchAll(sample, comp_default); }
+
+        public IEnumerable<object> SearchAll(object sample, Comparer<object> c)
         {
             long start = 0;
             long cnt = offset_sequ.Count();
             long numb = cnt;
             if (rare_elements != null)
             {
-                var dia = BSDia(0, rare_elements.Length, obj);
+                var dia = BSDia(0, rare_elements.Length, sample, c);
                 start = dia.Item1 * Nfactor;
                 numb = dia.Item2 * Nfactor;
                 if (start + numb > cnt) numb = cnt - start;
             }
-            var res = BinarySearchAll(start, numb, obj);
+            var res = BinarySearchAll(start, numb, sample, c);
             return res;
         }
 
@@ -251,37 +270,37 @@ namespace Polar.DB
         /// <param name="number"></param>
         /// <param name="sample"></param>
         /// <returns>диапазон start, number в массиве elements</returns>
-        private (int, int) BSDia(int start, int number, object sample)
+        private (int, int) BSDia(int start, int number, object sample, Comparer<object> current_comp)
         {
             if (number == 0) return (start, 0);
-            if (comp.Compare(rare_elements[start], sample) > 0) return (start, 0);
+            if (current_comp.Compare(rare_elements[start], sample) > 0) return (start, 0);
             if (number == 1) return (start, number);
 
             int half = number / 2;
             int middle = start + half;
             int rest = number - half - 1;
             object middle_obje = rare_elements[middle];
-            var middle_depth = comp.Compare(middle_obje, sample);
+            var middle_depth = current_comp.Compare(middle_obje, sample);
 
             if (middle_depth == 0)
             { // Вариант {левый, центральная точка, возможно правый}
                 int sta, num;
-                var left = BSDia(start, half, sample);
+                var left = BSDia(start, half, sample, current_comp);
                 if (left.Item2 == 0) { sta = half; num = 1; }
                 else { sta = left.Item1; num = left.Item2 + 1; }
-                if (rest > 0) { var right = BSDia(middle + 1, rest, sample); num += right.Item2; }
+                if (rest > 0) { var right = BSDia(middle + 1, rest, sample, current_comp); num += right.Item2; }
                 return (sta, num);
             }
             if (middle_depth < 0)
             {
                 if (rest == 0) return (middle, 1);
-                var d = BSDia(middle + 1, rest, sample);
+                var d = BSDia(middle + 1, rest, sample, current_comp);
                 if (d.Item2 == 0) return (middle, 1);
                 return d;
             }
             else // middle_depth > 0
             {
-                return BSDia(start, half, sample);
+                return BSDia(start, half, sample, current_comp);
             }
         }
 
