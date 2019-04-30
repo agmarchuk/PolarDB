@@ -7,7 +7,7 @@ using Polar.DB;
 
 namespace Polar.DB
 {
-    public class IndexKey32CompImmutable
+    public class IndexKey32CompImmutable : IIndexImmutable
     {
         // строится на основе последовательности пар {ключ, офсет}
         UniversalSequenceBase keyoffsets;

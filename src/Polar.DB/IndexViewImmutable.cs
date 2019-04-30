@@ -7,15 +7,16 @@ using Polar.DB;
 
 namespace Polar.DB
 {
-    public class IndexViewImm
+    public class IndexViewImmutable : IIndexImmutable
     {
         private UniversalSequenceBase bearing;
         private UniversalSequenceBase offset_sequ;
         private Comparer<object> comp_default;
         private Func<Stream> streamGen;
         private string tmpdir;
+        public Func<object, bool> Filter { get; set; }
         // создаем объект, подсоединяемся к носителям или создаем носители
-        public IndexViewImm(Func<Stream> streamGen, UniversalSequenceBase bearing, Comparer<object> comp_d, string tmpdir, long volume_of_offset_array)
+        public IndexViewImmutable(Func<Stream> streamGen, UniversalSequenceBase bearing, Comparer<object> comp_d, string tmpdir, long volume_of_offset_array)
         {
             this.streamGen = streamGen;
             this.bearing = bearing;
@@ -24,6 +25,12 @@ namespace Polar.DB
             offset_sequ = new UniversalSequenceBase(new PType(PTypeEnumeration.longinteger), streamGen());
             this.volume_of_offset_array = volume_of_offset_array;
         }
+
+        public void Clear()
+        {
+            offset_sequ.Clear();
+        }
+
         // Что нужно? Создать и использовать
         private object[] rare_elements = null; // --
 
@@ -35,7 +42,7 @@ namespace Polar.DB
             offset_sequ.Clear();
             bearing.Scan((off, obj) =>
             {
-                offset_sequ.AppendElement(off);
+                if (Filter == null || Filter(obj)) offset_sequ.AppendElement(off);
                 return true;
             });
             offset_sequ.Flush();
@@ -161,7 +168,7 @@ namespace Polar.DB
             };
 
             // Исполним
-            Bld(0L, bearing.Count());
+            Bld(0L, offset_sequ.Count());
 
             if (tmp_stream1 != null)
             {
@@ -179,10 +186,15 @@ namespace Polar.DB
         private int Nfactor = 40;
         public void Refresh()
         {
-            // построим прореженный массив
-            rare_elements = offset_sequ.ElementValues()
-                .Where((off, i) => (i % Nfactor == 0))
-                .Select(off => bearing.GetElement((long)off)).ToArray();
+            // построим прореженный массив значений
+            //TODO: Похоже, прореживание делается правильно, но используется неправильно. Иногда выскакивает
+            // ошибка, заключающаяся в том, что выдается меньше результатов. 
+            rare_elements = 
+                offset_sequ.ElementValues()
+                .Cast<long>()
+                .Where((off, i) => (i % Nfactor) == 0)
+                .Select(off => bearing.GetElement((long)off))
+                .ToArray();
         }
 
         // Поиск в последовательностях
@@ -247,10 +259,64 @@ namespace Polar.DB
 
         public IEnumerable<object> SearchAll(object sample, Comparer<object> c)
         {
+            //long start = 0;
+            //long cnt = offset_sequ.Count();
+            //long numb = cnt;
+            //if (rare_elements != null)
+            //{
+            //    var dia = BSDia(0, rare_elements.Length, sample, c);
+            //    start = dia.Item1 * Nfactor;
+            //    numb = dia.Item2 * Nfactor;
+            //    if (start + numb > cnt) numb = cnt - start;
+            //}
+            if (rare_elements != null)
+            {
+                return SA(sample, c);
+            }
+            else return SearchAll0(sample, c);
+        }
+        private IEnumerable<object> SA(object sample, Comparer<object> c)
+        {
+            long pos;
+            int ind = Array.BinarySearch(rare_elements, sample, c);
+            if (ind >= 0)
+            {
+                // Найти ближайший левый индекс i, который либо 0 либо c.Compare(rare_elements[i-1], sample) < 0
+                int i = ind;
+                while (i > 0 && c.Compare(rare_elements[i - 1], sample) >= 0) i--;
+                // Находим стартовую точку в последовательности отсортированных офсетов
+                pos = (i==0?0:i-1) * Nfactor;
+
+                //return Enumerable.Repeat(rare_elements[ind], 1);
+            }
+            //else return Enumerable.Empty<object>();
+            else
+            {
+                ind = ~ind;
+                pos = (ind==0?0: ind-1) * Nfactor;
+            }
+            // Сканируем
+            while (pos < offset_sequ.Count())
+            {
+                object val = null;
+                // Читаем значение или из массива или из последовательности
+                if (pos % Nfactor == 0) val = rare_elements[pos / Nfactor];
+                else val = bearing.GetElement((long)offset_sequ.GetByIndex(pos));
+                // вычисляем отношение к образцу
+                int cmp = c.Compare(val, sample);
+                pos++;
+                // пропускаем которые меньше, посылаем которые равны, выходим когда больше
+                if (cmp < 0) continue;
+                else if (cmp == 0) yield return val;
+                else break;
+            }
+        }
+        public IEnumerable<object> SearchAll0(object sample, Comparer<object> c)
+        {
             long start = 0;
             long cnt = offset_sequ.Count();
             long numb = cnt;
-            if (rare_elements != null)
+            if (false && rare_elements != null) // Конструкция не работает.
             {
                 var dia = BSDia(0, rare_elements.Length, sample, c);
                 start = dia.Item1 * Nfactor;

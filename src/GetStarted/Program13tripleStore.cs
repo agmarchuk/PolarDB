@@ -121,7 +121,7 @@ namespace GetStarted
         private Func<object, int> keyFunc;
         private Func<int, Diapason> scaleFunc;
 
-        private IndexViewImm indexTest;
+        private IndexViewImmutable indexTest;
         public TripleStore32(Func<Stream> stream_gen, string tmp_dir)
         {
             // Тип Object Variants
@@ -142,7 +142,7 @@ namespace GetStarted
             }));
             keyFunc = tri => (int)((object[])tri)[0];
             index_spo = new UniversalSequenceCompKey32(stream_gen(), keyFunc, spo_comparer, table);
-            indexTest = new IndexViewImm(stream_gen, table,
+            indexTest = new IndexViewImmutable(stream_gen, table,
                 Comparer<object>.Create(new Comparison<object>((object a, object b) =>
                 {
                     object[] aa = (object[])a; object[] bb = (object[])b;

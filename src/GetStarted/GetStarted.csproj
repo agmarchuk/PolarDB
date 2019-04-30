@@ -8,6 +8,14 @@
 
   <ItemGroup>
     <Compile Remove="PagedStreamStore.cs" />
+    <Compile Remove="Program10triples.cs" />
+    <Compile Remove="Program11.cs" />
+    <Compile Remove="Program12.cs" />
+    <Compile Remove="Program13tripleStore.cs" />
+    <Compile Remove="Program14.cs" />
+    <Compile Remove="Program15.cs" />
+    <Compile Remove="Program16.cs" />
+    <Compile Remove="TripleStore_mag.cs" />
   </ItemGroup>
 
   <ItemGroup>
