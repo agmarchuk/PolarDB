@@ -7,15 +7,15 @@ using Polar.DB;
 
 namespace Polar.DB
 {
-    public class IndexKey32CompImmutable : IIndexImmutable
+    public class IndexKey32CompImmutable : IIndex
     {
         // строится на основе последовательности пар {ключ, офсет}
         UniversalSequenceBase keyoffsets;
-        private UniversalSequenceBase bearing;
+        private IBearing bearing;
         private Func<object, IEnumerable<int>> keysFun;
         private Comparer<object> comp;
         private Scale scale = null;
-        public IndexKey32CompImmutable(Func<Stream> streamGen, UniversalSequenceBase bearing, 
+        public IndexKey32CompImmutable(Func<Stream> streamGen, IBearing bearing, 
             Func<object, IEnumerable<int>> keysFun, Comparer<object> comp)
         {
             this.bearing = bearing;
@@ -94,7 +94,7 @@ namespace Polar.DB
                         objs.Clear();
                     }
                     // основное действие
-                    object ob = bearing.GetElement(offsets[i]);
+                    object ob = bearing.GetItem(offsets[i]);
                     objs.Add(ob);
                 }
                 if (objs.Count > 1) fixgroup();
@@ -132,7 +132,7 @@ namespace Polar.DB
                 var bsa = BinarySearchAll(start, number, key, sample).ToArray();
                 foreach (var off in bsa)
                 {
-                    yield return bearing.GetElement(off);
+                    yield return bearing.GetItem(off);
                 }
             }
         }
@@ -186,7 +186,7 @@ namespace Polar.DB
             if (cmp == 0 && comp != null)
             {
                 long o = (long)pair[1];
-                cmp = comp.Compare(bearing.GetElement(o), sample);
+                cmp = comp.Compare(bearing.GetItem(o), sample);
             }
             return cmp;
         }
@@ -248,7 +248,7 @@ namespace Polar.DB
                 number = dia.numb;
             }
             IEnumerable<object> query = BinarySearchByKey(start, number, key)
-                .Select(off => bearing.GetElement(off));
+                .Select(off => bearing.GetItem(off));
             return query;
         }
     }

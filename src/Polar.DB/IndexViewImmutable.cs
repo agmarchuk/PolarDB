@@ -9,14 +9,14 @@ namespace Polar.DB
 {
     public class IndexViewImmutable : IIndexImmutable
     {
-        private UniversalSequenceBase bearing;
+        private IBearing bearing;
         private UniversalSequenceBase offset_sequ;
         private Comparer<object> comp_default;
         private Func<Stream> streamGen;
         private string tmpdir;
         public Func<object, bool> Filter { get; set; }
         // создаем объект, подсоединяемся к носителям или создаем носители
-        public IndexViewImmutable(Func<Stream> streamGen, UniversalSequenceBase bearing, Comparer<object> comp_d, string tmpdir, long volume_of_offset_array)
+        public IndexViewImmutable(Func<Stream> streamGen, IBearing bearing, Comparer<object> comp_d, string tmpdir, long volume_of_offset_array)
         {
             this.streamGen = streamGen;
             this.bearing = bearing;
@@ -62,7 +62,7 @@ namespace Polar.DB
                     {
                         long off = (long)offset_sequ.GetByIndex(start_ind + i);
                         offsets[i] = off;
-                        elements[i] = bearing.GetElement(off);
+                        elements[i] = bearing.GetItem(off);
                     }
                     // Сортируем
                     Array.Sort(elements, offsets, comp_default);
@@ -113,12 +113,12 @@ namespace Polar.DB
                     tmp_stream1.Position = 0L;
                     BinaryReader br1 = new BinaryReader(tmp_stream1);
                     long off1 = br1.ReadInt64();
-                    object obj1 = bearing.GetElement(off1);
+                    object obj1 = bearing.GetItem(off1);
                     long nom1 = 0; // номер обрабатываемого элемента
                     tmp_stream2.Position = 0L;
                     BinaryReader br2 = new BinaryReader(tmp_stream2);
                     long off2 = br2.ReadInt64();
-                    object obj2 = bearing.GetElement(off2);
+                    object obj2 = bearing.GetItem(off2);
                     long nom2 = 0; // номер обрабатываемого элемента
                     long out_ind = start_ind;
                     while (nom1 < firsthalf_number && nom2 < secondhalf_number)
@@ -130,7 +130,7 @@ namespace Polar.DB
                             if (nom1 < firsthalf_number)
                             {
                                 off1 = br1.ReadInt64();
-                                obj1 = bearing.GetElement(off1);
+                                obj1 = bearing.GetItem(off1);
                             }
                         }
                         else
@@ -140,7 +140,7 @@ namespace Polar.DB
                             if (nom2 < secondhalf_number)
                             {
                                 off2 = br2.ReadInt64();
-                                obj2 = bearing.GetElement(off2);
+                                obj2 = bearing.GetItem(off2);
                             }
                         }
                         out_ind++;
@@ -193,7 +193,7 @@ namespace Polar.DB
                 offset_sequ.ElementValues()
                 .Cast<long>()
                 .Where((off, i) => (i % Nfactor) == 0)
-                .Select(off => bearing.GetElement((long)off))
+                .Select(off => bearing.GetItem((long)off))
                 .ToArray();
         }
 
@@ -205,7 +205,7 @@ namespace Polar.DB
             {
                 // Получаем офсет, по нему получаем объект элемента
                 long offse = (long)offset_sequ.GetByIndex(start);
-                object obje = bearing.GetElement(offse);
+                object obje = bearing.GetItem(offse);
                 int cmp = comp.Compare(obje, sample);
                 if (cmp == 0) return Enumerable.Repeat<object>(obje, 1);
                 else return Enumerable.Empty<object>(); // Не найден
@@ -215,7 +215,7 @@ namespace Polar.DB
             long rest = number - half - 1;
             //object[] mid_pair = (object[])keyoffsets.GetByIndex(middle);
             long middle_offse = (long)offset_sequ.GetByIndex(middle);
-            object middle_obje = bearing.GetElement(middle_offse);
+            object middle_obje = bearing.GetItem(middle_offse);
             var middle_depth = comp.Compare(middle_obje, sample);
 
             if (middle_depth == 0)
@@ -301,7 +301,7 @@ namespace Polar.DB
                 object val = null;
                 // Читаем значение или из массива или из последовательности
                 if (pos % Nfactor == 0) val = rare_elements[pos / Nfactor];
-                else val = bearing.GetElement((long)offset_sequ.GetByIndex(pos));
+                else val = bearing.GetItem((long)offset_sequ.GetByIndex(pos));
                 // вычисляем отношение к образцу
                 int cmp = c.Compare(val, sample);
                 pos++;

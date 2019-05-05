@@ -61,8 +61,8 @@ namespace TripleStore
                     });
 
                 sw.Restart();
-                var triples_set = store.GenerateTripleFlow(qu_persons.Concat(qu_fotos).Concat(qu_reflections));
-                //foreach (var t in ntriples.Skip(98).Take(10)) Console.WriteLine(store.ToStr(t));
+                var triples_set = qu_persons.Concat(qu_fotos).Concat(qu_reflections)
+                    .Select(pfr => store.CodeTriple((object[])pfr));
                 store.Build(triples_set);
                 sw.Stop();
                 Console.WriteLine($"store Build ok. Duration={sw.ElapsedMilliseconds}");
@@ -83,13 +83,13 @@ namespace TripleStore
             // Проверяю работу выборки по субъекту
             var trs = store.Get_s(id);
             // Печатаю
-            foreach (object[] t in trs) Console.WriteLine(store.DecodeTriple(t));
+            foreach (object[] t in trs) Console.WriteLine(store.TripleToString(t));
 
             Console.WriteLine("===== single GetInverse =====");
 
             var trs2 = store.Get_t(id);
             // Печатаю
-            foreach (object[] t in trs2) Console.WriteLine(store.DecodeTriple(t));
+            foreach (object[] t in trs2) Console.WriteLine(store.TripleToString(t));
 
             Console.WriteLine("===== 1000 GetBySubject =====");
 
@@ -108,7 +108,7 @@ namespace TripleStore
             Console.WriteLine($"===== single Like {"p" + pers} =====");
             var trs3 = store.Like("p" + pers).ToArray();
             // Печатаю
-            foreach (object[] t in trs3) Console.WriteLine(store.DecodeTriple(t));
+            foreach (object[] t in trs3) Console.WriteLine(store.TripleToString(t));
 
             if (!store.TryGetCode(id, out int nid)) throw new Exception("222233");
                 //var trs2 = store.GetInverse(nid);
@@ -137,7 +137,7 @@ namespace TripleStore
                 ;
             foreach (object[] t in query1)
             {
-                Console.WriteLine(store.DecodeTriple(t));
+                Console.WriteLine(store.TripleToString(t));
             }
             Console.WriteLine();
 

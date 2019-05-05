@@ -24,7 +24,7 @@ namespace GetStarted
                 new NamedType("name", new PType(PTypeEnumeration.sstring)),
                 new NamedType("years", new PType(PTypeEnumeration.integer)));
 
-            UniversalSequenceBase table = new UniversalSequenceBase(tp_person, GenStream());
+            BearingPure table = new BearingPure(tp_person, GenStream);
             //IndexKey32CompImmutable id_index = new IndexKey32CompImmutable(GenStream, table, obj =>
             //    new int[] { (int)((object[])obj)[0] }, null);
             //IndexKey32CompImmutable str_index = new IndexKey32CompImmutable(GenStream, table, obj =>
@@ -51,13 +51,15 @@ namespace GetStarted
 
             if (toload)
             {
-                table.Clear();
-                sw.Restart();
-                for (int i = 0; i < nelements; i++)
-                {
-                    table.AppendElement(new object[] { i, "" + i, 33 });
-                }
-                table.Flush();
+                //table.Clear();
+                //sw.Restart();
+                //for (int i = 0; i < nelements; i++)
+                //{
+                //    table.AppendElement(new object[] { i, "" + i, 33 });
+                //}
+                //table.Flush();
+                table.Load(Enumerable.Range(0, nelements).Select(i => new object[] { i, "" + i, 33 }));
+
                 //id_index.Build();
                 //str_index.Build();
                 nameview_index.Build();

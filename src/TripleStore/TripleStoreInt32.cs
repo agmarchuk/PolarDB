@@ -41,13 +41,6 @@ namespace TripleStore
                 ob => Enumerable.Repeat<int>((int)((object[])ob)[0], 1), null);
 
             // Обратный ссылочный индекс
-            //i_index = new IndexKey32Imm(stream_gen, table, obj =>
-            //{
-            //    object[] pair = (object[])((object[])obj)[2];
-            //    int tg = (int)pair[0];
-            //    if (tg != 1) return Enumerable.Empty<int>();
-            //    return Enumerable.Repeat<int>((int)pair[1], 1);
-            //}, null);
             inv_index = new IndexKey32CompImmutable(stream_gen, table, obj =>
             {
                 object[] pair = (object[])((object[])obj)[2];
@@ -145,27 +138,23 @@ namespace TripleStore
         }
 
         // ================== Утилиты ====================
-        // Генерация потока триплетов
-        internal IEnumerable<object> GenerateTripleFlow(IEnumerable<object> triples)
+        internal object[] CodeTriple(object[] tri)
         {
-            foreach (object[] tri in triples)
+            int subj = nt.GetSetStr((string)tri[0]);
+            int pred = nt.GetSetStr((string)tri[1]);
+            int tg = (int)((object[])tri[2])[0];
+            if (tg == 1)
             {
-                int subj = nt.GetSetStr((string)tri[0]);
-                int pred = nt.GetSetStr((string)tri[1]);
-                int tg = (int)((object[])tri[2])[0];
-                if (tg == 1)
-                {
-                    int oobj = nt.GetSetStr((string)((object[])tri[2])[1]);
-                    yield return new object[] { subj, pred, new object[] { 1, oobj } };
-                }
-                else
-                {
-                    string dobj = (string)((object[])tri[2])[1];
-                    yield return new object[] { subj, pred, new object[] { 2, dobj } };
-                }
+                int oobj = nt.GetSetStr((string)((object[])tri[2])[1]);
+                return new object[] { subj, pred, new object[] { 1, oobj } };
+            }
+            else
+            {
+                string dobj = (string)((object[])tri[2])[1];
+                return new object[] { subj, pred, new object[] { 2, dobj } };
             }
         }
-        internal string DecodeTriple(object[] tr)
+        internal string TripleToString(object[] tr)
         {
             string subj = nt.Decode((int)tr[0]);
             string pred = nt.Decode((int)tr[1]);
@@ -176,15 +165,6 @@ namespace TripleStore
                 " .";
         }
 
-        //internal string ToStr(object obj)
-        //{
-        //    object[] tri = (object[])obj;
-        //    object[] ooo = (object[])tri[2];
-        //    int tg = (int)ooo[0];
-        //    return "<" + nt.Decode((int)tri[0]) + "> <" + nt.Decode((int)tri[1]) + "> " +
-        //    (tg == 1 ? "<" + nt.Decode((int)ooo[1]) + ">" : "\"" + ooo[1] + "\"") +
-        //    " .";
-        //}
         public bool TryGetCode(string s, out int code)
         {
             return nt.TryGetCode(s, out code);
