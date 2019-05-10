@@ -30,9 +30,14 @@ namespace Polar.DB
                 sequence.AppendElement(new object[] { false, element });
             }
             sequence.Flush();
+            Build();
+        }
+        public void Build()
+        { 
+            foreach (var index in Indexes) index.Build();
         }
         public void Flush() { sequence.Flush(); }
-        public void Refresh() { sequence.Refresh(); }
+        public void Refresh() { sequence.Refresh(); foreach (var index in Indexes) index.Refresh(); }
         public IEnumerable<object> ElementValues()
         {
             return sequence.ElementValues()
@@ -47,7 +52,7 @@ namespace Polar.DB
             for (long ii = 0; ii < ll; ii++)
             {
                 long off = ii == 0 ? sequence.ElementOffset(0) : sequence.ElementOffset();
-                object[] full_object = (object[])sequence.GetElement();
+                object[] full_object = (object[])sequence.GetElement(off);
                 if ((bool)full_object[0]) continue; // если уничтожен
                 bool ok = handler(off, full_object[1]);
                 if (!ok) break;
@@ -65,6 +70,27 @@ namespace Polar.DB
             if ((bool)pair[0]) return null;
             return pair[1];
         }
+        public bool IsDeletedItem(long off)
+        {
+            return (bool)sequence.GetTypedElement(new PType(PTypeEnumeration.boolean), off);
+        }
+
+        public long AddItem(object item)
+        {
+            long off = sequence.AppendElement(new object[] { false, item });
+            sequence.Flush();
+            // Запуск хендлеров ...
+            foreach (var index in Indexes) index.OnAddItem(item, off);
+            return off;
+        }
+
+        public void DeleteItem(long off)
+        {
+            sequence.SetTypedElement(new PType(PTypeEnumeration.boolean), true, off);
+            // Запуск хендлеров ...
+            foreach (var index in Indexes) index.OnDeleteItem(off);
+        }
+
         public IIndex[] Indexes { get; set; }
 
     }

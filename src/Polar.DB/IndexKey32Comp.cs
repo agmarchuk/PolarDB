@@ -7,19 +7,22 @@ using Polar.DB;
 
 namespace Polar.DB
 {
-    public class IndexKey32CompImmutable : IIndexImmutable
+    public class IndexKey32Comp : IIndex
     {
         // строится на основе последовательности пар {ключ, офсет}
         UniversalSequenceBase keyoffsets;
         private IBearing bearing;
-        private Func<object, IEnumerable<int>> keysFun;
+        private Func<object, bool> applicable;
+        private Func<object, int> hashFun;
         private Comparer<object> comp;
         private Scale scale = null;
-        public IndexKey32CompImmutable(Func<Stream> streamGen, IBearing bearing, 
-            Func<object, IEnumerable<int>> keysFun, Comparer<object> comp)
+        public IndexKey32Comp(Func<Stream> streamGen, IBearing bearing,
+            Func<object, bool> applicable,
+            Func<object, int> hashFun, Comparer<object> comp)
         {
             this.bearing = bearing;
-            this.keysFun = keysFun;
+            this.applicable = applicable;
+            this.hashFun = hashFun;
             this.comp = comp;
             keyoffsets = new UniversalSequenceBase(
                 new PTypeRecord(
@@ -39,9 +42,10 @@ namespace Polar.DB
 
             bearing.Scan((off, obj) =>
             {
-                foreach (int k in keysFun(obj))
+                if (applicable(obj))
                 {
-                    keys_list.Add(k);
+                    int hash = hashFun(obj);
+                    keys_list.Add(hash);
                     offsets_list.Add(off);
                 }
                 return true;
@@ -118,23 +122,36 @@ namespace Polar.DB
 
         public IEnumerable<object> GetAllBySample(object sample)
         {
-            long start = 0;
-            long number = keyoffsets.Count();
-            var kf = keysFun(sample).ToArray();
-            foreach (int key in kf)
+            var key = hashFun(sample);
+            if (dynaKeyIndex.TryGetValue(key, out List<long> offsets))
             {
-                if (scale != null && scale.GetDia != null)
+                foreach(long off in offsets)
                 {
-                    Diapason dia = scale.GetDia(key);
-                    start = dia.start;
-                    number = dia.numb;
-                }
-                var bsa = BinarySearchAll(start, number, key, sample).ToArray();
-                foreach (var off in bsa)
-                {
-                    yield return bearing.GetItem(off);
+                    var item = bearing.GetItem(off);
+                    if (item == null) continue;
+                    if (comp != null && comp.Compare(item, sample) != 0) continue; 
+                    yield return item; 
                 }
             }
+            long start = 0;
+            long number = keyoffsets.Count();
+            if (scale != null && scale.GetDia != null)
+            {
+                Diapason dia = scale.GetDia(key);
+                start = dia.start;
+                number = dia.numb;
+            }
+            var bsa = BinarySearchAll(start, number, key, sample);
+            foreach (var off in bsa)
+            {
+                var item = bearing.GetItem(off);
+                if (item == null) continue;
+                if (comp != null && comp.Compare(item, sample) != 0) continue;
+                yield return item;
+            }
+            //return BinarySearchAll(start, number, key, sample)
+            //    .Select(off => bearing.GetItem(off))
+            //    .Where(v => v != null);
         }
 
 
@@ -240,16 +257,53 @@ namespace Polar.DB
         }
         public IEnumerable<object> GetAllByKey(int key)
         {
-            long start = 0, number = Count();
+            if (dynaKeyIndex.TryGetValue(key, out List<long> offsets))
+            {
+                foreach (long off in offsets)
+                {
+                    var item = bearing.GetItem(off);
+                    if (item == null) continue;
+                    yield return item;
+                }
+            }
+            long start = 0;
+            long number = keyoffsets.Count();
             if (scale != null && scale.GetDia != null)
             {
                 Diapason dia = scale.GetDia(key);
                 start = dia.start;
                 number = dia.numb;
             }
-            IEnumerable<object> query = BinarySearchByKey(start, number, key)
-                .Select(off => bearing.GetItem(off));
-            return query;
+            var bsa = BinarySearchByKey(start, number, key);
+            foreach (var off in bsa)
+            {
+                var item = bearing.GetItem(off);
+                if (item == null) continue;
+                yield return item;
+            }
         }
+
+        Dictionary<int, List<long>> dynaKeyIndex = new Dictionary<int, List<long>>();
+
+        public void OnAddItem(object item, long off)
+        {
+            // определяем ключ
+            int key = hashFun(item);
+            // Если вход есть в словаре, то добавляем офсет, иначе формируем вход
+            if (dynaKeyIndex.TryGetValue(key, out List<long> list))
+            {
+                list.Add(off);
+            } else
+            {
+                dynaKeyIndex.Add(key, Enumerable.Repeat(off, 1).ToList());
+            }
+        }
+
+        public void OnDeleteItem(long off)
+        {
+            // Пока вроде не нужно ничего делать
+            //throw new NotImplementedException();
+        }
+
     }
 }

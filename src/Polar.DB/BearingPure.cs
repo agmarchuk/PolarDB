@@ -28,6 +28,10 @@ namespace Polar.DB
                 sequence.AppendElement(element);
             }
             sequence.Flush();
+            Build();
+        }
+        public void Build()
+        { 
             foreach (var index in Indexes) index.Build();
         }
         public void Flush() { sequence.Flush(); }
@@ -41,6 +45,10 @@ namespace Polar.DB
             sequence.Scan(handler);
         }
         public object GetItem(long off) { return sequence.GetElement(off); }
+
+        public long AddItem(object item) { throw new Exception("Not implemented"); }
+        public void DeleteItem(long off) { throw new Exception("Not implemented"); }
+
         public IIndex[] Indexes { get; set; }
     }
 }

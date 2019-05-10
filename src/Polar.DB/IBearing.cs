@@ -20,7 +20,18 @@ namespace Polar.DB
         /// Сброс буферов, важная операция, когда идет добавление по-элементно 
         /// </summary>
         void Flush();
-        
+
+        /// <summary>
+        /// Загрузка данных и вычисление индексов
+        /// </summary>
+        /// <param name="flow"></param>
+        void Load(IEnumerable<object> flow);
+
+        /// <summary>
+        /// Построение или перепостроение индексов
+        /// </summary>
+        void Build();
+
         /// <summary>
         /// "освежение" или "разогрев" - важна после подсоединения к уже сформированной последовательности 
         /// </summary>
@@ -45,6 +56,22 @@ namespace Polar.DB
         /// <returns></returns>
         object GetItem(long off);
 
+        /// <summary>
+        /// упаковывает и добавляет к опорной последовательности новый элемент (айтем) 
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns>Возвращает офсет записанного элемента</returns>
+        long AddItem(object item);
+
+        /// <summary>
+        /// Уничтожает айтем по офсету элемента, в который айтем упакован 
+        /// </summary>
+        /// <param name="off"></param>
+        void DeleteItem(long off);
+
+        /// <summary>
+        /// Массив индексов, сопоставленных опорной последовательности
+        /// </summary>
         IIndex[] Indexes { get; set; }
     }
 }

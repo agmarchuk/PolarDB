@@ -10,6 +10,9 @@ namespace Polar.DB
         void Build();
         void Refresh();
         //IBearing Bearing { get; set; }
+        void OnAddItem(object item, long off);
+        void OnDeleteItem(long off);
+
     }
     public interface IIndexImmutable
     {

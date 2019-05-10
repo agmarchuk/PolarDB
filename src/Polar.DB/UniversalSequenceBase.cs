@@ -92,10 +92,15 @@ namespace Polar.DB
             ByteFlow.Serialize(bw, v, tp_elem);
             return pos;
         }
-        public long SetElement(object v, long off)
+        public void SetElement(object v, long off)
         {
             if (off != fs.Position) fs.Position = off;
-            return SetElement(v);
+            SetElement(v);
+        }
+        public void SetTypedElement(PType tp, object v, long off)
+        {
+            if (off != fs.Position) fs.Position = off;
+            ByteFlow.Serialize(bw, v, tp);
         }
         private long append_offset = 8L;
         public long AppendElement(object v)
@@ -114,6 +119,11 @@ namespace Polar.DB
         {
             if (off != fs.Position) fs.Position = off;
             return GetElement();
+        }
+        public object GetTypedElement(PType tp, long off)
+        {
+            if (off != fs.Position) fs.Position = off;
+            return ByteFlow.Deserialize(br, tp);
         }
         public object GetByIndex(long index)
         {
