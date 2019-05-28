@@ -15,10 +15,10 @@ namespace TripleStore
             //Random rnd = new Random(11111);
             Console.WriteLine("Start TripleStore experiments");
             int cnt = 0;
-            Func<Stream> GenStream = () => new FileStream(path + "Databases/f" + (cnt++) + ".bin",
+            Func<Stream> GenStream = () => new FileStream(path + "/f" + (cnt++) + ".bin",
                 FileMode.OpenOrCreate, FileAccess.ReadWrite);
 
-            TripleStoreInt32 store = new TripleStoreInt32(GenStream, path + "Databases");
+            TripleStoreInt32 store = new TripleStoreInt32(GenStream, path);
 
             int npersons = 40_000;
             bool toload = true;

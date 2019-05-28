@@ -15,20 +15,17 @@ namespace TripleStore
         // Носителем таблицы является последовательность пар {код, строка}. Номер строки - ее код. Это первично. 
         // По коду строка определяется однозначно (как вводили), по строке код может определяться с учетом эквивалентностей.
         // Вначале таблица пустая, она заполняется 
-        private UniversalSequenceBase table;
-        //private UniversalSequence<long> str_offsets;
+        private BearingPure table;
         private UniversalSequenceBase str_offsets;
 
-        //private IndexKey32CompImm name_index;
-        private IndexKey32CompImmutable name_index;
-        private Dictionary<string, int> dyna_index;
+        private IndexKey32Comp name_index;
+        //private Dictionary<string, int> dyna_index;
         public Nametable32(Func<Stream> stream_gen)
         {
             PType tp_elem = new PTypeRecord(
                 new NamedType("code", new PType(PTypeEnumeration.integer)),
                 new NamedType("str", new PType(PTypeEnumeration.sstring)));
-            table = new UniversalSequenceBase(tp_elem, stream_gen());
-            //str_offsets = new UniversalSequence<long>(new PType(PTypeEnumeration.longinteger), stream_gen());
+            table = new BearingPure(tp_elem, stream_gen);
             str_offsets = new UniversalSequenceBase(new PType(PTypeEnumeration.longinteger), stream_gen());
             Comparer<object> comp_str = Comparer<object>.Create(new Comparison<object>((object a, object b) =>
             {
@@ -37,16 +34,19 @@ namespace TripleStore
                 return aa.CompareTo(bb);
             }));
 
-            name_index = new IndexKey32CompImmutable(stream_gen, table,
-                ob => Enumerable.Repeat(Hashfunctions.HashRot13((string)((object[])ob)[1]), 1), comp_str);
-            dyna_index = new Dictionary<string, int>();
+            name_index = new IndexKey32Comp(stream_gen, table, 
+                ob => true,
+                ob => Hashfunctions.HashRot13((string)((object[])ob)[1]), comp_str);
+
+            table.Indexes = new IIndex[] { name_index };
+            //dyna_index = new Dictionary<string, int>();
         }
         public void Clear()
         {
             table.Clear();
             str_offsets.Clear();
             name_index.Clear();
-            dyna_index = new Dictionary<string, int>();
+            //dyna_index = new Dictionary<string, int>();
         }
         //public void Load(IEnumerable<string> flow)
         //{
@@ -64,7 +64,7 @@ namespace TripleStore
         public void Build()
         {
             // Про порядок операторов еще надо подумать
-            dyna_index = new Dictionary<string, int>();
+            //dyna_index = new Dictionary<string, int>();
             name_index.Build();
         }
         public void Refresh()
@@ -77,9 +77,9 @@ namespace TripleStore
         private int SetStr(string s)
         {
             int code = (int)table.Count();
-            long off = table.AppendElement(new object[] { code, s });
+            long off = table.AddItem(new object[] { code, s });
             str_offsets.AppendElement(off);
-            dyna_index.Add(s, code);
+            //dyna_index.Add(s, code);
             // нужен итоговый Flush по двум последовательностям
             return code;
         }
@@ -90,7 +90,8 @@ namespace TripleStore
         }
         public bool TryGetCode(string s, out int code)
         {
-            if (dyna_index.TryGetValue(s, out code)) return true;
+            //if (dyna_index.TryGetValue(s, out code)) return true;
+            code = -1;
             var q = name_index.GetAllBySample(new object[] { -1, s }).FirstOrDefault(ob => (string)((object[])ob)[1] == s);
             if (q == null) return false;
             code = (int)((object[])q)[0];
@@ -106,7 +107,7 @@ namespace TripleStore
         public string Decode(int cod)
         {
             long off = (long)str_offsets.GetByIndex(cod);
-            return (string)((object[])table.GetElement(off))[1];
+            return (string)((object[])table.GetItem(off))[1];
         }
     }
 }

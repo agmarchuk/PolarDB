@@ -73,5 +73,8 @@ namespace Polar.DB
         /// Массив индексов, сопоставленных опорной последовательности
         /// </summary>
         IIndex[] Indexes { get; set; }
+
+        void ClearIndexes();
+        void AddIndex(IIndex index);
     }
 }

@@ -20,6 +20,9 @@ namespace Polar.DB
         {
             sequence.Clear();
         }
+
+        public long Count() { return sequence.Count(); }
+
         public void Load(IEnumerable<object> flow)
         {
             Clear();
@@ -28,6 +31,8 @@ namespace Polar.DB
                 sequence.AppendElement(element);
             }
             sequence.Flush();
+            Indexes = list_indexes.ToArray();
+            list_indexes.Clear();
             Build();
         }
         public void Build()
@@ -46,8 +51,26 @@ namespace Polar.DB
         }
         public object GetItem(long off) { return sequence.GetElement(off); }
 
-        public long AddItem(object item) { throw new Exception("Not implemented"); }
+        public long AddItem(object item)
+        {
+            long off = sequence.AppendElement(item);
+            sequence.Flush();
+            // Запуск хендлеров ...
+            foreach (var index in Indexes) index.OnAddItem(item, off);
+            return off;
+        }
         public void DeleteItem(long off) { throw new Exception("Not implemented"); }
+
+        private List<IIndex> list_indexes = new List<IIndex>();
+        public void ClearIndexes()
+        {
+            list_indexes.Clear();
+        }
+
+        public void AddIndex(IIndex index)
+        {
+            list_indexes.Add(index);
+        }
 
         public IIndex[] Indexes { get; set; }
     }

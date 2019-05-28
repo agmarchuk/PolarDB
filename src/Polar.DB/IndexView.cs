@@ -371,6 +371,8 @@ namespace Polar.DB
         }
         public void OnAddItem(object item, long off)
         {
+            // Проверим применимость
+            if (!applicable(item)) return;
             // Нужно сформировать пару (item, off) и поместить ее в List
             dyna_list.Add((item, off));
         }

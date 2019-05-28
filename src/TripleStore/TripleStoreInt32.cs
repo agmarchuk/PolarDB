@@ -9,11 +9,12 @@ namespace TripleStore
     public class TripleStoreInt32
     {
         private Nametable32 nt;
-        private UniversalSequenceBase table;
-        private IndexKey32CompImmutable s_index;
-        private IndexKey32CompImmutable inv_index;
+        //private UniversalSequenceBase table;
+        private BearingDeletable table;
+        private IndexKey32Comp s_index;
+        private IndexKey32Comp inv_index;
         //private IndexKey32Imm i_index;
-        private IndexViewImmutable name_index;
+        private IndexView name_index;
         private Comparer<object> comp_like;
         public TripleStoreInt32(Func<Stream> stream_gen, string tmp_dir_path)
         {
@@ -23,31 +24,33 @@ namespace TripleStore
             PType tp_ov = new PTypeUnion(
                 new NamedType("dummy", new PType(PTypeEnumeration.none)),
                 new NamedType("iri", new PType(PTypeEnumeration.integer)),
-                new NamedType("str", new PType(PTypeEnumeration.sstring)),
-                new NamedType("int", new PType(PTypeEnumeration.sstring)),
-                new NamedType("date", new PType(PTypeEnumeration.sstring)),
-                new NamedType("langstr", new PTypeRecord(
-                    new NamedType("lang", new PType(PTypeEnumeration.sstring)),
-                    new NamedType("str", new PType(PTypeEnumeration.sstring)))));
+                new NamedType("str", new PType(PTypeEnumeration.sstring))
+                //new NamedType("int", new PType(PTypeEnumeration.sstring)),
+                //new NamedType("date", new PType(PTypeEnumeration.sstring)),
+                //new NamedType("langstr", new PTypeRecord(
+                //    new NamedType("lang", new PType(PTypeEnumeration.sstring)),
+                //    new NamedType("str", new PType(PTypeEnumeration.sstring))))
+                    );
             PType tp_triple = new PTypeRecord(
                 new NamedType("subj", new PType(PTypeEnumeration.integer)),
                 new NamedType("pred", new PType(PTypeEnumeration.integer)),
                 new NamedType("obj", tp_ov));
             // Главная последовательность кодированных триплетов
-            table = new UniversalSequenceBase(tp_triple, stream_gen());
+            //table = new UniversalSequenceBase(tp_triple, stream_gen());
+            table = new BearingDeletable(tp_triple, stream_gen);
 
             // прямой ссылочный индекс
-            s_index = new IndexKey32CompImmutable(stream_gen, table,
-                ob => Enumerable.Repeat<int>((int)((object[])ob)[0], 1), null);
+            s_index = new IndexKey32Comp(stream_gen, table, ob => true,
+                ob => (int)((object[])ob)[0], null);
 
             // Обратный ссылочный индекс
-            inv_index = new IndexKey32CompImmutable(stream_gen, table, obj =>
-            {
-                object[] pair = (object[])((object[])obj)[2];
-                int tg = (int)pair[0];
-                if (tg != 1) return Enumerable.Empty<int>();
-                return Enumerable.Repeat<int>((int)pair[1], 1);
-            }, null);
+            inv_index = new IndexKey32Comp(stream_gen, table,
+                ob => (int)((object[])((object[])ob)[2])[0] == 1,
+                obj =>
+                {
+                    object[] pair = (object[])((object[])obj)[2];
+                    return (int)pair[1];
+                }, null);
 
             // Индекс по тексту объектов триплетов с предикатом http://fogid.net/o/name
             int p_name = Int32.MinValue;
@@ -57,23 +60,8 @@ namespace TripleStore
                     (string)((object[])((object[])a)[2])[1], 
                     (string)((object[])((object[])b)[2])[1], StringComparison.OrdinalIgnoreCase);
             }));
-            name_index = new IndexViewImmutable(stream_gen, table, comp, tmp_dir_path, 20_000_000)
-            {
-                Filter = obj =>
-                {
-                    //TODO: не учтен вариант отсутствия константы в 
-                    if (p_name == Int32.MinValue)
-                    {
-                        // Если нет константы, то фильтр не будет пропускать
-                        if (!TryGetCode("http://fogid.net/o/name", out p_name)) return false;
-                    }
-                    int p = (int)((object[])obj)[1];
-                    //object[] o = (object[])((object[])obj)[2];
-                    //int tg = (int)o[0];
-                    if (p == p_name) return true;
-                    return false;
-                }
-            };
+            int cod_name = nt.GetSetStr("http://fogid.net/o/name");
+            name_index = new IndexView(stream_gen, table, ob => (int)((object[])ob)[1] == cod_name, comp, tmp_dir_path, 20_000_000);
 
             comp_like = Comparer<object>.Create(new Comparison<object>((object a, object b) =>
             {
@@ -83,6 +71,7 @@ namespace TripleStore
                     (string)((object[])((object[])b)[2])[1], 0, len, StringComparison.OrdinalIgnoreCase);
             }));
 
+            table.Indexes = new IIndex[] { s_index, inv_index, name_index };
         }
 
         public void Build(IEnumerable<object> triples)
@@ -101,7 +90,8 @@ namespace TripleStore
             nt.Clear();
             foreach (object tri in triples)
             {
-                long off = table.AppendElement(tri);
+                //long off = table.AppendElement(tri);
+                table.AddItem(tri);
             }
             table.Flush();
             nt.Flush();

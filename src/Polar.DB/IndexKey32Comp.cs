@@ -21,6 +21,7 @@ namespace Polar.DB
             Func<object, int> hashFun, Comparer<object> comp)
         {
             this.bearing = bearing;
+            this.bearing.AddIndex(this);
             this.applicable = applicable;
             this.hashFun = hashFun;
             this.comp = comp;
@@ -287,6 +288,8 @@ namespace Polar.DB
 
         public void OnAddItem(object item, long off)
         {
+            // Проверяем возможность добавления в индекс
+            if (!applicable(item)) return;
             // определяем ключ
             int key = hashFun(item);
             // Если вход есть в словаре, то добавляем офсет, иначе формируем вход
