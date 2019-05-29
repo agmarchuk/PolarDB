@@ -20,7 +20,7 @@ namespace TripleStore
 
             TripleStoreInt32 store = new TripleStoreInt32(GenStream, path);
 
-            int npersons = 40_000;
+            int npersons = 400_000;
             bool toload = true;
 
             if (toload)
