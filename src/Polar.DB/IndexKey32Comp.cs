@@ -21,7 +21,6 @@ namespace Polar.DB
             Func<object, int> hashFun, Comparer<object> comp)
         {
             this.bearing = bearing;
-            this.bearing.AddIndex(this);
             this.applicable = applicable;
             this.hashFun = hashFun;
             this.comp = comp;

@@ -10,16 +10,20 @@ namespace Polar.DB
     public class IndexKey32CompImmutable : IIndexImmutable
     {
         // строится на основе последовательности пар {ключ, офсет}
-        UniversalSequenceBase keyoffsets;
-        private IBearing bearing;
-        private Func<object, IEnumerable<int>> keysFun;
+        private UniversalSequenceBase keyoffsets;
+        private UniversalSequenceBase bearing;
+        private Func<object, bool> applicable;
+        private Func<object, int> keyFun;
         private Comparer<object> comp;
         private Scale scale = null;
-        public IndexKey32CompImmutable(Func<Stream> streamGen, IBearing bearing, 
-            Func<object, IEnumerable<int>> keysFun, Comparer<object> comp)
+
+        public IndexKey32CompImmutable(Func<Stream> streamGen, UniversalSequenceBase bearing,
+            Func<object, bool> applicable,
+            Func<object, int> keyFun, Comparer<object> comp)
         {
             this.bearing = bearing;
-            this.keysFun = keysFun;
+            this.applicable = applicable;
+            this.keyFun = keyFun;
             this.comp = comp;
             keyoffsets = new UniversalSequenceBase(
                 new PTypeRecord(
@@ -27,7 +31,7 @@ namespace Polar.DB
                     new NamedType("off", new PType(PTypeEnumeration.longinteger))),
                 streamGen());
             // Шкалу надо вычислять не всегда, о реальном условии еще надо подумать
-            if (comp == null) scale = new Scale(streamGen());
+            //if (comp == null) scale = new Scale(streamGen());
         }
         public void Clear() { keyoffsets.Clear(); }
         public long Count() { return keyoffsets.Count(); }
@@ -39,11 +43,8 @@ namespace Polar.DB
 
             bearing.Scan((off, obj) =>
             {
-                foreach (int k in keysFun(obj))
-                {
-                    keys_list.Add(k);
-                    offsets_list.Add(off);
-                }
+                keys_list.Add(keyFun(obj));
+                offsets_list.Add(off);
                 return true;
             });
             int[] keys = keys_list.ToArray();
@@ -94,7 +95,7 @@ namespace Polar.DB
                         objs.Clear();
                     }
                     // основное действие
-                    object ob = bearing.GetItem(offsets[i]);
+                    object ob = bearing.GetElement(offsets[i]);
                     objs.Add(ob);
                 }
                 if (objs.Count > 1) fixgroup();
@@ -120,20 +121,17 @@ namespace Polar.DB
         {
             long start = 0;
             long number = keyoffsets.Count();
-            var kf = keysFun(sample).ToArray();
-            foreach (int key in kf)
+            int key = keyFun(sample);
+            if (scale != null && scale.GetDia != null)
             {
-                if (scale != null && scale.GetDia != null)
-                {
-                    Diapason dia = scale.GetDia(key);
-                    start = dia.start;
-                    number = dia.numb;
-                }
-                var bsa = BinarySearchAll(start, number, key, sample).ToArray();
-                foreach (var off in bsa)
-                {
-                    yield return bearing.GetItem(off);
-                }
+                Diapason dia = scale.GetDia(key);
+                start = dia.start;
+                number = dia.numb;
+            }
+            var bsa = BinarySearchAll(start, number, key, sample).ToArray();
+            foreach (var off in bsa)
+            {
+                yield return bearing.GetElement(off);
             }
         }
 
@@ -186,7 +184,7 @@ namespace Polar.DB
             if (cmp == 0 && comp != null)
             {
                 long o = (long)pair[1];
-                cmp = comp.Compare(bearing.GetItem(o), sample);
+                cmp = comp.Compare(bearing.GetElement(o), sample);
             }
             return cmp;
         }
@@ -248,7 +246,7 @@ namespace Polar.DB
                 number = dia.numb;
             }
             IEnumerable<object> query = BinarySearchByKey(start, number, key)
-                .Select(off => bearing.GetItem(off));
+                .Select(off => bearing.GetElement(off));
             return query;
         }
     }

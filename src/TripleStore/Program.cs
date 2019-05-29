@@ -20,7 +20,7 @@ namespace TripleStore
 
             TripleStoreInt32 store = new TripleStoreInt32(GenStream, path);
 
-            int npersons = 400_000;
+            int npersons = 40_000;
             bool toload = true;
 
             if (toload)
@@ -60,9 +60,9 @@ namespace TripleStore
                         };
                     });
 
+                var triples_set = qu_persons.Concat(qu_fotos).Concat(qu_reflections);
+                    //.Select(pfr => store.CodeTriple((object[])pfr));
                 sw.Restart();
-                var triples_set = qu_persons.Concat(qu_fotos).Concat(qu_reflections)
-                    .Select(pfr => store.CodeTriple((object[])pfr));
                 store.Build(triples_set);
                 sw.Stop();
                 Console.WriteLine($"store Build ok. Duration={sw.ElapsedMilliseconds}");

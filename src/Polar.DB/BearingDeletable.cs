@@ -33,8 +33,6 @@ namespace Polar.DB
                 sequence.AppendElement(new object[] { false, element });
             }
             sequence.Flush();
-            Indexes = list_indexes.ToArray();
-            list_indexes.Clear();
             Build();
         }
         public void Build()
@@ -94,17 +92,6 @@ namespace Polar.DB
             sequence.SetTypedElement(new PType(PTypeEnumeration.boolean), true, off);
             // Запуск хендлеров ...
             foreach (var index in Indexes) index.OnDeleteItem(off);
-        }
-
-        private List<IIndex> list_indexes = new List<IIndex>();
-        public void ClearIndexes()
-        {
-            list_indexes.Clear();
-        }
-
-        public void AddIndex(IIndex index)
-        {
-            list_indexes.Add(index);
         }
 
         public IIndex[] Indexes { get; set; }

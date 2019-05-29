@@ -16,10 +16,14 @@ namespace TripleStore
         //private IndexKey32Imm i_index;
         private IndexView name_index;
         private Comparer<object> comp_like;
+        private string[] preload_names = { "http://fogid.net/o/name" };
         public TripleStoreInt32(Func<Stream> stream_gen, string tmp_dir_path)
         {
             // сначала таблица имен
             nt = new Nametable32(stream_gen);
+            // Предзагрузка должна быть обеспечена даже для пустой таблицы имен
+            foreach (string s in preload_names) nt.GetSetStr(s);
+            nt.Flush();
             // Тип Object Variants
             PType tp_ov = new PTypeUnion(
                 new NamedType("dummy", new PType(PTypeEnumeration.none)),
@@ -53,7 +57,7 @@ namespace TripleStore
                 }, null);
 
             // Индекс по тексту объектов триплетов с предикатом http://fogid.net/o/name
-            int p_name = Int32.MinValue;
+            //int p_name = Int32.MinValue;
             Comparer<object> comp = Comparer<object>.Create(new Comparison<object>((object a, object b) =>
             {
                 return string.Compare(
@@ -78,7 +82,6 @@ namespace TripleStore
         {
             Load(triples);
             s_index.Build();
-            //i_index.Build();
             inv_index.Build();
             name_index.Build();
             nt.Build();
@@ -88,10 +91,14 @@ namespace TripleStore
         {
             table.Clear();
             nt.Clear();
+            // Предзагрузка
+            foreach (string s in preload_names) nt.GetSetStr(s);
+            nt.Flush();
+
             foreach (object tri in triples)
             {
-                //long off = table.AppendElement(tri);
-                table.AddItem(tri);
+                var tr = CodeTriple((object[])tri);
+                table.AddItem(tr);
             }
             table.Flush();
             nt.Flush();

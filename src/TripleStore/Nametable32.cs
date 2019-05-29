@@ -15,84 +15,75 @@ namespace TripleStore
         // Носителем таблицы является последовательность пар {код, строка}. Номер строки - ее код. Это первично. 
         // По коду строка определяется однозначно (как вводили), по строке код может определяться с учетом эквивалентностей.
         // Вначале таблица пустая, она заполняется 
-        private BearingPure table;
-        private UniversalSequenceBase str_offsets;
+        private UniversalSequenceBase cod_str;
+        // Это офсеты основной таблицы. Номер элемента совпадает с кодом
+        private UniversalSequenceBase offsets;
+        // Индекс хеш строки - офсет. Индекс может быть неполный. Полный индекс - вместе со словарем 
+        private IndexKey32CompImmutable index_str;
+        // Динамическая часть индекса
+        private Dictionary<string, int> dyna_index;
 
-        private IndexKey32Comp name_index;
-        //private Dictionary<string, int> dyna_index;
         public Nametable32(Func<Stream> stream_gen)
         {
             PType tp_elem = new PTypeRecord(
                 new NamedType("code", new PType(PTypeEnumeration.integer)),
                 new NamedType("str", new PType(PTypeEnumeration.sstring)));
-            table = new BearingPure(tp_elem, stream_gen);
-            str_offsets = new UniversalSequenceBase(new PType(PTypeEnumeration.longinteger), stream_gen());
-            Comparer<object> comp_str = Comparer<object>.Create(new Comparison<object>((object a, object b) =>
-            {
-                var aa = (string)((object[])a)[1];
-                var bb = (string)((object[])b)[1];
-                return aa.CompareTo(bb);
-            }));
-
-            name_index = new IndexKey32Comp(stream_gen, table, 
-                ob => true,
-                ob => Hashfunctions.HashRot13((string)((object[])ob)[1]), comp_str);
-
-            table.Indexes = new IIndex[] { name_index };
-            //dyna_index = new Dictionary<string, int>();
+            cod_str = new UniversalSequenceBase(tp_elem, stream_gen());
+            offsets = new UniversalSequenceBase(new PType(PTypeEnumeration.longinteger), stream_gen());
+            index_str = new IndexKey32CompImmutable(stream_gen, cod_str, ob => true,
+                ob => Hashfunctions.HashRot13((string)((object[])ob)[1]), null);
+            dyna_index = new Dictionary<string, int>();
         }
         public void Clear()
         {
-            table.Clear();
-            str_offsets.Clear();
-            name_index.Clear();
-            //dyna_index = new Dictionary<string, int>();
+            cod_str.Clear();
+            offsets.Clear();
+            index_str.Clear();
+            dyna_index = new Dictionary<string, int>();
         }
-        //public void Load(IEnumerable<string> flow)
-        //{
-        //    // а правильно ли без очистки name_index ?
-        //    int cod = (int)table.Count();
-        //    foreach (string s in flow)
-        //    {
-        //        long off = table.AppendElement(new object[] { cod, s });
-        //        cod++;
-        //        str_offsets.AppendElement(off);
-        //    }
-        //    table.Flush();
-        //    str_offsets.Flush();
-        //}
+
+        /// <summary>
+        /// Перестраивает индекс index_str
+        /// </summary>
         public void Build()
         {
             // Про порядок операторов еще надо подумать
-            //dyna_index = new Dictionary<string, int>();
-            name_index.Build();
+            index_str.Build();
+            dyna_index = new Dictionary<string, int>();
         }
         public void Refresh()
         {
-            table.Refresh();
-            str_offsets.Refresh();
-            name_index.Refresh();
+            cod_str.Refresh();
+            offsets.Refresh();
+            index_str.Refresh();
         }
         // ==================== Динамика ===================
+
+        /// <summary>
+        /// Добавление НОВОГО имени, получение кода
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
         private int SetStr(string s)
         {
-            int code = (int)table.Count();
-            long off = table.AddItem(new object[] { code, s });
-            str_offsets.AppendElement(off);
-            //dyna_index.Add(s, code);
+            // Новый код определяется, записывается в основную таблицу, записывается в таблицу офсетов, записывается в динамический индекс
+            int code = (int)cod_str.Count();
+            long off = cod_str.AppendElement(new object[] { code, s });
+            offsets.AppendElement(off);
+            dyna_index.Add(s, code);
             // нужен итоговый Flush по двум последовательностям
             return code;
         }
         public void Flush()
         {
-            table.Flush();
-            str_offsets.Flush();
+            cod_str.Flush();
+            offsets.Flush();
         }
         public bool TryGetCode(string s, out int code)
         {
-            //if (dyna_index.TryGetValue(s, out code)) return true;
+            if (dyna_index.TryGetValue(s, out code)) return true;
             code = -1;
-            var q = name_index.GetAllBySample(new object[] { -1, s }).FirstOrDefault(ob => (string)((object[])ob)[1] == s);
+            var q = index_str.GetAllBySample(new object[] { -1, s }).FirstOrDefault(ob => (string)((object[])ob)[1] == s);
             if (q == null) return false;
             code = (int)((object[])q)[0];
             return true;
@@ -106,8 +97,8 @@ namespace TripleStore
         }
         public string Decode(int cod)
         {
-            long off = (long)str_offsets.GetByIndex(cod);
-            return (string)((object[])table.GetItem(off))[1];
+            long off = (long)offsets.GetByIndex(cod);
+            return (string)((object[])cod_str.GetElement(off))[1];
         }
     }
 }
