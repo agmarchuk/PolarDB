@@ -121,6 +121,7 @@ namespace Polar.DB
         {
             long start = 0;
             long number = keyoffsets.Count();
+            if (number == 0) goto finish;
             int key = keyFun(sample);
             if (scale != null && scale.GetDia != null)
             {
@@ -133,6 +134,7 @@ namespace Polar.DB
             {
                 yield return bearing.GetElement(off);
             }
+            finish: { }
         }
 
 

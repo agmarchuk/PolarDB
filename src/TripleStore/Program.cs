@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using Polar.DB;
 
 namespace TripleStore
 {
@@ -9,7 +10,7 @@ namespace TripleStore
     {
         static void Main(string[] args)
         {
-            string path = "";
+            string path = "/Home/data";
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
             Random rnd = new Random();
             //Random rnd = new Random(11111);
@@ -61,11 +62,76 @@ namespace TripleStore
                     });
 
                 var triples_set = qu_persons.Concat(qu_fotos).Concat(qu_reflections);
-                    //.Select(pfr => store.CodeTriple((object[])pfr));
+
+                if (true)
+                {
+                    Dictionary<string, int> dic = new Dictionary<string, int>();
+                    UniversalSequenceBase usb = new UniversalSequenceBase(
+                        new PTypeRecord(
+                            new NamedType("code", new PType(PTypeEnumeration.integer)),
+                            new NamedType("str", new PType(PTypeEnumeration.sstring))),
+                        GenStream());
+                    UniversalSequenceBase offsets = new UniversalSequenceBase(new PType(PTypeEnumeration.longinteger),
+                        GenStream());
+
+                    List<object> tlist = new List<object>();
+                    usb.Clear();
+                    offsets.Clear();
+
+                    Func<string, int> todic, todic2;
+                    todic = s =>
+                     {
+                         int nom = -1;
+                         if (!dic.TryGetValue(s, out nom))
+                         {
+                             nom = (int)usb.Count();
+                             long off = usb.AppendElement(new object[] { nom, s });
+                             offsets.AppendElement(off);
+                             dic.Add(s, nom);
+                         }
+                         return nom;
+                     };
+
+                    Nametable32 nt = new Nametable32(GenStream);
+                    nt.Clear();
+                    todic = s =>
+                    {
+                        return nt.GetSetStr(s);
+                    };
+
+                    sw.Restart();
+                    foreach (object[] tri in triples_set)
+                    {
+                        string s = (string)tri[0];
+                        int subj = todic(s);
+                        s = (string)tri[1];
+                        int pred = todic(s);
+                        object[] obj = (object[])tri[2];
+                        object[] o;
+                        if ((int)obj[0] == 1)
+                        {
+                            o = new object[] { (int)obj[0], todic((string)obj[1]) };
+                        }
+                        else
+                        {
+                            o = new object[] { (int)obj[0], (string)obj[1] };
+                        }
+                        //tlist.Add(new object[] { subj, pred, o });
+                    }
+                    usb.Flush();
+                    offsets.Flush();
+                    sw.Stop();
+                    Console.WriteLine($"store Build ok. Duration={sw.ElapsedMilliseconds}");
+
+                    return;
+                }
+
                 sw.Restart();
                 store.Build(triples_set);
                 sw.Stop();
                 Console.WriteLine($"store Build ok. Duration={sw.ElapsedMilliseconds}");
+
+                return;
             }
             else
             {
