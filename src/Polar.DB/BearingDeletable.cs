@@ -17,11 +17,8 @@ namespace Polar.DB
                 new NamedType("deleted", new PType(PTypeEnumeration.boolean)),
                 new NamedType("element", tp_el)), streamGen());
         }
-        // Без индексов можно последовательноть очистить, загрузить поток значений, сканировать поток значений
-        public void Clear()
-        {
-            sequence.Clear();
-        }
+        // Без индексов можно последовательность очистить, загрузить поток значений, сканировать поток значений
+        public void Clear() { sequence.Clear(); }
 
         public long Count() { return sequence.Count(); }
 
@@ -76,6 +73,16 @@ namespace Polar.DB
         public bool IsDeletedItem(long off)
         {
             return (bool)sequence.GetTypedElement(new PType(PTypeEnumeration.boolean), off);
+        }
+
+        /// <summary>
+        /// Добавление айтема без флюша и запуска хендлеров 
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
+        public long AppendItem(object item)
+        {
+            return sequence.AppendElement(new object[] { false, item });
         }
 
         public long AddItem(object item)

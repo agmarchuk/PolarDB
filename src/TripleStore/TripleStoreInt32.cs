@@ -89,34 +89,18 @@ namespace TripleStore
         }
         private void Load(IEnumerable<object> triples)
         {
-
             table.Clear();
             nt.Clear();
             // Предзагрузка
             foreach (string s in preload_names) nt.GetSetStr(s);
             nt.Flush();
 
-            System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-            sw.Restart();
-
-            List<object> list = new List<object>();
             foreach (object tri in triples)
             {
                 var tr = CodeTriple((object[])tri);
-                list.Add(tr);
-            }
-            sw.Stop();
-            Console.WriteLine($"Code ok {sw.ElapsedMilliseconds}");
-
-            sw.Restart();
-            foreach (object tr in list)
-            {
-                table.AddItem(tr);
+                table.AppendItem(tr);
             }
             table.Flush();
-            nt.Flush();
-            sw.Stop();
-            Console.WriteLine($"Build ok {sw.ElapsedMilliseconds}");
         }
 
         public void Refresh()

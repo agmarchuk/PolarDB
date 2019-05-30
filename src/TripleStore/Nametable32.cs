@@ -70,7 +70,19 @@ namespace TripleStore
             int code = (int)cod_str.Count();
             long off = cod_str.AppendElement(new object[] { code, s });
             offsets.AppendElement(off);
-            dyna_index.Add(s, code);
+            if (dyna_index.Count > 10_000_000)
+            {
+                System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+                sw.Start();
+                Flush();
+                Build();
+                sw.Stop();
+                Console.WriteLine($"Build() {sw.ElapsedMilliseconds}");
+            }
+            else
+            {
+                dyna_index.Add(s, code);
+            }
             // нужен итоговый Flush по двум последовательностям
             return code;
         }

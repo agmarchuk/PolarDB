@@ -31,7 +31,7 @@ namespace Polar.DB
                     new NamedType("off", new PType(PTypeEnumeration.longinteger))),
                 streamGen());
             // Шкалу надо вычислять не всегда, о реальном условии еще надо подумать
-            //if (comp == null) scale = new Scale(streamGen());
+            if (comp == null) scale = new Scale(streamGen());
         }
         public void Clear() { keyoffsets.Clear(); }
         public long Count() { return keyoffsets.Count(); }
