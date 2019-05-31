@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using Polar.DB;
 
-namespace TripleStore
+namespace Polar.TripleStore
 {
     public class TripleStoreInt32
     {
