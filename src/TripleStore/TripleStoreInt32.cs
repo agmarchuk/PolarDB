@@ -16,14 +16,22 @@ namespace Polar.TripleStore
         //private IndexKey32Imm i_index;
         private IndexView name_index;
         private Comparer<object> comp_like;
-        private string[] preload_names = { "http://fogid.net/o/name" };
+        private string[] preload_names = { "http://www.w3.org/1999/02/22-rdf-syntax-ns#type", "http://fogid.net/o/name" };
+        public int Code_rdftype { get; set; }
+        public int Code_fogname { get; set; }
+        internal void PreloadFognames()
+        {
+            foreach (string s in preload_names) nt.GetSetStr(s);
+            Code_rdftype = nt.GetSetStr("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+            Code_fogname = nt.GetSetStr("http://fogid.net/o/name");
+            nt.Flush();
+        }
         public TripleStoreInt32(Func<Stream> stream_gen, string tmp_dir_path)
         {
             // сначала таблица имен
             nt = new Nametable32(stream_gen);
             // Предзагрузка должна быть обеспечена даже для пустой таблицы имен
-            foreach (string s in preload_names) nt.GetSetStr(s);
-            nt.Flush();
+            PreloadFognames();
             // Тип Object Variants
             PType tp_ov = new PTypeUnion(
                 new NamedType("dummy", new PType(PTypeEnumeration.none)),
@@ -78,29 +86,31 @@ namespace Polar.TripleStore
             table.Indexes = new IIndex[] { s_index, inv_index, name_index };
         }
 
-        public void Build(IEnumerable<object> triples)
+        public void Build()
         {
-            Load(triples);
             s_index.Build();
             inv_index.Build();
             name_index.Build();
             nt.Build();
             nt.Flush();
         }
-        private void Load(IEnumerable<object> triples)
+        public void Clear()
         {
             table.Clear();
+            s_index.Clear();
+            inv_index.Clear();
+            name_index.Clear();
             nt.Clear();
             // Предзагрузка
-            foreach (string s in preload_names) nt.GetSetStr(s);
-            nt.Flush();
-
+            PreloadFognames();
+        }
+        public void Load(IEnumerable<object> triples)
+        {
             foreach (object tri in triples)
             {
-                var tr = CodeTriple((object[])tri);
-                table.AppendItem(tr);
+                //var tr = CodeTriple((object[])tri);
+                table.AppendItem(tri);
             }
-            table.Flush();
         }
 
         public void Refresh()
@@ -135,7 +145,10 @@ namespace Polar.TripleStore
         }
 
         // ================== Утилиты ====================
-        internal object[] CodeTriple(object[] tri)
+        public int CodeEntity(string en) { return nt.GetSetStr(en); }
+        public string DecodeEntity(int ient) { return nt.Decode(ient); }
+
+        public object[] CodeTriple(object[] tri)
         {
             int subj = nt.GetSetStr((string)tri[0]);
             int pred = nt.GetSetStr((string)tri[1]);
@@ -151,7 +164,7 @@ namespace Polar.TripleStore
                 return new object[] { subj, pred, new object[] { 2, dobj } };
             }
         }
-        internal string TripleToString(object[] tr)
+        public string TripleToString(object[] tr)
         {
             string subj = nt.Decode((int)tr[0]);
             string pred = nt.Decode((int)tr[1]);

@@ -45,6 +45,7 @@ namespace Polar.DB
             offset_sequ.Clear();
             bearing.Scan((off, obj) =>
             {
+                bool isapp = applicable(obj);
                 if (applicable(obj)) offset_sequ.AppendElement(off);
                 return true;
             });
