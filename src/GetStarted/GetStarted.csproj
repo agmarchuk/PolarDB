@@ -24,6 +24,7 @@
     <ProjectReference Include="..\Polar.DB\Polar.DB.csproj" />
     <ProjectReference Include="..\Polar.CellIndexes\Polar.CellIndexes.csproj" />
     <ProjectReference Include="..\Polar.PagedStreams\Polar.PagedStreams.csproj" />
+    <ProjectReference Include="..\TripleStore\Polar.TripleStore.csproj" />
   </ItemGroup>
 
 </Project>

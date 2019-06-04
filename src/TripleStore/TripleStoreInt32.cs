@@ -108,8 +108,8 @@ namespace Polar.TripleStore
         {
             foreach (object tri in triples)
             {
-                //var tr = CodeTriple((object[])tri);
-                table.AppendItem(tri);
+                var tr = CodeTriple((object[])tri);
+                table.AppendItem(tr);
             }
         }
 
