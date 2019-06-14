@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -7,8 +7,8 @@
     <Company>iis</Company>
     <Product>PolarDB</Product>
     <Description>Kernel library of PolarDB product: polar types, binary and text serialization and deserialization, UniversalSequence</Description>
-    <Version>1.0.5</Version>
-    <PackageLicenseUrl>http://mag.iis.nsk.su/mag_license.htm</PackageLicenseUrl>
+    <Version>1.0.6</Version>
+    <PackageLicenseUrl></PackageLicenseUrl>
     <NeutralLanguage>az-Cyrl-AZ</NeutralLanguage>
   </PropertyGroup>
 
