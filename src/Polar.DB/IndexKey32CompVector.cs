@@ -219,6 +219,7 @@ namespace Polar.DB
         /// <returns></returns>
         private IEnumerable<long> BinarySearchByKey(long start, long number, int key)
         {
+            if (number == 0) return Enumerable.Empty<long>();
             if (number < plain)
             {
                 return keyoffsets.ElementValues(keyoffsets.ElementOffset(start), number)
