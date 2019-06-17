@@ -14,14 +14,12 @@ namespace GetStarted
         {
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
             System.Random rnd = new Random();
+            //string path = "../../../../data/Databases/";
             string path = "D:/Home/data/Databases/";
             int fnom = 0;
             Func<Stream> GenStream = () => File.Open(path + (fnom++), FileMode.OpenOrCreate);
-            Console.WriteLine("Start Main20");
-            
-            TripleRecordStore store = new TripleRecordStore(GenStream, path);
-
-            store.Preload = new string[] {
+            Console.WriteLine("Start TestConsoleApp (Main32)");
+            TripleRecordStore store = new TripleRecordStore(GenStream, path, new string[] {
                 "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
                 , "http://fogid.net/o/name"
                 , "http://fogid.net/o/age"
@@ -30,10 +28,9 @@ namespace GetStarted
                 , "http://fogid.net/o/reflection"
                 , "http://fogid.net/o/reflected"
                 , "http://fogid.net/o/in-doc"
-            };
+            });
 
-
-            int npersons = 400_000;
+            int npersons = 4_000_000;
             int nphotos = npersons * 2;
             int nreflections = npersons * 6;
 
@@ -90,17 +87,15 @@ namespace GetStarted
                 var reflections3 = Enumerable.Range(0, nreflections).Select(i => nreflections - i - 1)
                     .Select(c => store.CodeRecord(new object[] { "" +(c+3*npersons), // Это "прямой" код не требующий кодирования через таблицу
                         new object[] { new object[] { 0, 5 },
-                            //new object[] { 6, ""+rnd.Next(npersons) },
-                            //new object[] { 7, ""+(rnd.Next(nphotos) + npersons) } 
-                            new object[] { 6, -1 - (rnd.Next(npersons)) },
-                            new object[] { 7, -1 - (rnd.Next(nphotos) + npersons) }
+                            new object[] { 6, ""+rnd.Next(npersons) },
+                            new object[] { 7, ""+(rnd.Next(nphotos) + npersons) }
                         },
                         new object[] { }
                     }));
                 if (tocode)
                 {
-                    //store.Load(persons2.Concat(photos2).Concat(reflections2));
-                    store.Load(persons3.Concat(photos3).Concat(reflections3));
+                    store.Load(persons2.Concat(photos2).Concat(reflections2));
+                    //store.Load(persons3.Concat(photos3).Concat(reflections3));
                 }
                 else
                 {
@@ -156,6 +151,21 @@ namespace GetStarted
             sw.Stop();
             Console.WriteLine($"{nprobe} persons for photos ok. duration={sw.ElapsedMilliseconds} total={total}");
 
+            //var likes = store.Like("p" + 666);
+            //foreach (var like in likes)
+            //{
+            //    Console.WriteLine($"like {store.ToTT(like)}");
+            //}
+
+            sw.Restart();
+            total = 0;
+            for (int i=0; i<1000; i++)
+            {
+                string id = "p" + rnd.Next(npersons / 10 + 1, npersons);
+                total += store.Like(id).Count();
+            }
+            sw.Stop();
+            Console.WriteLine($"{nprobe} likes for persons ok. duration={sw.ElapsedMilliseconds} total={total}");
         }
     }
 

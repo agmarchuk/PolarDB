@@ -21,6 +21,7 @@ namespace Polar.TripleStore
         private Comparer<object> comp_like;
         private string[] preload_names = { };
         public string[] Preload { get { return preload_names; } set { preload_names = value; LoadPreloadnames(); } }
+        private int cod_name;
         internal void LoadPreloadnames()
         {
             foreach (string s in preload_names) nt.GetSetStr(s);
@@ -30,11 +31,12 @@ namespace Polar.TripleStore
         public int Code(string s) => nt.GetSetStr(s);
         public string Decode(int c) => nt.Decode(c);
 
-        public TripleRecordStore(Func<Stream> stream_gen, string tmp_dir_path)
+        public TripleRecordStore(Func<Stream> stream_gen, string tmp_dir_path, string[] preload_names)
         {
             // сначала таблица имен
             nt = new Nametable32(stream_gen);
             // Предзагрузка должна быть обеспечена даже для пустой таблицы имен
+            this.preload_names = preload_names;
             LoadPreloadnames();
             // Тип записи
             PType tp_record = new PTypeRecord(
@@ -63,29 +65,36 @@ namespace Polar.TripleStore
                 }, null);
 
 
-            //// Индекс по текстам полей записей триплетов с предикатом http://fogid.net/o/name
-            //// компаратор надо поменять!!!!!!
-            //Comparer<object> comp = Comparer<object>.Create(new Comparison<object>((object a, object b) =>
-            //{
-            //    return string.Compare(
-            //        (string)((object[])((object[])a)[2])[1],
-            //        (string)((object[])((object[])b)[2])[1], StringComparison.OrdinalIgnoreCase);
-            //}));
-            //int cod_name = nt.GetSetStr("http://fogid.net/o/name");
-            //// name-индекс пока будет скалярным и будет индексировать первое (!) name-поле в записи
-            //name_index = new IndexView(stream_gen, table, 
-            //    ob => (int)((object[])ob)[1] == cod_name, comp, tmp_dir_path, 20_000_000);
+            // Индекс по текстам полей записей триплетов с предикатом http://fogid.net/o/name
+            // Предполагается, что в Preload есть такое имя:
+            cod_name = nt.GetSetStr("http://fogid.net/o/name");
+            // Это компаратор сортировки. (более ранний комментарий: компаратор надо поменять!!!!!!)
+            Comparer<object> comp = Comparer<object>.Create(new Comparison<object>((object a, object b) =>
+            {
+                object predval1 = ((object[])((object[])a)[2]).FirstOrDefault(pair => (int)((object[])pair)[0] == cod_name);
+                object predval2 = ((object[])((object[])b)[2]).FirstOrDefault(pair => (int)((object[])pair)[0] == cod_name);
 
-            //comp_like = Comparer<object>.Create(new Comparison<object>((object a, object b) =>
-            //{
-            //    int len = ((string)((object[])((object[])b)[2])[1]).Length;
-            //    return string.Compare(
-            //        (string)((object[])((object[])a)[2])[1], 0,
-            //        (string)((object[])((object[])b)[2])[1], 0, len, StringComparison.OrdinalIgnoreCase);
-            //}));
+                return string.Compare(
+                    (string)((object[])predval1)[1],
+                    (string)((object[])predval2)[1],
+                    StringComparison.OrdinalIgnoreCase);
+            }));
 
-            //table.Indexes = new IIndex[] { s_index, inv_index, name_index };
-            table.Indexes = new IIndex[] { s_index, inv_index };
+            comp_like = Comparer<object>.Create(new Comparison<object>((object a, object b) =>
+            {
+                string val1 = (string)((object[])((object[])((object[])a)[2]).FirstOrDefault(pair => (int)((object[])pair)[0] == cod_name))[1];
+                string val2 = (string)((object[])((object[])((object[])b)[2]).FirstOrDefault(pair => (int)((object[])pair)[0] == cod_name))[1];
+                int len = val2.Length;
+                return string.Compare(
+                    val1, 0,
+                    val2, 0, len, StringComparison.OrdinalIgnoreCase);
+            }));
+            // name-индекс пока будет скалярным и будет индексировать первое (!) name-поле в записи
+            name_index = new IndexView(stream_gen, table,
+                ob => ((object[])((object[])ob)[2]).FirstOrDefault(pair => (int)((object[])pair)[0] == cod_name) != null, 
+                comp, tmp_dir_path, 20_000_000);
+
+            table.Indexes = new IIndex[] { s_index, inv_index, name_index };
 
         }
         public void Clear()
@@ -93,7 +102,7 @@ namespace Polar.TripleStore
             table.Clear();
             s_index.Clear();
             inv_index.Clear();
-            //name_index.Clear();
+            name_index.Clear();
             nt.Clear();
             // Предзагрузка
             LoadPreloadnames();
@@ -123,7 +132,7 @@ namespace Polar.TripleStore
         {
             s_index.Build();
             inv_index.Build();
-            //name_index.Build();
+            name_index.Build();
             nt.Build();
             nt.Flush();
         }
@@ -132,7 +141,7 @@ namespace Polar.TripleStore
             table.Refresh();
             s_index.Refresh();
             inv_index.Refresh();
-            //name_index.Refresh();
+            name_index.Refresh();
             nt.Refresh();
         }
 
@@ -147,7 +156,10 @@ namespace Polar.TripleStore
             var qu = inv_index.GetAllByKey(c);
             return qu;
         }
-
+        public IEnumerable<object> Like(string sample)
+        {
+            return name_index.SearchAll(new object[] { -1, new object[0], new object[] { new object[] { cod_name, sample } } }, comp_like);
+        }
         public string ToTT(object rec)
         {
             object[] rr = (object[])rec;
