@@ -34,7 +34,7 @@ namespace GetStarted
             int nphotos = npersons * 2;
             int nreflections = npersons * 6;
 
-            bool toload = true;
+            bool toload = false;
             bool tocode = true;
             if (toload)
             {
@@ -105,7 +105,7 @@ namespace GetStarted
                 sw.Stop();
                 Console.WriteLine($"Load ok. duration={sw.ElapsedMilliseconds}");
             }
-            else
+            //else
             {
                 sw.Restart();
                 store.Refresh();

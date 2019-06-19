@@ -70,7 +70,7 @@ namespace Polar.TripleStore
             int code = (int)cod_str.Count();
             long off = cod_str.AppendElement(new object[] { code, s });
             offsets.AppendElement(off);
-            if (dyna_index.Count > 10_000_000)
+            if (dyna_index.Count > 100_000_000)
             {
                 System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
                 sw.Start();

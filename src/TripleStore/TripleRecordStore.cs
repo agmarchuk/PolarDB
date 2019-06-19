@@ -122,19 +122,31 @@ namespace Polar.TripleStore
         }
         public void Load(IEnumerable<object> records)
         {
+            int ii = 0;
             foreach (object[] record in records)
             {
                 table.AppendItem(record);
+                ii++;
+                if (ii % 1_000_000 == 0) Console.Write($"{ii / 1_000_000} ");
             }
+            Console.WriteLine("load ok.");
             table.Flush();
         }
         public void Build()
         {
-            s_index.Build();
-            inv_index.Build();
-            name_index.Build();
             nt.Build();
             nt.Flush();
+            GC.Collect();
+            Console.WriteLine("Nametable ok.");
+            s_index.Build();
+            GC.Collect();
+            Console.WriteLine("s_index ok.");
+            inv_index.Build();
+            GC.Collect();
+            Console.WriteLine("inv_index ok.");
+            name_index.Build();
+            GC.Collect();
+            Console.WriteLine("name_index ok.");
         }
         public void Refresh()
         {
