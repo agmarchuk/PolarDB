@@ -172,6 +172,12 @@ namespace Polar.TripleStore
         {
             return name_index.SearchAll(new object[] { -1, new object[0], new object[] { new object[] { cod_name, sample } } }, comp_like);
         }
+
+
+        // ================== Утилиты ====================
+        public int CodeEntity(string en) { return nt.GetSetStr(en); }
+        public string DecodeEntity(int ient) { return nt.Decode(ient); }
+
         public string ToTT(object rec)
         {
             object[] rr = (object[])rec;
