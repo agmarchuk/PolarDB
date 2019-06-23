@@ -131,6 +131,7 @@ namespace Polar.TripleStore
             }
             Console.WriteLine("load ok.");
             table.Flush();
+            nt.Flush();
         }
         public void Build()
         {
@@ -147,6 +148,7 @@ namespace Polar.TripleStore
             name_index.Build();
             GC.Collect();
             Console.WriteLine("name_index ok.");
+            nt.Flush();
         }
         public void Refresh()
         {
