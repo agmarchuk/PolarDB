@@ -26,10 +26,8 @@ namespace Polar.DB
             this.volume_of_offset_array = volume_of_offset_array;
         }
 
-        public void Clear()
-        {
-            offset_sequ.Clear();
-        }
+        public void Clear() { offset_sequ.Clear(); }
+        public void Flush() { offset_sequ.Flush(); }
 
         // Что нужно? Создать и использовать
         private object[] rare_elements = null; // --

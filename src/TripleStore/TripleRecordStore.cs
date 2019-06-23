@@ -97,6 +97,14 @@ namespace Polar.TripleStore
             table.Indexes = new IIndex[] { s_index, inv_index, name_index };
 
         }
+        public void Flush()
+        {
+            table.Flush();
+            s_index.Flush();
+            inv_index.Flush();
+            name_index.Flush();
+            nt.Flush();
+        }
         public void Clear()
         {
             table.Clear();

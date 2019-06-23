@@ -8,6 +8,7 @@ namespace Polar.DB
     {
         void Clear();
         void Build();
+        void Flush();
         void Refresh();
         //IBearing Bearing { get; set; }
         void OnAddItem(object item, long off);
@@ -18,6 +19,7 @@ namespace Polar.DB
     {
         void Clear();
         void Build();
+        void Flush();
         void Refresh();
     }
 }
