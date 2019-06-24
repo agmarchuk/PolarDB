@@ -158,6 +158,8 @@ namespace Polar.TripleStore
             Console.WriteLine("name_index ok.");
             nt.Flush();
         }
+        // Динамическое построение строит диннамическую часть индексов, ЕСЛИ НАДО
+        public void DynaBuild() { nt.Build(); nt.Flush(); }
         public void Refresh()
         {
             table.Refresh();
