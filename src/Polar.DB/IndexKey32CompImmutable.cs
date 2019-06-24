@@ -34,6 +34,7 @@ namespace Polar.DB
             if (comp == null) scale = new Scale(streamGen());
         }
         public void Clear() { keyoffsets.Clear(); }
+        public void Flush() { keyoffsets.Flush(); }
         public long Count() { return keyoffsets.Count(); }
         public void Build()
         {

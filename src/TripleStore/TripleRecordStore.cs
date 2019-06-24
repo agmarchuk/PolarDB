@@ -97,6 +97,14 @@ namespace Polar.TripleStore
             table.Indexes = new IIndex[] { s_index, inv_index, name_index };
 
         }
+        public void Flush()
+        {
+            table.Flush();
+            s_index.Flush();
+            inv_index.Flush();
+            name_index.Flush();
+            nt.Flush();
+        }
         public void Clear()
         {
             table.Clear();
@@ -131,6 +139,7 @@ namespace Polar.TripleStore
             }
             Console.WriteLine("load ok.");
             table.Flush();
+            nt.Flush();
         }
         public void Build()
         {
@@ -147,7 +156,10 @@ namespace Polar.TripleStore
             name_index.Build();
             GC.Collect();
             Console.WriteLine("name_index ok.");
+            nt.Flush();
         }
+        // Динамическое построение строит диннамическую часть индексов, ЕСЛИ НАДО
+        public void DynaBuild() { nt.Build(); nt.Flush(); }
         public void Refresh()
         {
             table.Refresh();
@@ -172,6 +184,12 @@ namespace Polar.TripleStore
         {
             return name_index.SearchAll(new object[] { -1, new object[0], new object[] { new object[] { cod_name, sample } } }, comp_like);
         }
+
+
+        // ================== Утилиты ====================
+        public int CodeEntity(string en) { return nt.GetSetStr(en); }
+        public string DecodeEntity(int ient) { return nt.Decode(ient); }
+
         public string ToTT(object rec)
         {
             object[] rr = (object[])rec;
