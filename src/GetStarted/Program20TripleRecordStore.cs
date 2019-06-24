@@ -30,11 +30,11 @@ namespace GetStarted
                 , "http://fogid.net/o/in-doc"
             });
 
-            int npersons = 4_000_000;
+            int npersons = 20_000_000;
             int nphotos = npersons * 2;
             int nreflections = npersons * 6;
 
-            bool toload = false;
+            bool toload = true;
             bool tocode = true;
             if (toload)
             {
