@@ -37,7 +37,11 @@ namespace Polar.DB
                 nelements = br.ReadInt64();
                 // если длина элементов фиксирована, устанавливаем на условный конец, если нет -устанавливаем на начало пустого
                 if (elem_size > 0) fs.Position = 8 + nelements * elem_size;
-                else fs.Position = fs.Length; // Этот вариант породит ошибку, если реальный размер файла больше, чем занимают элементы
+                else
+                {
+                    //fs.Position = fs.Length; // Этот вариант породит ошибку, если реальный размер файла больше, чем занимают элементы
+                    this.Scan((off, ob) => true);
+                }
             }
         }
         /// <summary>
