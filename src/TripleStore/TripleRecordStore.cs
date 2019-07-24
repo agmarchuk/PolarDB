@@ -84,6 +84,7 @@ namespace Polar.TripleStore
             {
                 string val1 = (string)((object[])((object[])((object[])a)[2]).FirstOrDefault(pair => (int)((object[])pair)[0] == cod_name))[1];
                 string val2 = (string)((object[])((object[])((object[])b)[2]).FirstOrDefault(pair => (int)((object[])pair)[0] == cod_name))[1];
+                if (string.IsNullOrEmpty(val2)) return 0;
                 int len = val2.Length;
                 return string.Compare(
                     val1, 0,
@@ -184,7 +185,28 @@ namespace Polar.TripleStore
         {
             return name_index.SearchAll(new object[] { -1, new object[0], new object[] { new object[] { cod_name, sample } } }, comp_like);
         }
-
+        /// <summary>
+        /// Уничтожает все записи с заданным ключом
+        /// </summary>
+        /// <param name="c"></param>
+        public void DeleteAll(int c)
+        {
+            //table.DeleteItem()
+            IEnumerable<long> offsets = s_index.GetAllOffsetsByKey(c);
+            foreach (long off in offsets)
+            {
+                table.DeleteItem(off); //TODO:? "уничтожаться" айтемы будут и все последующие разы и хендлеры будут часто запускаться 
+            }
+        }
+        /// <summary>
+        /// Запись триплетной записи с замещением предыдущих 
+        /// </summary>
+        /// <param name="item"></param>
+        public void PutRecord(object item)
+        {
+            DeleteAll((int)((object[])item)[0]);
+            table.AddItem(item);
+        }
 
         // ================== Утилиты ====================
         public int CodeEntity(string en) { return nt.GetSetStr(en); }

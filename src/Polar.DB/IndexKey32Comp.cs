@@ -259,6 +259,34 @@ namespace Polar.DB
                 return BinarySearchByKey(start, half, key);
             }
         }
+        /// <summary>
+        /// Получение всех офсетов записей в опорной последовательности bearing с указанным ключом
+        /// </summary>
+        /// <param name="key">ключ</param>
+        /// <returns>последовательность офсетов, офсеты не обязаны быть отсортированными и могут (?) повторяться, однако сначала идут офсеты слабой динамики и они не повторяются, потом статики и они не повторяются</returns>
+        public IEnumerable<long> GetAllOffsetsByKey(int key)
+        {
+            if (dynaKeyIndex.TryGetValue(key, out List<long> offsets))
+            {
+                foreach (long off in offsets)
+                {
+                    yield return off;
+                }
+            }
+            long start = 0;
+            long number = keyoffsets.Count();
+            if (scale != null && scale.GetDia != null)
+            {
+                Diapason dia = scale.GetDia(key);
+                start = dia.start;
+                number = dia.numb;
+            }
+            var bsa = BinarySearchByKey(start, number, key);
+            foreach (var off in bsa)
+            {
+                yield return off;
+            }
+        }
         public IEnumerable<object> GetAllByKey(int key)
         {
             if (dynaKeyIndex.TryGetValue(key, out List<long> offsets))
