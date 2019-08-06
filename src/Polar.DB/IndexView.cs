@@ -327,11 +327,11 @@ namespace Polar.DB
         /// <param name="number"></param>
         /// <param name="sample"></param>
         /// <returns>диапазон start, number в массиве elements</returns>
-        private (int, int) BSDia(int start, int number, object sample, Comparer<object> current_comp)
+        private Tuple<int, int> BSDia(int start, int number, object sample, Comparer<object> current_comp)
         {
-            if (number == 0) return (start, 0);
-            if (current_comp.Compare(rare_elements[start], sample) > 0) return (start, 0);
-            if (number == 1) return (start, number);
+            if (number == 0) return new Tuple<int, int>(start, 0);
+            if (current_comp.Compare(rare_elements[start], sample) > 0) return new Tuple<int, int>(start, 0);
+            if (number == 1) return new Tuple<int, int>(start, number);
 
             int half = number / 2;
             int middle = start + half;
@@ -346,13 +346,13 @@ namespace Polar.DB
                 if (left.Item2 == 0) { sta = half; num = 1; }
                 else { sta = left.Item1; num = left.Item2 + 1; }
                 if (rest > 0) { var right = BSDia(middle + 1, rest, sample, current_comp); num += right.Item2; }
-                return (sta, num);
+                return new Tuple<int, int>(sta, num);
             }
             if (middle_depth < 0)
             {
-                if (rest == 0) return (middle, 1);
+                if (rest == 0) return new Tuple<int, int>(middle, 1);
                 var d = BSDia(middle + 1, rest, sample, current_comp);
-                if (d.Item2 == 0) return (middle, 1);
+                if (d.Item2 == 0) return new Tuple<int, int>(middle, 1);
                 return d;
             }
             else // middle_depth > 0
@@ -360,7 +360,7 @@ namespace Polar.DB
                 return BSDia(start, half, sample, current_comp);
             }
         }
-        private List<(object, long)> dyna_list = new List<(object, long)>();
+        private List<Tuple<object, long>> dyna_list = new List<Tuple<object, long>>();
         private IEnumerable<object> DynaSearch(object sample, Comparer<object> c)
         {
             var query = dyna_list.Where(pair => c.Compare(pair.Item1, sample) == 0)
@@ -373,7 +373,7 @@ namespace Polar.DB
             // Проверим применимость
             if (!applicable(item)) return;
             // Нужно сформировать пару (item, off) и поместить ее в List
-            dyna_list.Add((item, off));
+            dyna_list.Add(new Tuple<object, long>(item, off));
         }
 
         public void OnDeleteItem(long off)
