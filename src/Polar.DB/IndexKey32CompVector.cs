@@ -110,6 +110,7 @@ namespace Polar.DB
             }
             keyoffsets.Flush();
 
+            if (scale != null && keys.Length == 0) scale = null;
             if (scale != null) scale.Load(keys);
 
             keys = null;
