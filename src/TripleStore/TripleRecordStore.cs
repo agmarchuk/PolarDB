@@ -21,7 +21,11 @@ namespace Polar.TripleStore
         private Comparer<object> comp_like;
         private string[] preload_names = { };
         public string[] Preload { get { return preload_names; } set { preload_names = value; LoadPreloadnames(); } }
+        // Важные коды
+        private int cod_rdftype = 0;
         private int cod_name;
+        private int cod_delete;
+
         internal void LoadPreloadnames()
         {
             foreach (string s in preload_names) nt.GetSetStr(s);
@@ -38,6 +42,12 @@ namespace Polar.TripleStore
             // Предзагрузка должна быть обеспечена даже для пустой таблицы имен
             this.preload_names = preload_names;
             LoadPreloadnames();
+
+            // Вычисление "важных" кодов
+            // cod_rdftype = nt.GetSetStr("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"); // Зафиксирован 0;
+            cod_delete = nt.GetSetStr("http://fogid.net/o/delete");
+            cod_name = nt.GetSetStr("http://fogid.net/o/name");
+
             // Тип записи
             PType tp_record = new PTypeRecord(
                 new NamedType("id", new PType(PTypeEnumeration.integer)),
@@ -65,9 +75,6 @@ namespace Polar.TripleStore
                 }, null);
 
 
-            // Индекс по текстам полей записей триплетов с предикатом http://fogid.net/o/name
-            // Предполагается, что в Preload есть такое имя:
-            cod_name = nt.GetSetStr("http://fogid.net/o/name");
             // Это компаратор сортировки. (более ранний комментарий: компаратор надо поменять!!!!!!)
             Comparer<object> comp = Comparer<object>.Create(new Comparison<object>((object a, object b) =>
             {
@@ -105,6 +112,15 @@ namespace Polar.TripleStore
             inv_index.Flush();
             name_index.Flush();
             nt.Flush();
+        }
+        public void Close()
+        {
+            Flush();
+            table.Close();
+            s_index.Close();
+            inv_index.Close();
+            name_index.Close();
+            nt.Close();
         }
         public void Clear()
         {
@@ -175,7 +191,12 @@ namespace Polar.TripleStore
             var qu = s_index.GetAllByKey(c)
                 .FirstOrDefault();
             return qu;
-        } 
+        }
+        public IEnumerable<object> GetRecords()
+        {
+            var qu = table.ElementValues();
+            return qu;
+        }
         public IEnumerable<object> GetRefers(int c)
         {
             var qu = inv_index.GetAllByKey(c);
@@ -189,7 +210,7 @@ namespace Polar.TripleStore
         /// Уничтожает все записи с заданным ключом
         /// </summary>
         /// <param name="c"></param>
-        public void DeleteAll(int c)
+        private void DeleteAll(int c) 
         {
             //table.DeleteItem()
             IEnumerable<long> offsets = s_index.GetAllOffsetsByKey(c);
@@ -205,8 +226,18 @@ namespace Polar.TripleStore
         public void PutRecord(object item)
         {
             DeleteAll((int)((object[])item)[0]);
-            table.AddItem(item);
+            //Если не delete, то добавлять айтем в базу данных
+            if (GetTypeCode(item) != cod_delete) table.AddItem(item);
         }
+
+        // Выявление в записи типа: находит в объекте первый тип или выдает -1
+        public int GetTypeCode(object item)
+        {
+            object[] direct = (object[])(((object[])item)[1]);
+            var pair = direct.Cast<object[]>().FirstOrDefault(pa => (int)pa[0] == cod_rdftype);
+            if (pair == null) return -1;
+            return (int)pair[1];
+        } 
 
         // ================== Утилиты ====================
         public int CodeEntity(string en) { return nt.GetSetStr(en); }

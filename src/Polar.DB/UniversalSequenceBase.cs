@@ -63,6 +63,11 @@ namespace Polar.DB
             bw.Write(nelements);
             fs.Position = pos;
         }
+        public void Close()
+        {
+            Flush();
+            fs.Close();
+        }
         public void Refresh()
         {
             fs.Position = 0L;

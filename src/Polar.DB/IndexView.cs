@@ -31,6 +31,7 @@ namespace Polar.DB
 
         public void Clear() { offset_sequ.Clear(); }
         public void Flush() { offset_sequ.Flush(); }
+        public void Close() { Flush(); offset_sequ.Close(); }
 
         // Что нужно? Создать и использовать
         private object[] rare_elements = null; // --

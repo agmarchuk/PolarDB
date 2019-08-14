@@ -92,6 +92,14 @@ namespace Polar.TripleStore
         {
             cod_str.Flush();
             offsets.Flush();
+            index_str.Flush();
+        }
+        public void Close()
+        {
+            Flush();
+            cod_str.Close();
+            offsets.Close();
+            index_str.Close();
         }
         public bool TryGetCode(string s, out int code)
         {

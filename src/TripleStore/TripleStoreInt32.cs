@@ -104,6 +104,21 @@ namespace Polar.TripleStore
             // Предзагрузка
             PreloadFognames();
         }
+        public void Flush()
+        {
+            s_index.Flush();
+            inv_index.Flush();
+            name_index.Flush();
+            nt.Flush();
+        }
+        public void Close()
+        {
+            Flush();
+            s_index.Close();
+            inv_index.Close();
+            name_index.Close();
+            nt.Close();
+        }
         public void Load(IEnumerable<object> triples)
         {
             foreach (object tri in triples)

@@ -37,6 +37,7 @@ namespace Polar.DB
             foreach (var index in Indexes) index.Build();
         }
         public void Flush() { sequence.Flush(); }
+        public void Close() { sequence.Close(); }
         public void Refresh() { sequence.Refresh(); foreach (var index in Indexes) index.Refresh(); }
         public IEnumerable<object> ElementValues()
         {
