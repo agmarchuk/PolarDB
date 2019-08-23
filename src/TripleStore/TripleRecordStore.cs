@@ -154,7 +154,7 @@ namespace Polar.TripleStore
                 ii++;
                 if (ii % 1_000_000 == 0) Console.Write($"{ii / 1_000_000} ");
             }
-            Console.WriteLine("load ok.");
+            //Console.WriteLine("load ok.");
             table.Flush();
             nt.Flush();
         }
