@@ -19,6 +19,7 @@
   <ItemGroup>
     <Compile Remove="IndexKey32CompImm.cs" />
     <Compile Remove="IndexKey32Imm.cs" />
+    <Compile Remove="UniversalSequence.cs" />
     <Compile Remove="UniversalSequenceComp.cs" />
     <Compile Remove="UniversalSequenceCompKey32.cs" />
   </ItemGroup>
