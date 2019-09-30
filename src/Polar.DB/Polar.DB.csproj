@@ -7,9 +7,9 @@
     <Company>iis</Company>
     <Product>PolarDB</Product>
     <Description>Kernel library of PolarDB product: polar types, binary and text serialization and deserialization, UniversalSequence</Description>
-    <Version>1.0.6</Version>
+    <Version>1.0.7</Version>
     <PackageLicenseUrl></PackageLicenseUrl>
-    <NeutralLanguage>az-Cyrl-AZ</NeutralLanguage>
+    <NeutralLanguage>ru</NeutralLanguage>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

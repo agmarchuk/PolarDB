@@ -37,7 +37,11 @@ namespace Polar.DB
                 nelements = br.ReadInt64();
                 // если длина элементов фиксирована, устанавливаем на условный конец, если нет -устанавливаем на начало пустого
                 if (elem_size > 0) fs.Position = 8 + nelements * elem_size;
-                else fs.Position = fs.Length; // Этот вариант породит ошибку, если реальный размер файла больше, чем занимают элементы
+                else
+                {
+                    //fs.Position = fs.Length; // Этот вариант породит ошибку, если реальный размер файла больше, чем занимают элементы
+                    this.Scan((off, ob) => true);
+                }
             }
         }
         /// <summary>
@@ -58,6 +62,11 @@ namespace Polar.DB
             fs.Position = 0L;
             bw.Write(nelements);
             fs.Position = pos;
+        }
+        public void Close()
+        {
+            Flush();
+            fs.Close();
         }
         public void Refresh()
         {
@@ -174,6 +183,37 @@ namespace Polar.DB
         public void S32(long start, long numb, Func<object, int> keyFun)
         {
             int[] keys = new int[numb];
+            object[] records = new object[numb];
+            long pos = start;
+            Scan((off, obj) =>
+            {
+                keys[pos] = keyFun(obj);
+                records[pos] = obj;
+                pos++;
+                return true;
+            });
+            Array.Sort(keys, records);
+            // TODO: Похоже, метод работает правильно только для полного диапазона. 
+            Clear();
+            for (long ii = 0; ii < keys.LongLength; ii++)
+            {
+                AppendElement(records[ii]);
+            }
+            this.Flush();
+        }
+
+        /// <summary>
+        /// Функция сортировки последовательности с использованием 64-разрядного ключа
+        /// </summary>
+        /// <param name="keyFun"></param>
+        public void Sort64(Func<object, long> keyFun)
+        {
+            if (!tp_elem.HasNoTail || keyFun == null) throw new Exception("Err in Sort64:");
+            S64(0, this.Count(), keyFun);
+        }
+        public void S64(long start, long numb, Func<object, long> keyFun)
+        {
+            long[] keys = new long[numb];
             object[] records = new object[numb];
             long pos = start;
             Scan((off, obj) =>

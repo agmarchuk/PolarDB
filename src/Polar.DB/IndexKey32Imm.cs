@@ -32,7 +32,6 @@ namespace Polar.DB
         public void Build()
         {
             // формируем массив пар
-            int ne = 0; //(int)bearing.Count();
             List<int> keys = new List<int>();
             List<long> offsets = new List<long>();
 

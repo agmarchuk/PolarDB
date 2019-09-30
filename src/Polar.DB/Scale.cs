@@ -31,9 +31,14 @@ namespace Polar.DB
                 SetGetDia();
             }
         }
+        public void Close()
+        {
+            keylengthminmaxstarts.Close();
+        }
         public void Load(int[] keys)
         {
             keysLength = keys.Length;
+            if (keysLength == 0) return;
             n_scale = keysLength / 16;
             min = keys[0];
             max = keys[keysLength - 1];

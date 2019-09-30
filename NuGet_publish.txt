@@ -1,5 +1,5 @@
 ﻿
 
-Для публикации в NuGet надо там авторизоваться для пакетов PolarDB или Polar.* и делать Upload
+Для публикации в NuGet (https://www.nuget.org/) надо там авторизоваться для пакетов PolarDB или Polar.* и делать Upload
  
 

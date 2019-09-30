@@ -13,8 +13,8 @@ namespace GetStarted
     {
         public static void Main(string[] args)
         {
-            Main20();
-            //Test(args);
+            //Main1();
+            Test();
         }
         public static void Main1()
         {

@@ -68,7 +68,154 @@ namespace Polar.DB
                     }
             }
         }
-        public static object Deserialize(TextReader tr, PType tp) { TextFlow tf = new TextFlow(tr); tf.Skip(); return tf.Des(tp); }
+        private static int intend = 4;
+        private static void Intend(TextWriter tw, int nspaces)
+        {
+            tw.Write('\n'); for (int i = 0; i < nspaces; i++) tw.Write(' ');
+        }
+        private static bool IsSimple(PType tp)
+        {
+            if (tp.IsAtom || tp.Vid == PTypeEnumeration.sstring) return true;
+            if (tp.Vid == PTypeEnumeration.record)
+            {
+                PTypeRecord rec = (PTypeRecord)tp;
+                bool simple = true;
+                for (int i = 0; i < rec.Fields.Length; i++)
+                {
+                    var t = rec.Fields[i].Type;
+                    if (!(t.IsAtom || t.Vid == PTypeEnumeration.sstring)) { simple = false; break; }
+                }
+                if (simple) return true;
+            }
+            return false;
+
+        }
+        public static void SerializeFormatted(TextWriter tw, object v, PType tp, int level)
+        {
+            Intend(tw, level * intend);
+            switch (tp.Vid)
+            {
+                case PTypeEnumeration.none: { return; }
+                case PTypeEnumeration.boolean: { tw.Write((bool)v ? 't' : 'f'); return; }
+                case PTypeEnumeration.@byte: { tw.Write(((byte)v).ToString()); return; }
+                case PTypeEnumeration.character: { tw.Write((char)v); return; }
+                case PTypeEnumeration.integer: { tw.Write((int)v); return; }
+                case PTypeEnumeration.longinteger: { tw.Write((long)v); return; }
+                case PTypeEnumeration.real: { tw.Write(((double)v).ToString("G", System.Globalization.CultureInfo.InvariantCulture)); return; }
+                case PTypeEnumeration.sstring:
+                    {
+                        tw.Write('\"');
+                        tw.Write(((string)v).Replace("\\", "\\\\").Replace("\"", "\\\""));
+                        tw.Write('\"');
+                        return;
+                    }
+                case PTypeEnumeration.record:
+                    {
+                        object[] rec = (object[])v;
+                        PTypeRecord tp_rec = (PTypeRecord)tp;
+                        if (rec.Length != tp_rec.Fields.Length) throw new Exception("Err in Serialize: wrong record field number");
+                        bool simple = IsSimple(tp);
+                        if (simple) { Serialize(tw, v, tp); return; }
+                        tw.Write('{');
+                        for (int i = 0; i < rec.Length; i++)
+                        {
+                            if (i != 0) tw.Write(',');
+                            SerializeFormatted(tw, rec[i], tp_rec.Fields[i].Type, level+1);
+                        }
+
+                        Intend(tw, level * intend);
+                        tw.Write('}');
+                        return;
+                    }
+                case PTypeEnumeration.sequence:
+                    {
+                        PType tp_element = ((PTypeSequence)tp).ElementType;
+                        object[] elements = (object[])v;
+                        tw.Write('[');
+                        bool isfirst = true;
+                        foreach (object el in elements)
+                        {
+                            if (!isfirst) tw.Write(','); isfirst = false;
+                            SerializeFormatted(tw, el, tp_element, level+1);
+                        }
+                        Intend(tw, level * intend);
+                        tw.Write(']');
+                        return;
+                    }
+                case PTypeEnumeration.union:
+                    {
+                        PTypeUnion tp_uni = (PTypeUnion)tp;
+                        // тег - 1 байт
+                        int tag = (int)((object[])v)[0];
+                        object subval = ((object[])v)[1];
+                        if (tag < 0 || tag >= tp_uni.Variants.Length) throw new Exception("Err in Serialize: wrong union tag");
+                        tw.Write(tag);
+                        tw.Write('^');
+                        if (IsSimple(tp_uni.Variants[tag].Type))
+                        {
+                            Serialize(tw, subval, tp_uni.Variants[tag].Type);
+                            return;
+                        }
+                        SerializeFormatted(tw, subval, tp_uni.Variants[tag].Type, level+1);
+                        return;
+                    }
+            }
+        }
+        public static void SerializeFlowToSequense(TextWriter tw, IEnumerable<object> flow, PType tp)
+        {
+            tw.Write('[');
+            bool ft = true;
+            foreach (object ob in flow)
+            {
+                if (!ft) tw.Write(',');
+                ft = false;
+                Serialize(tw, ob, tp);
+            }
+            tw.Write(']');
+            
+        }
+        public static void SerializeFlowToSequenseFormatted(TextWriter tw, IEnumerable<object> flow, PType tp, int level)
+        {
+            tw.Write('\n'); for (int i = 0; i < level * intend; i++) tw.Write(' ');
+            tw.Write('[');
+            bool ft = true;
+            foreach (object ob in flow)
+            {
+                if (!ft) tw.Write(',');
+                ft = false;
+                SerializeFormatted(tw, ob, tp, level+1);
+            }
+            tw.Write('\n'); for (int i = 0; i < level * intend; i++) tw.Write(' ');
+            tw.Write(']');
+            tw.Flush();
+
+        }
+
+
+        public static object Deserialize(TextReader tr, PType tp)
+        { TextFlow tf = new TextFlow(tr); tf.Skip(); return tf.Des(tp); }
+        public static IEnumerable<object> DeserializeSequenseToFlow(TextReader tr, PType tp)
+        {
+            TextFlow tf = new TextFlow(tr);
+            tf.Skip();
+            char c = tf.ReadChar();
+            if (c != '[') throw new Exception("Err in DeserializeSequenseToFlow");
+
+            bool firsttime = true;
+            while (true)
+            {
+                tf.Skip();
+                //выхожу по закрывающей скобке
+                if (firsttime && tr.Peek() == ']') { c = (char)tr.Read(); break; }
+                firsttime = false;
+                yield return tf.Des(tp);
+                tf.Skip();
+                c = (char)tr.Read();
+                if (c == ']') break;
+                else if (c == ',') continue;
+                throw new Exception("Polar syntax error 19333");
+            }
+        }
 
         // Более удобный объект для парсинга TextFlow
         private TextReader tr;
@@ -194,11 +341,13 @@ namespace Polar.DB
                         List<object> lsequ = new List<object>();
                         char c = (char)tr.Read();
                         if (c != '[') throw new Exception("Polar syntax error 19331");
+                        bool firsttime = true;
                         while (true)
                         {
                             Skip();
                             //TODO: неудачно, что дважды проверяю и выхожу по закрывающей скобке
-                            if (tr.Peek() == ']') { c = (char)tr.Read(); break; }
+                            if (firsttime && tr.Peek() == ']') { c = (char)tr.Read(); break; }
+                            firsttime = false;
                             lsequ.Add(Des(tp_element));
                             Skip();
                             c = (char)tr.Read();

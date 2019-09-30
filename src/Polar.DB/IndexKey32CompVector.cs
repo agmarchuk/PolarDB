@@ -31,6 +31,7 @@ namespace Polar.DB
         }
         public void Clear() { keyoffsets.Clear(); }
         public void Flush() { keyoffsets.Flush(); }
+        public void Close() { Flush(); keyoffsets.Close(); if (scale != null) scale.Close(); }
         public long Count() { return keyoffsets.Count(); }
         public void Build()
         {
@@ -110,6 +111,7 @@ namespace Polar.DB
             }
             keyoffsets.Flush();
 
+            //if (scale != null && keys.Length == 0) scale = null;
             if (scale != null) scale.Load(keys);
 
             keys = null;

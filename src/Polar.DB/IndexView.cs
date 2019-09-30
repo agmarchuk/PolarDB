@@ -9,33 +9,38 @@ namespace Polar.DB
 {
     public class IndexView : IIndex
     {
+        public string tmpdir { get { return _tmpdir; } set { _tmpdir = value; }  }
+        public int buffersize { get { return _buffersize; } set { _buffersize = value; }  }
+        public long volume_of_offset_array { get { return _volume_of_offset_array; } set { _volume_of_offset_array = value; } }
+        private string _tmpdir = "./";
+        private int _buffersize = 1024 * 1024 * 64;
+        private long _volume_of_offset_array = 20_000_000;
+
+
         private IBearing bearing;
         private Func<object, bool> applicable;
         private UniversalSequenceBase offset_sequ;
         private Comparer<object> comp_default;
         private Func<Stream> streamGen;
-        private string tmpdir;
         //public Func<object, bool> Filter { get; set; }
         // создаем объект, подсоединяемся к носителям или создаем носители
         public IndexView(Func<Stream> streamGen, IBearing bearing, 
-            Func<object, bool> applicable, Comparer<object> comp_d, string tmpdir, long volume_of_offset_array)
+            Func<object, bool> applicable, Comparer<object> comp_d)
         {
             this.streamGen = streamGen;
             this.bearing = bearing;
             this.applicable = applicable;
             this.comp_default = comp_d;
-            this.tmpdir = tmpdir;
             offset_sequ = new UniversalSequenceBase(new PType(PTypeEnumeration.longinteger), streamGen());
-            this.volume_of_offset_array = volume_of_offset_array;
         }
 
         public void Clear() { offset_sequ.Clear(); }
         public void Flush() { offset_sequ.Flush(); }
+        public void Close() { Flush(); offset_sequ.Close(); }
 
         // Что нужно? Создать и использовать
         private object[] rare_elements = null; // --
 
-        private long volume_of_offset_array = 20_000_000;
 
         public void Build()
         {
@@ -92,7 +97,7 @@ namespace Polar.DB
                     tmp_stream1.Position = 0L;
                     tmp_stream2.Position = 0L;
 
-                    byte[] buffer = new byte[1024 * 1024 * 64];
+                    byte[] buffer = new byte[buffersize];
 
                     Stream source1 = offset_sequ.Media;
                     source1.Position = 8 + firsthalf_start * 8;
@@ -327,11 +332,11 @@ namespace Polar.DB
         /// <param name="number"></param>
         /// <param name="sample"></param>
         /// <returns>диапазон start, number в массиве elements</returns>
-        private (int, int) BSDia(int start, int number, object sample, Comparer<object> current_comp)
+        private Tuple<int, int> BSDia(int start, int number, object sample, Comparer<object> current_comp)
         {
-            if (number == 0) return (start, 0);
-            if (current_comp.Compare(rare_elements[start], sample) > 0) return (start, 0);
-            if (number == 1) return (start, number);
+            if (number == 0) return new Tuple<int, int>(start, 0);
+            if (current_comp.Compare(rare_elements[start], sample) > 0) return new Tuple<int, int>(start, 0);
+            if (number == 1) return new Tuple<int, int>(start, number);
 
             int half = number / 2;
             int middle = start + half;
@@ -346,13 +351,13 @@ namespace Polar.DB
                 if (left.Item2 == 0) { sta = half; num = 1; }
                 else { sta = left.Item1; num = left.Item2 + 1; }
                 if (rest > 0) { var right = BSDia(middle + 1, rest, sample, current_comp); num += right.Item2; }
-                return (sta, num);
+                return new Tuple<int, int>(sta, num);
             }
             if (middle_depth < 0)
             {
-                if (rest == 0) return (middle, 1);
+                if (rest == 0) return new Tuple<int, int>(middle, 1);
                 var d = BSDia(middle + 1, rest, sample, current_comp);
-                if (d.Item2 == 0) return (middle, 1);
+                if (d.Item2 == 0) return new Tuple<int, int>(middle, 1);
                 return d;
             }
             else // middle_depth > 0
@@ -360,7 +365,7 @@ namespace Polar.DB
                 return BSDia(start, half, sample, current_comp);
             }
         }
-        private List<(object, long)> dyna_list = new List<(object, long)>();
+        private List<Tuple<object, long>> dyna_list = new List<Tuple<object, long>>();
         private IEnumerable<object> DynaSearch(object sample, Comparer<object> c)
         {
             var query = dyna_list.Where(pair => c.Compare(pair.Item1, sample) == 0)
@@ -373,7 +378,7 @@ namespace Polar.DB
             // Проверим применимость
             if (!applicable(item)) return;
             // Нужно сформировать пару (item, off) и поместить ее в List
-            dyna_list.Add((item, off));
+            dyna_list.Add(new Tuple<object, long>(item, off));
         }
 
         public void OnDeleteItem(long off)
@@ -381,5 +386,12 @@ namespace Polar.DB
             // Пока вроде не нужно ничего делать
             //throw new NotImplementedException();
         }
+    }
+    // Пока не воспользовался
+    public class IndexViewOptions
+    {
+        public long volume_of_offset_array = 20_000_000;
+        public string tmpdir = "./";
+        public int buffersize = 1024 * 1024 * 64;
     }
 }

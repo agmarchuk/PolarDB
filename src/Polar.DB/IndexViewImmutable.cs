@@ -334,11 +334,11 @@ namespace Polar.DB
         /// <param name="number"></param>
         /// <param name="sample"></param>
         /// <returns>диапазон start, number в массиве elements</returns>
-        private (int, int) BSDia(int start, int number, object sample, Comparer<object> current_comp)
+        private Tuple<int, int> BSDia(int start, int number, object sample, Comparer<object> current_comp)
         {
-            if (number == 0) return (start, 0);
-            if (current_comp.Compare(rare_elements[start], sample) > 0) return (start, 0);
-            if (number == 1) return (start, number);
+            if (number == 0) return new Tuple<int, int>(start, 0);
+            if (current_comp.Compare(rare_elements[start], sample) > 0) return new Tuple<int, int>(start, 0);
+            if (number == 1) return new Tuple<int, int>(start, number);
 
             int half = number / 2;
             int middle = start + half;
@@ -353,13 +353,13 @@ namespace Polar.DB
                 if (left.Item2 == 0) { sta = half; num = 1; }
                 else { sta = left.Item1; num = left.Item2 + 1; }
                 if (rest > 0) { var right = BSDia(middle + 1, rest, sample, current_comp); num += right.Item2; }
-                return (sta, num);
+                return new Tuple<int, int>(sta, num);
             }
             if (middle_depth < 0)
             {
-                if (rest == 0) return (middle, 1);
+                if (rest == 0) return new Tuple<int, int>(middle, 1);
                 var d = BSDia(middle + 1, rest, sample, current_comp);
-                if (d.Item2 == 0) return (middle, 1);
+                if (d.Item2 == 0) return new Tuple<int, int>(middle, 1);
                 return d;
             }
             else // middle_depth > 0

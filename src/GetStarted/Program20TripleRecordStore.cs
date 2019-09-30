@@ -15,7 +15,7 @@ namespace GetStarted
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
             System.Random rnd = new Random();
             //string path = "../../../../data/Databases/";
-            string path = "D:/Home/data/Databases/";
+            string path = "C:/Home/data/Databases/";
             int fnom = 0;
             Func<Stream> GenStream = () => File.Open(path + (fnom++), FileMode.OpenOrCreate);
             Console.WriteLine("Start TestConsoleApp (Main32)");
@@ -30,7 +30,7 @@ namespace GetStarted
                 , "http://fogid.net/o/in-doc"
             });
 
-            int npersons = 20_000_000;
+            int npersons = 40_000;
             int nphotos = npersons * 2;
             int nreflections = npersons * 6;
 

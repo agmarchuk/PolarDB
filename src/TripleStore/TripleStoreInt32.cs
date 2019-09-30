@@ -73,7 +73,7 @@ namespace Polar.TripleStore
                     (string)((object[])((object[])b)[2])[1], StringComparison.OrdinalIgnoreCase);
             }));
             int cod_name = nt.GetSetStr("http://fogid.net/o/name");
-            name_index = new IndexView(stream_gen, table, ob => (int)((object[])ob)[1] == cod_name, comp, tmp_dir_path, 20_000_000);
+            name_index = new IndexView(stream_gen, table, ob => (int)((object[])ob)[1] == cod_name, comp);
 
             comp_like = Comparer<object>.Create(new Comparison<object>((object a, object b) =>
             {
@@ -103,6 +103,21 @@ namespace Polar.TripleStore
             nt.Clear();
             // Предзагрузка
             PreloadFognames();
+        }
+        public void Flush()
+        {
+            s_index.Flush();
+            inv_index.Flush();
+            name_index.Flush();
+            nt.Flush();
+        }
+        public void Close()
+        {
+            Flush();
+            s_index.Close();
+            inv_index.Close();
+            name_index.Close();
+            nt.Close();
         }
         public void Load(IEnumerable<object> triples)
         {
