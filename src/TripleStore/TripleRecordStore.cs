@@ -99,8 +99,8 @@ namespace Polar.TripleStore
             }));
             // name-индекс пока будет скалярным и будет индексировать первое (!) name-поле в записи
             name_index = new IndexView(stream_gen, table,
-                ob => ((object[])((object[])ob)[2]).FirstOrDefault(pair => (int)((object[])pair)[0] == cod_name) != null, 
-                comp, tmp_dir_path, 20_000_000);
+                ob => ((object[])((object[])ob)[2]).FirstOrDefault(pair => (int)((object[])pair)[0] == cod_name) != null, comp)
+            { tmpdir = tmp_dir_path, volume_of_offset_array = 20_000_000 };
 
             table.Indexes = new IIndex[] { s_index, inv_index, name_index };
 
