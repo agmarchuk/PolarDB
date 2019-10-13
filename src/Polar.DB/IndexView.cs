@@ -9,24 +9,29 @@ namespace Polar.DB
 {
     public class IndexView : IIndex
     {
+        public string tmpdir { get { return _tmpdir; } set { _tmpdir = value; }  }
+        public int buffersize { get { return _buffersize; } set { _buffersize = value; }  }
+        public long volume_of_offset_array { get { return _volume_of_offset_array; } set { _volume_of_offset_array = value; } }
+        private string _tmpdir = "./";
+        private int _buffersize = 1024 * 1024 * 64;
+        private long _volume_of_offset_array = 20_000_000;
+
+
         private IBearing bearing;
         private Func<object, bool> applicable;
         private UniversalSequenceBase offset_sequ;
         private Comparer<object> comp_default;
         private Func<Stream> streamGen;
-        private string tmpdir;
         //public Func<object, bool> Filter { get; set; }
         // создаем объект, подсоединяемся к носителям или создаем носители
         public IndexView(Func<Stream> streamGen, IBearing bearing, 
-            Func<object, bool> applicable, Comparer<object> comp_d, string tmpdir, long volume_of_offset_array)
+            Func<object, bool> applicable, Comparer<object> comp_d)
         {
             this.streamGen = streamGen;
             this.bearing = bearing;
             this.applicable = applicable;
             this.comp_default = comp_d;
-            this.tmpdir = tmpdir;
             offset_sequ = new UniversalSequenceBase(new PType(PTypeEnumeration.longinteger), streamGen());
-            this.volume_of_offset_array = volume_of_offset_array;
         }
 
         public void Clear() { offset_sequ.Clear(); }
@@ -36,7 +41,6 @@ namespace Polar.DB
         // Что нужно? Создать и использовать
         private object[] rare_elements = null; // --
 
-        private long volume_of_offset_array = 20_000_000;
 
         public void Build()
         {
@@ -93,7 +97,7 @@ namespace Polar.DB
                     tmp_stream1.Position = 0L;
                     tmp_stream2.Position = 0L;
 
-                    byte[] buffer = new byte[1024 * 1024 * 64];
+                    byte[] buffer = new byte[buffersize];
 
                     Stream source1 = offset_sequ.Media;
                     source1.Position = 8 + firsthalf_start * 8;
@@ -382,5 +386,12 @@ namespace Polar.DB
             // Пока вроде не нужно ничего делать
             //throw new NotImplementedException();
         }
+    }
+    // Пока не воспользовался
+    public class IndexViewOptions
+    {
+        public long volume_of_offset_array = 20_000_000;
+        public string tmpdir = "./";
+        public int buffersize = 1024 * 1024 * 64;
     }
 }

@@ -34,7 +34,7 @@ namespace GetStarted
                     new IndexKey32Comp(GenStream, table, obj => true,
                         obj => (int)((object[])obj)[0], null),
                     new IndexView(GenStream, table, obj => true,
-                        comp, path + "Databases/", 20_000_000)
+                        comp) { tmpdir = path + "Databases/", volume_of_offset_array = 20_000_000 }
                 };
 
             int nelements = 1_000_000;
