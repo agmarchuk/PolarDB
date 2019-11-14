@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2027
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29123.88
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Polar.DB", "src\Polar.DB\Polar.DB.csproj", "{9C5E2BEA-1BCC-41D7-99D8-83D37A239B8F}"
 EndProject
@@ -26,6 +26,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Polar.Datanode", "src\Polar.Datanode\Polar.Datanode.csproj", "{F0BE70C2-257B-4E54-A352-D530B584C0B6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Polar.TripleStore", "src\TripleStore\Polar.TripleStore.csproj", "{D80DD468-5D31-4E6C-9A28-BAF46ED2CC2E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Starting", "..\PolarDB.wiki\work\Starting\Starting.csproj", "{D1BFBFF3-B8CC-4637-88EC-24E8087220C7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -69,6 +71,10 @@ Global
 		{D80DD468-5D31-4E6C-9A28-BAF46ED2CC2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D80DD468-5D31-4E6C-9A28-BAF46ED2CC2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D80DD468-5D31-4E6C-9A28-BAF46ED2CC2E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D1BFBFF3-B8CC-4637-88EC-24E8087220C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D1BFBFF3-B8CC-4637-88EC-24E8087220C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D1BFBFF3-B8CC-4637-88EC-24E8087220C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D1BFBFF3-B8CC-4637-88EC-24E8087220C7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
