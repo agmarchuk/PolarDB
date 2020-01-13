@@ -94,7 +94,7 @@ namespace Polar.TripleStore
         }
         public void Close()
         {
-            Flush();
+            //Flush();
             cod_str.Close();
             offsets.Close();
             index_str.Close();

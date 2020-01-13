@@ -36,7 +36,7 @@ namespace Polar.DB
 
         public void Clear() { offset_sequ.Clear(); }
         public void Flush() { offset_sequ.Flush(); }
-        public void Close() { Flush(); offset_sequ.Close(); }
+        public void Close() { offset_sequ.Close(); }
 
         // Что нужно? Создать и использовать
         private object[] rare_elements = null; // --
@@ -207,6 +207,7 @@ namespace Polar.DB
         // Поиск в последовательностях
         private IEnumerable<object> BinarySearchAll(long start, long number, object sample, Comparer<object> comp)
         {
+            if (number == 0) return Enumerable.Empty<object>(); // Не найден
             long half = number / 2;
             if (half == 0)
             {

@@ -115,7 +115,7 @@ namespace Polar.TripleStore
         }
         public void Close()
         {
-            Flush();
+            //Flush();
             table.Close();
             s_index.Close();
             inv_index.Close();

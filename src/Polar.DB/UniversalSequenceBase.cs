@@ -65,7 +65,7 @@ namespace Polar.DB
         }
         public void Close()
         {
-            Flush();
+            //Flush();
             fs.Close();
         }
         public void Refresh()
