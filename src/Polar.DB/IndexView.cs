@@ -196,12 +196,13 @@ namespace Polar.DB
             // построим прореженный массив значений
             //TODO: Похоже, прореживание делается правильно, но используется неправильно. Иногда выскакивает
             // ошибка, заключающаяся в том, что выдается меньше результатов. 
-            rare_elements =
-                offset_sequ.ElementValues()
-                .Cast<long>()
-                .Where((off, i) => (i % Nfactor) == 0)
-                .Select(off => bearing.GetItem((long)off))
-                .ToArray();
+            // Закрываю существенную оптимизацию!!!!
+            //rare_elements =
+            //    offset_sequ.ElementValues()
+            //    .Cast<long>()
+            //    .Where((off, i) => (i % Nfactor) == 0)
+            //    .Select(off => bearing.GetItem((long)off))
+            //    .ToArray();
         }
 
         // Поиск в последовательностях
