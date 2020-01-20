@@ -20,14 +20,40 @@ namespace Polar.TripleStore
         private IndexView name_index;
         private Comparer<object> comp_like;
         private string[] preload_names = { };
-        public string[] Preload { get { return preload_names; } set { preload_names = value; LoadPreloadnames(); } }
-        // Важные коды
-        private int cod_rdftype = 0;
-        private int cod_name;
-        private int cod_delete;
+        //public string[] Preload { get { return preload_names; } set { preload_names = value; LoadPreloadnames(); } }
+        // Важные коды, заполняются тогда, когда можно
+        private int _cod_rdftype = -1;
+        private int _cod_name = -1;
+        private int _cod_delete = -1;
+        public int cod_rdftype 
+        { 
+            get 
+            {
+                if (_cod_rdftype == -1) _cod_rdftype = nt.GetSetStr("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+                return _cod_rdftype;
+            } 
+        }
+        public int cod_name
+        {
+            get
+            {
+                if (_cod_name == -1) _cod_name = nt.GetSetStr("http://fogid.net/o/name");
+                return _cod_name;
+            }
+        }
+        public int cod_delete
+        {
+            get
+            {
+                if (_cod_delete == -1) _cod_delete = nt.GetSetStr("http://fogid.net/o/delete");
+                return _cod_delete;
+            }
+        }
+
 
         internal void LoadPreloadnames()
         {
+            // Фиксация важных кодов - Сейчас не должна использоваться. 
             foreach (string s in preload_names) nt.GetSetStr(s);
             nt.Flush();
         }
@@ -39,14 +65,9 @@ namespace Polar.TripleStore
         {
             // сначала таблица имен
             nt = new Nametable32(stream_gen);
-            // Предзагрузка должна быть обеспечена даже для пустой таблицы имен
+            // Предзагрузка откладывается
             this.preload_names = preload_names;
-            LoadPreloadnames();
-
-            // Вычисление "важных" кодов
-            // cod_rdftype = nt.GetSetStr("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"); // Зафиксирован 0;
-            cod_delete = nt.GetSetStr("http://fogid.net/o/delete");
-            cod_name = nt.GetSetStr("http://fogid.net/o/name");
+            //LoadPreloadnames(); // Это потом
 
             // Тип записи
             PType tp_record = new PTypeRecord(
@@ -115,7 +136,7 @@ namespace Polar.TripleStore
         }
         public void Close()
         {
-            Flush();
+            //Flush();
             table.Close();
             s_index.Close();
             inv_index.Close();
@@ -130,7 +151,7 @@ namespace Polar.TripleStore
             name_index.Clear();
             nt.Clear();
             // Предзагрузка
-            LoadPreloadnames();
+            //LoadPreloadnames();
         }
         // Специально кодирует объект. Если целый, то это уже код, если строка, то кодирует с помощью Nametable
         private int Cd(object v) => v is int ? (int)v : Code((string)v);

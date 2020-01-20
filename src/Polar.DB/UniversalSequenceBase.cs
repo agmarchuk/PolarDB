@@ -42,6 +42,7 @@ namespace Polar.DB
                     //fs.Position = fs.Length; // Этот вариант породит ошибку, если реальный размер файла больше, чем занимают элементы
                     this.Scan((off, ob) => true);
                 }
+                append_offset = fs.Position;
             }
         }
         /// <summary>
@@ -57,11 +58,11 @@ namespace Polar.DB
         }
         public void Flush()
         {
-            fs.Flush();
             long pos = fs.Position;
             fs.Position = 0L;
             bw.Write(nelements);
             fs.Position = pos;
+            fs.Flush();
         }
         public void Close()
         {
@@ -72,7 +73,7 @@ namespace Polar.DB
         {
             fs.Position = 0L;
 
-            fs.CopyTo(Stream.Null);
+            fs.CopyTo(Stream.Null); // Это решение плохо тем, что работает с полным файлом даже если занята только часть
             //fs.CopyToAsync(Stream.Null);
 
             //byte[] buff = new byte[1000000];

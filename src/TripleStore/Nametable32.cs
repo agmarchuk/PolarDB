@@ -33,8 +33,6 @@ namespace Polar.TripleStore
             index_str = new IndexKey32CompImmutable(stream_gen, cod_str, ob => true,
                 ob => Hashfunctions.HashRot13((string)((object[])ob)[1]), null);
             dyna_index = new Dictionary<string, int>();
-
-            var c1 = cod_str.ElementValues().Take(10).ToArray();
         }
         public void Clear()
         {
@@ -96,7 +94,7 @@ namespace Polar.TripleStore
         }
         public void Close()
         {
-            Flush();
+            //Flush();
             cod_str.Close();
             offsets.Close();
             index_str.Close();
