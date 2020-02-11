@@ -13,8 +13,9 @@ namespace GetStarted
     {
         public static void Main(string[] args)
         {
-            Main21();
+            //Main21();
             //Test(args);
+            Demo101();
         }
         public static void Main1()
         {
