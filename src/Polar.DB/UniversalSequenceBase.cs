@@ -137,8 +137,8 @@ namespace Polar.DB
         }
         public object GetByIndex(long index)
         {
-            //if (elem_size <= 0) throw new Exception("Err: method can't be implemented to sequences of unknown element size");
-            //if (index < 0 || index >= nelements) throw new IndexOutOfRangeException();
+            if (elem_size <= 0) throw new Exception("Err: method can't be implemented to sequences of unknown element size");
+            if (index < 0 || index >= nelements) throw new IndexOutOfRangeException();
             return GetElement(ElementOffset(index));
         }
         public IEnumerable<object> ElementValues()
@@ -181,7 +181,7 @@ namespace Polar.DB
             if (!tp_elem.HasNoTail || keyFun == null) throw new Exception("Err in Sort32:");
             S32(0, this.Count(), keyFun);
         }
-        public void S32(long start, long numb, Func<object, int> keyFun)
+        private void S32(long start, long numb, Func<object, int> keyFun)
         {
             int[] keys = new int[numb];
             object[] records = new object[numb];
@@ -212,7 +212,7 @@ namespace Polar.DB
             if (!tp_elem.HasNoTail || keyFun == null) throw new Exception("Err in Sort64:");
             S64(0, this.Count(), keyFun);
         }
-        public void S64(long start, long numb, Func<object, long> keyFun)
+        private void S64(long start, long numb, Func<object, long> keyFun)
         {
             long[] keys = new long[numb];
             object[] records = new object[numb];
