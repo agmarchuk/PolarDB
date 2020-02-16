@@ -19,7 +19,7 @@ namespace GetStarted
                 new NamedType("name", new PType(PTypeEnumeration.sstring)),
                 new NamedType("age", new PType(PTypeEnumeration.integer)));
             // Нам поднадобится несколько стримов, соорудим генератор
-            string dbpath = @"D:/Home/data/GetStarted/";
+            //string dbpath = @"D:/Home/data/GetStarted/";
             int istream = 0;
             Func<Stream> GenStream = () =>
             {
@@ -78,7 +78,7 @@ namespace GetStarted
             sw.Stop();
             Console.WriteLine($"{nprobe} GetAllByKey ok. duration={sw.ElapsedMilliseconds}");
 
-            // Результаты: для 1 млн. персон загрузка 1260 мс., выборки 120 мс/1000, refresh 237 мс. (повторно 7 мс.)
+            // Результаты: для 1 млн. персон загрузка 1260 мс., выборки 120 мс/10000, refresh 237 мс. (повторно 7 мс.)
 
         }
     }

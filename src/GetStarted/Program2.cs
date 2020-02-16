@@ -10,7 +10,6 @@ namespace GetStarted
 {
     public partial class Program
     {
-        static string path = "Databases/";
         public static void Main2()
         {
             Random rnd = new Random();
@@ -22,14 +21,14 @@ namespace GetStarted
                 new NamedType("id", new PType(PTypeEnumeration.integer)),
                 new NamedType("name", new PType(PTypeEnumeration.sstring)),
                 new NamedType("age", new PType(PTypeEnumeration.real)));
-            Stream stream = new FileStream(path + "recordsequence.pac", FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            Stream stream = new FileStream(dbpath + "recordsequence.pac", FileMode.OpenOrCreate, FileAccess.ReadWrite);
             PaCell cell = new PaCell(new PTypeSequence(tp_pers), stream, false);
             // Простой индекс, это отсортированная последовательность пар: ключ-офсет, в данном случае, ключ - идентификатор, офсет - смещение записи в ячейке cell 
             PType tp_index = new PTypeSequence(new PTypeRecord(
                 new NamedType("key", new PType(PTypeEnumeration.integer)),
                 new NamedType("offset", new PType(PTypeEnumeration.longinteger))
                 ));
-            PaCell cell_index = new PaCell(tp_index, new FileStream(path + "id_index.pac", FileMode.OpenOrCreate, FileAccess.ReadWrite), false);
+            PaCell cell_index = new PaCell(tp_index, new FileStream(dbpath + "id_index.pac", FileMode.OpenOrCreate, FileAccess.ReadWrite), false);
             int nelements = 1000000;
             bool toload = true; // Загружать или нет новую базу данных
             if (toload)

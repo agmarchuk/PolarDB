@@ -9,14 +9,13 @@ namespace GetStarted
 {
     public partial class Program
     {
-        public static void Main18()
+        public static void Demo103()
         {
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
             Random rnd = new Random();
-            string path = "";
             Console.WriteLine("Start Main18: bearing experiments");
             int cnt = 0;
-            Func<Stream> GenStream = () => new FileStream(path + "Databases/f" + (cnt++) + ".bin",
+            Func<Stream> GenStream = () => new FileStream(dbpath + "f" + (cnt++) + ".bin",
                 FileMode.OpenOrCreate, FileAccess.ReadWrite);
             PType tp_elem = new PTypeRecord(
                 new NamedType("id", new PType(PTypeEnumeration.integer)),
@@ -34,7 +33,7 @@ namespace GetStarted
                     new IndexKey32Comp(GenStream, table, obj => true,
                         obj => (int)((object[])obj)[0], null),
                     new IndexView(GenStream, table, obj => true,
-                        comp) { tmpdir = path + "Databases/", volume_of_offset_array = 20_000_000 }
+                        comp) { tmpdir = dbpath, volume_of_offset_array = 20_000_000 }
                 };
 
             int nelements = 1_000_000;
@@ -104,8 +103,8 @@ namespace GetStarted
             {
                 int ke = rnd.Next(nelements);
                 total += name_index.SearchAll(new object[] { -1, "" + (ke), -1 }, 
-                    //comp_like).Count();
-                    comp).Count();
+                    comp_like).Count();
+                    //comp).Count();
             }
             sw.Stop();
             Console.WriteLine($"SearchAll: {nprobes} probes ok. duration={sw.ElapsedMilliseconds} total={total}");

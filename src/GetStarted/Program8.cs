@@ -109,9 +109,9 @@ namespace GetStarted
 
             // ======================== Теперь нам понадобится страничное хранилище =========================
             // файл - носитель хранилища
-            string dbpath = path + "storage8.bin";
-            bool fob_exists = File.Exists(dbpath);
-            FileStream fs = new FileStream(dbpath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            string filepath = dbpath + "storage8.bin";
+            bool fob_exists = File.Exists(filepath);
+            FileStream fs = new FileStream(filepath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
             FileOfBlocks fob = new FileOfBlocks(fs);
             Stream first_stream = fob.GetFirstAsStream();
             if (!fob_exists)
@@ -153,7 +153,7 @@ namespace GetStarted
             bool toload = false; // Загружать или нет новую базу данных
             if (toload)
             {
-                FileStream tmp_file = new FileStream(path + "tmp.pac", FileMode.CreateNew, FileAccess.ReadWrite);
+                FileStream tmp_file = new FileStream(dbpath + "tmp.pac", FileMode.CreateNew, FileAccess.ReadWrite);
                 PaCell key_index = new PaCell(tp_index, tmp_file, false);
                 sw.Restart();
                 // При загрузке кеш будет мешаться, его полезно деактивировать
@@ -213,7 +213,7 @@ namespace GetStarted
                 Console.WriteLine("Load ok. duration for {0} elements: {1} ms", nelements, sw.ElapsedMilliseconds);
                 key_index.Close();
                 tmp_file.Dispose();
-                File.Delete(path + "tmp.pac");
+                File.Delete(dbpath + "tmp.pac");
             }
 
             sw.Restart();
@@ -339,7 +339,7 @@ namespace GetStarted
             Random rnd = new Random();
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
             Console.WriteLine("Start demo key-value DataNode + SequencePortion");
-            DataNode dn = new DataNode(path);
+            DataNode dn = new DataNode(dbpath);
             PType tp_person = new PTypeRecord(
                     new NamedType("name", new PType(PTypeEnumeration.sstring)),
                     new NamedType("age", new PType(PTypeEnumeration.real)));

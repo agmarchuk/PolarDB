@@ -26,10 +26,10 @@ namespace GetStarted
 
             // ======================== Теперь нам понадобится страничное хранилище =========================
             // файл - носитель хранилища
-            string dbpath = path + "storage.bin";
-            bool fob_exists = File.Exists(dbpath); // этот признак используется при разных процессах инициализации
+            string filepath = dbpath + "storage.bin";
+            bool fob_exists = File.Exists(filepath); // этот признак используется при разных процессах инициализации
             // Открываем иили создаем файл-носитель хранилища
-            FileStream fs = new FileStream(dbpath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            FileStream fs = new FileStream(filepath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
             // Создаем собственно блочное (страничное) хранилище
             FileOfBlocks fob = new FileOfBlocks(fs);
             // Далее идет корявый способ создания трех потоков (Stream), нужных для базы данных 

@@ -26,9 +26,9 @@ namespace GetStarted
 
             // ======================== Теперь нам понадобится страничное хранилище =========================
             // файл - носитель хранилища
-            string dbpath = path + "storage7.bin";
-            bool fob_exists = File.Exists(dbpath);
-            FileStream fs = new FileStream(dbpath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            string filepath = dbpath + "storage7.bin";
+            bool fob_exists = File.Exists(filepath);
+            FileStream fs = new FileStream(filepath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
             FileOfBlocks fob = new FileOfBlocks(fs);
             Stream first_stream = fob.GetFirstAsStream();
             if (!fob_exists)

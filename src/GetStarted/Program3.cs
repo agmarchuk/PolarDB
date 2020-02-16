@@ -23,9 +23,9 @@ namespace GetStarted
                 new NamedType("name", new PType(PTypeEnumeration.sstring)),
                 new NamedType("age", new PType(PTypeEnumeration.real)));
             // Собственно таблица
-            TableView tab_person = new TableView(path + "person", tp_person);
+            TableView tab_person = new TableView(dbpath + "person", tp_person);
             Func<object, int> person_code_keyproducer = v => (int)((object[])((object[])v)[1])[0];
-            IndexKeyImmutable<int> ind_arr_person = new IndexKeyImmutable<int>(path + "person_ind")
+            IndexKeyImmutable<int> ind_arr_person = new IndexKeyImmutable<int>(dbpath + "person_ind")
             {
                 Table = tab_person,
                 KeyProducer = person_code_keyproducer,

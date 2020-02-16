@@ -21,7 +21,7 @@ namespace GetStarted
 
             // ======== Проверяем ввод данных через IO =======
             //FileStream fs = new FileStream(path + "filestream.bin", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, 10000000);
-            FileStream fs = new FileStream(path + "filestream.bin", FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            FileStream fs = new FileStream(dbpath + "filestream.bin", FileMode.OpenOrCreate, FileAccess.ReadWrite);
             byte[] buffer = new byte[2048 * 32];
             for (int i = 0; i< buffer.Length; i++) { buffer[i] = (byte)(i & 255); }
             sw.Restart();
@@ -45,7 +45,7 @@ namespace GetStarted
             Console.WriteLine($"{sw.ElapsedMilliseconds} ms. for writing {mbytes / 8 * 1024 * 1024} long numbers");
 
             // ======== Проверяем ввод данных через ячейку =======
-            PaCell cell = new PaCell(new PTypeSequence(new PType(PTypeEnumeration.longinteger)), path + "sequ_long.pac", false);
+            PaCell cell = new PaCell(new PTypeSequence(new PType(PTypeEnumeration.longinteger)), dbpath + "sequ_long.pac", false);
             cell.Clear();
             cell.Fill(new object[0]);
             sw.Restart();
@@ -62,7 +62,7 @@ namespace GetStarted
                 new NamedType("f1", new PType(PTypeEnumeration.integer)),
                 new NamedType("f2", new PType(PTypeEnumeration.sstring)),
                 new NamedType("f3", new PType(PTypeEnumeration.real)));
-            PaCell cell2 = new PaCell(new PTypeSequence(tp_rec), path + "sequ_rec.pac", false);
+            PaCell cell2 = new PaCell(new PTypeSequence(tp_rec), dbpath + "sequ_rec.pac", false);
             cell2.Clear();
             cell2.Fill(new object[0]);
             sw.Restart();
@@ -81,7 +81,7 @@ namespace GetStarted
                 new NamedType("f1", new PType(PTypeEnumeration.integer)),
                 new NamedType("f2", new PType(PTypeEnumeration.sstring)),
                 new NamedType("f3", new PType(PTypeEnumeration.real)));
-            Stream stream = new FileStream(path + "fstream.bin",  FileMode.OpenOrCreate, FileAccess.ReadWrite); //new MemoryStream();
+            Stream stream = new FileStream(dbpath + "fstream.bin",  FileMode.OpenOrCreate, FileAccess.ReadWrite); //new MemoryStream();
             BinaryWriter bw3 = new BinaryWriter(stream);
             sw.Restart();
             int ne3 = nelements / 3;
@@ -101,7 +101,7 @@ namespace GetStarted
                 new NamedType("f3", new PType(PTypeEnumeration.real)));
 
             //PagedStreamStore ps_store = new PagedStreamStore(path + "storage.bin", 4); // заказали 4 стрима, конкретные будут: ps_store[i]
-            StreamStorage ps_store = new StreamStorage(path + "storage9.bin", 4);
+            StreamStorage ps_store = new StreamStorage(dbpath + "storage9.bin", 4);
             ps_store.DeactivateCache();
             PaCell cell4 = new PaCell(new PTypeSequence(tp_rec), ps_store[0], false);
             cell4.Clear();

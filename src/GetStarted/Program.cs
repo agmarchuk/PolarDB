@@ -11,11 +11,12 @@ namespace GetStarted
 {
     public partial class Program
     {
+        private static string dbpath = @"D:/Home/data/GetStarted/";
         public static void Main(string[] args)
         {
             //Main21();
             //Test(args);
-            Demo102();
+            Demo103();
         }
         public static void Main1()
         {

@@ -27,7 +27,7 @@ namespace GetStarted
 
             // ======================== Страничное хранилище возьмем из описания PagedStreamStore =========================
             //PagedStreamStore ps_store = new PagedStreamStore(path + "storage.bin", 4); // заказали 4 стрима, конкретные будут: ps_store[i]
-            StreamStorage ps_store = new StreamStorage(path + "storage6uindex.bin", 4); 
+            StreamStorage ps_store = new StreamStorage(dbpath + "storage6uindex.bin", 4); 
 
             // База данных такая же, как и в программе 4, только идентификатор определен как строка, придется воспользоваться полуключем
             TableView tab_person;
