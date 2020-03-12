@@ -79,7 +79,8 @@ namespace Polar.TripleStore
                 new NamedType("fields",
                     new PTypeSequence(new PTypeRecord(
                         new NamedType("prop", new PType(PTypeEnumeration.integer)),
-                        new NamedType("value", new PType(PTypeEnumeration.sstring)))))
+                        new NamedType("value", new PType(PTypeEnumeration.sstring)),
+                        new NamedType("lang", new PType(PTypeEnumeration.sstring)))))
                 );
             // Главная последовательность: множестов кодированных записей
             table = new BearingDeletable(tp_record, stream_gen);

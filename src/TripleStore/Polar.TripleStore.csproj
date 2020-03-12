@@ -10,7 +10,7 @@
     <Authors>alexander.g.marchuk</Authors>
     <Company>iis</Company>
     <Product>PolarDB</Product>
-    <PackageLicenseUrl>http://mag.iis.nsk.su/mag_license.htm</PackageLicenseUrl>
+    <!-- <PackageLicenseUrl>http://mag.iis.nsk.su/mag_license.htm</PackageLicenseUrl> -->
   </PropertyGroup>
 
   <ItemGroup>
