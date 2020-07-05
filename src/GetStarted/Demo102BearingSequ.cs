@@ -41,7 +41,7 @@ namespace GetStarted
             Func<int, IEnumerable<object>> GenPers = nper => Enumerable.Range(0, nper)
                 .Select(i => new object[] { nper - i - 1, "_" + (nper - i - 1), rnd.Next(130) });
             // Будут ветви загрузки и присоединения
-            bool toload = false;
+            bool toload = true;
             int npersons = 1_000_000;
             sw.Restart();
             if (toload)
