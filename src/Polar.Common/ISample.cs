@@ -9,17 +9,19 @@ namespace Polar.Common
     public interface ISample
     {
         void Run();
-        ICollection<IField> Fields { get; set; }
+        void Clear();
+        ICollection<IField> Fields { get; }
         string DiplayName { get;}
         string Name { get; set; }
     }
 
     public interface IField
     {
-        FieldType Type { get; set; }
+        FieldType Type { get; }
         string LabelName { get; set; }
         string Name { get; set; }
         object Value { get; set; }
+        object DefaultValue {get; set;}
     }
 
     public enum FieldType

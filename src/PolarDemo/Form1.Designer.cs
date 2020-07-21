@@ -34,13 +34,15 @@
             this.tpRun = new System.Windows.Forms.TabPage();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.pFields = new System.Windows.Forms.Panel();
+            this.panel2 = new System.Windows.Forms.Panel();
+            this.lSampleName = new System.Windows.Forms.Label();
             this.bRun = new System.Windows.Forms.Button();
             this.tbConsole = new System.Windows.Forms.TextBox();
             this.tpCode = new System.Windows.Forms.TabPage();
             this.tbCode = new System.Windows.Forms.TextBox();
-            this.panel2 = new System.Windows.Forms.Panel();
-            this.lSampleName = new System.Windows.Forms.Label();
-            this.pFields = new System.Windows.Forms.Panel();
+            this.tpDesc = new System.Windows.Forms.TabPage();
+            this.descEdit = new System.Windows.Forms.RichTextBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -49,8 +51,9 @@
             this.tpRun.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
             this.panel1.SuspendLayout();
-            this.tpCode.SuspendLayout();
             this.panel2.SuspendLayout();
+            this.tpCode.SuspendLayout();
+            this.tpDesc.SuspendLayout();
             this.SuspendLayout();
             // 
             // splitContainer1
@@ -62,6 +65,7 @@
             // splitContainer1.Panel1
             // 
             this.splitContainer1.Panel1.Controls.Add(this.treeView1);
+            this.splitContainer1.Panel1.Padding = new System.Windows.Forms.Padding(0, 0, 0, 12);
             this.splitContainer1.Panel1MinSize = 250;
             // 
             // splitContainer1.Panel2
@@ -77,7 +81,7 @@
             this.treeView1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.treeView1.Location = new System.Drawing.Point(0, 0);
             this.treeView1.Name = "treeView1";
-            this.treeView1.Size = new System.Drawing.Size(250, 472);
+            this.treeView1.Size = new System.Drawing.Size(250, 460);
             this.treeView1.TabIndex = 0;
             this.treeView1.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
             this.treeView1.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseDoubleClick);
@@ -86,6 +90,7 @@
             // 
             this.tabControl1.Controls.Add(this.tpRun);
             this.tabControl1.Controls.Add(this.tpCode);
+            this.tabControl1.Controls.Add(this.tpDesc);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Name = "tabControl1";
@@ -131,8 +136,39 @@
             this.panel1.Size = new System.Drawing.Size(633, 138);
             this.panel1.TabIndex = 0;
             // 
+            // pFields
+            // 
+            this.pFields.AutoScroll = true;
+            this.pFields.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.pFields.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.pFields.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pFields.Location = new System.Drawing.Point(0, 29);
+            this.pFields.Name = "pFields";
+            this.pFields.Size = new System.Drawing.Size(631, 107);
+            this.pFields.TabIndex = 2;
+            // 
+            // panel2
+            // 
+            this.panel2.Controls.Add(this.lSampleName);
+            this.panel2.Controls.Add(this.bRun);
+            this.panel2.Dock = System.Windows.Forms.DockStyle.Top;
+            this.panel2.Location = new System.Drawing.Point(0, 0);
+            this.panel2.Name = "panel2";
+            this.panel2.Size = new System.Drawing.Size(631, 29);
+            this.panel2.TabIndex = 1;
+            // 
+            // lSampleName
+            // 
+            this.lSampleName.AutoSize = true;
+            this.lSampleName.Location = new System.Drawing.Point(3, 8);
+            this.lSampleName.Name = "lSampleName";
+            this.lSampleName.Size = new System.Drawing.Size(35, 13);
+            this.lSampleName.TabIndex = 1;
+            this.lSampleName.Text = "label1";
+            // 
             // bRun
             // 
+            this.bRun.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.bRun.Location = new System.Drawing.Point(500, 3);
             this.bRun.Name = "bRun";
             this.bRun.Size = new System.Drawing.Size(111, 23);
@@ -168,6 +204,7 @@
             // 
             // tbCode
             // 
+            this.tbCode.BackColor = System.Drawing.SystemColors.ButtonHighlight;
             this.tbCode.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tbCode.Location = new System.Drawing.Point(3, 3);
             this.tbCode.Multiline = true;
@@ -177,34 +214,26 @@
             this.tbCode.Size = new System.Drawing.Size(639, 440);
             this.tbCode.TabIndex = 0;
             // 
-            // panel2
+            // tpDesc
             // 
-            this.panel2.Controls.Add(this.lSampleName);
-            this.panel2.Controls.Add(this.bRun);
-            this.panel2.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panel2.Location = new System.Drawing.Point(0, 0);
-            this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(631, 29);
-            this.panel2.TabIndex = 1;
+            this.tpDesc.Controls.Add(this.descEdit);
+            this.tpDesc.Location = new System.Drawing.Point(4, 22);
+            this.tpDesc.Name = "tpDesc";
+            this.tpDesc.Size = new System.Drawing.Size(645, 446);
+            this.tpDesc.TabIndex = 2;
+            this.tpDesc.Text = "Description";
+            this.tpDesc.UseVisualStyleBackColor = true;
             // 
-            // lSampleName
+            // descEdit
             // 
-            this.lSampleName.AutoSize = true;
-            this.lSampleName.Location = new System.Drawing.Point(12, 7);
-            this.lSampleName.Name = "lSampleName";
-            this.lSampleName.Size = new System.Drawing.Size(35, 13);
-            this.lSampleName.TabIndex = 1;
-            this.lSampleName.Text = "label1";
-            // 
-            // pFields
-            // 
-            this.pFields.BackColor = System.Drawing.Color.WhiteSmoke;
-            this.pFields.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.pFields.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pFields.Location = new System.Drawing.Point(0, 29);
-            this.pFields.Name = "pFields";
-            this.pFields.Size = new System.Drawing.Size(631, 107);
-            this.pFields.TabIndex = 2;
+            this.descEdit.BackColor = System.Drawing.SystemColors.ButtonHighlight;
+            this.descEdit.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.descEdit.Location = new System.Drawing.Point(0, 0);
+            this.descEdit.Name = "descEdit";
+            this.descEdit.ReadOnly = true;
+            this.descEdit.Size = new System.Drawing.Size(645, 446);
+            this.descEdit.TabIndex = 0;
+            this.descEdit.Text = "";
             // 
             // Form1
             // 
@@ -213,11 +242,10 @@
             this.AutoSize = true;
             this.ClientSize = new System.Drawing.Size(907, 472);
             this.Controls.Add(this.splitContainer1);
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.Text = "Form1";
+            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
@@ -227,10 +255,11 @@
             this.tableLayoutPanel1.ResumeLayout(false);
             this.tableLayoutPanel1.PerformLayout();
             this.panel1.ResumeLayout(false);
-            this.tpCode.ResumeLayout(false);
-            this.tpCode.PerformLayout();
             this.panel2.ResumeLayout(false);
             this.panel2.PerformLayout();
+            this.tpCode.ResumeLayout(false);
+            this.tpCode.PerformLayout();
+            this.tpDesc.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -250,6 +279,8 @@
         private System.Windows.Forms.Panel panel2;
         private System.Windows.Forms.Label lSampleName;
         private System.Windows.Forms.Panel pFields;
+        private System.Windows.Forms.TabPage tpDesc;
+        private System.Windows.Forms.RichTextBox descEdit;
     }
 }
 

@@ -11,7 +11,30 @@ namespace Polar.Samples
 {
     public class Demo102 : ISample
     {
-        public ICollection<IField> Fields { get; set; }
+        public ICollection<IField> Fields
+        {
+            get
+            {
+                return new List<IField>() {
+                    new NumericField("Number of persons", "npersons") { DefaultValue = 1_000_000 },
+                    new NumericField("Number of probes", "nprobe") { DefaultValue = 10_000}
+                };
+            }
+        }
+
+        private Stream stream;
+        public void Clear()
+        {
+            try
+            {
+                if (stream != null)
+                {
+                    stream.Close();
+                }
+            }
+            catch { }
+        }
+
         //START_SOURCE_CODE
         public void Run()
         {
@@ -28,6 +51,7 @@ namespace Polar.Samples
             Func<Stream> GenStream = () =>
             {
                 Stream fs = File.Open(dbpath + "d102_" + istream + ".bin", FileMode.OpenOrCreate, FileAccess.ReadWrite);
+                stream = fs;
                 istream++;
                 return fs;
             };
@@ -46,7 +70,7 @@ namespace Polar.Samples
                 .Select(i => new object[] { nper - i - 1, "_" + (nper - i - 1), rnd.Next(130) });
             // Будут ветви загрузки и присоединения
             bool toload = true;
-            int npersons = 1_000_000;
+
             sw.Restart();
             if (toload)
             {
@@ -71,7 +95,6 @@ namespace Polar.Samples
 
             // Измерим скорость выборок
             sw.Restart();
-            int nprobe = 10000;
             for (int i = 0; i < nprobe; i++)
             {
                 int c = rnd.Next(npersons);
@@ -83,10 +106,11 @@ namespace Polar.Samples
             Console.WriteLine($"{nprobe} GetAllByKey ok. duration={sw.ElapsedMilliseconds}");
 
             // Результаты: для 1 млн. персон загрузка 1260 мс., выборки 120 мс/10000, refresh 237 мс. (повторно 7 мс.)
-
         }
         //END_SOURCE_CODE
         public string Name { get; set; }
         public string DiplayName { get => "Demo102"; }
+        public int npersons;
+        public int nprobe;
     }
 }

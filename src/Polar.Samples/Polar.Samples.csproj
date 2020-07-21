@@ -42,7 +42,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Compare\Demo103.cs" />
-    <Compile Include="Compare\Test\Sample4.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -51,7 +50,6 @@
     <Compile Include="Demo101.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Demo102.cs" />
-    <Compile Include="Test1\Sample5.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Polar.CellIndexes\Polar.CellIndexes.csproj">

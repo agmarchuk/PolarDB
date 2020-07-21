@@ -34,6 +34,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Polar.Common", "src\Polar.C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Polar.Samples", "src\Polar.Samples\Polar.Samples.csproj", "{6F968DED-D213-4D08-B7ED-169C7DAEEBDB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PolarDB.BDLearningCourse", "PolarDB.BDLearningCourse\PolarDB.BDLearningCourse.csproj", "{CFD6A497-CF5A-4C1D-B78F-66265A0FAE2D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -88,6 +90,10 @@ Global
 		{6F968DED-D213-4D08-B7ED-169C7DAEEBDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6F968DED-D213-4D08-B7ED-169C7DAEEBDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6F968DED-D213-4D08-B7ED-169C7DAEEBDB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CFD6A497-CF5A-4C1D-B78F-66265A0FAE2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CFD6A497-CF5A-4C1D-B78F-66265A0FAE2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CFD6A497-CF5A-4C1D-B78F-66265A0FAE2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CFD6A497-CF5A-4C1D-B78F-66265A0FAE2D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

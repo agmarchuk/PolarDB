@@ -11,8 +11,25 @@ namespace Polar.Samples
 {
     public class Demo101 : ISample
     {
-        public ICollection<IField> Fields { get; set; }
-
+        public ICollection<IField> Fields { get
+            {
+                return new List<IField>() { 
+                    new NumericField("Number of persons", "npersons") { DefaultValue = 1_000_000 }
+                };
+            }
+        }
+        private Stream stream;
+        public void Clear()
+        {
+            try
+            {
+                if (stream != null)
+                {
+                    stream.Close();
+                }
+            }
+            catch { }
+        }
         //START_SOURCE_CODE
         public void Run()
         {
@@ -69,11 +86,11 @@ namespace Polar.Samples
             // Более экономным, как правило, является использование последовательностей
 
             string dbpath = System.IO.Path.GetTempPath();
-            Stream filestream = new FileStream(dbpath + "db0.bin", FileMode.OpenOrCreate, FileAccess.ReadWrite);
-            UniversalSequenceBase usequence = new UniversalSequenceBase(tp_person, filestream);
+            stream = new FileStream(dbpath + "db0.bin", FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            Stream filestream = stream;
+           UniversalSequenceBase usequence = new UniversalSequenceBase(tp_person, filestream);
 
             // Последовательность можно очистить, в нее можно добавлять элементы, в конце добавлений нужно сбросить буфер
-            int npersons = 1_000_000;
             usequence.Clear();
             foreach (object record in GenPers(npersons))
             {
@@ -89,5 +106,6 @@ namespace Polar.Samples
         //END_SOURCE_CODE
         public string Name { get; set; }
         public string DiplayName { get => "Demo101"; }
+        public int npersons;
     }
 }
