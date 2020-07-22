@@ -85,6 +85,7 @@ namespace Polar.Samples
             int totalages = 0;
             usequence.Scan((off, ob) => { totalages += (int)((object[])ob)[2]; return true; });
             Console.WriteLine($"total ages = {totalages}");
+            filestream.Close();
         }
         //END_SOURCE_CODE
         public string Name { get; set; }

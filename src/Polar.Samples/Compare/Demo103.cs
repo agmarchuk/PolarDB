@@ -116,6 +116,7 @@ namespace Polar.Samples.Compare
             sw.Stop();
             Console.WriteLine($"SearchAll: {nprobes} probes ok. duration={sw.ElapsedMilliseconds} total={total}");
 
+            table.Close();
         }
         //END_SOURCE_CODE
         public string Name { get; set; }
