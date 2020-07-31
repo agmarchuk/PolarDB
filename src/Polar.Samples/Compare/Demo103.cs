@@ -11,8 +11,26 @@ namespace Polar.Samples.Compare
 {
     public class Demo103 : ISample
     {
-        public ICollection<IField> Fields { get; set; }
+        public ICollection<IField> Fields { get {
+                return new List<IField>() {
+                    new NumericField("Number of elements", "nelements") { DefaultValue = 1_000_000 },
+                    new NumericField("Number of probes", "nprobes") { DefaultValue = 1_000}
+                };
+            }  
+        }
 
+        private Stream stream;
+        public void Clear()
+        {
+            try
+            {
+                if (stream != null)
+                {
+                    stream.Close();
+                }
+            }
+            catch  { }
+        }
         //START_SOURCE_CODE
         public void Run()
         {
@@ -21,8 +39,12 @@ namespace Polar.Samples.Compare
             Console.WriteLine("Start Main18: bearing experiments");
             string dbpath = System.IO.Path.GetTempPath();
             int cnt = 0;
-            Func<Stream> GenStream = () => new FileStream(dbpath + "f" + (cnt++) + ".bin",
+            Func<Stream> GenStream = () =>
+            {
+                stream = new FileStream(dbpath + "f" + (cnt++) + ".bin",
                 FileMode.OpenOrCreate, FileAccess.ReadWrite);
+                return stream;
+            };
             PType tp_elem = new PTypeRecord(
                 new NamedType("id", new PType(PTypeEnumeration.integer)),
                 new NamedType("name", new PType(PTypeEnumeration.sstring)),
@@ -43,7 +65,6 @@ namespace Polar.Samples.Compare
                         comp) { tmpdir = dbpath, volume_of_offset_array = 20_000_000 }
                 };
 
-            int nelements = 1_000_000;
             bool toload = true;
 
             if (toload)
@@ -91,8 +112,6 @@ namespace Polar.Samples.Compare
                 Console.WriteLine("~~" + tp_elem.Interpret(ob));
             }
 
-            int nprobes = 1000;
-
             sw.Restart();
             int total = 0;
             for (int i = 0; i < nprobes; i++)
@@ -115,11 +134,12 @@ namespace Polar.Samples.Compare
             }
             sw.Stop();
             Console.WriteLine($"SearchAll: {nprobes} probes ok. duration={sw.ElapsedMilliseconds} total={total}");
-
             table.Close();
         }
         //END_SOURCE_CODE
         public string Name { get; set; }
         public string DiplayName { get => "Demo103"; }
+        public int nelements;
+        public int nprobes;
     }
 }
