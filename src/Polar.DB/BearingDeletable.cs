@@ -65,7 +65,7 @@ namespace Polar.DB
         /// </summary>
         /// <param name="off"></param>
         /// <returns></returns>
-        public object GetItem(long off)
+        public object GetIteнm(long off)
         {
             object[] pair = (object[])sequence.GetElement(off);
             if ((bool)pair[0]) return null;
