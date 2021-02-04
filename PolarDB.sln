@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2027
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29418.71
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Polar.DB", "src\Polar.DB\Polar.DB.csproj", "{9C5E2BEA-1BCC-41D7-99D8-83D37A239B8F}"
 EndProject
@@ -36,7 +36,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Polar.Samples", "src\Polar.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PolarDB.BDLearningCourse", "PolarDB.BDLearningCourse\PolarDB.BDLearningCourse.csproj", "{CFD6A497-CF5A-4C1D-B78F-66265A0FAE2D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GetStarted2", "src\GetStarted2\Getstarted2.csproj", "{9F00F447-9E04-491C-9ECF-BD63D7B979D2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Getstarted2", "src\GetStarted2\Getstarted2.csproj", "{9F00F447-9E04-491C-9ECF-BD63D7B979D2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GetStarted3", "GetStarted3\GetStarted3.csproj", "{7B271F17-53A4-4F82-AE08-C7E1B05CDD08}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -100,6 +102,10 @@ Global
 		{9F00F447-9E04-491C-9ECF-BD63D7B979D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9F00F447-9E04-491C-9ECF-BD63D7B979D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9F00F447-9E04-491C-9ECF-BD63D7B979D2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B271F17-53A4-4F82-AE08-C7E1B05CDD08}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B271F17-53A4-4F82-AE08-C7E1B05CDD08}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B271F17-53A4-4F82-AE08-C7E1B05CDD08}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B271F17-53A4-4F82-AE08-C7E1B05CDD08}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
