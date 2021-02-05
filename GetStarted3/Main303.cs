@@ -10,9 +10,9 @@ namespace GetStarted3
 {
     partial class Program
     {
-        public static void Main302()
+        public static void Main303()
         {
-            Console.WriteLine("Start Main302");
+            Console.WriteLine("Start Main303");
             // Создадим типы записи и последовательности записей
             PType tp_rec = new PTypeRecord(
                 new NamedType("id", new PType(PTypeEnumeration.integer)),
@@ -26,34 +26,26 @@ namespace GetStarted3
 
             Random rnd = new Random();
             int nelements = 100_000;
-            // Последовательность создается пустой или она может быть очищена
-            sequence.Clear();
-            // В последовательность можно добавлять элементы в объектном представлении
-            for (int i = 0; i < nelements; i++)
-            {
-                sequence.AppendElement(new object[] { i, "Иванов" + i, rnd.Next(1, 110) });
-            }
-
-            // Серию записей обязательно надо завершать сбросом буферов
-            sequence.Flush();
-
-            // Изучим полученную последовательность
-            Console.WriteLine($"Count={sequence.Count()}");
-            foreach (object[] r in sequence.ElementValues().Skip(50_000).Take(20))
-            {
-                Console.WriteLine($"{r[0]} {r[1]} {r[2]} ");
-            }
 
             // При заполнении массива, сохраним офсеты элементов в массиве
             long[] offsets = new long[nelements];
             int[] keys = new int[nelements];
-            sequence.Clear();
-            for (int i = 0; i < nelements; i++)
+            //sequence.Clear();
+            //for (int i = 0; i < nelements; i++)
+            //{
+            //    int key = nelements - i - 1;
+            //    offsets[i] = sequence.AppendElement(new object[] { key, "Иванов" + key, rnd.Next(1, 110) });
+            //    keys[i] = key;
+            //}
+
+            int ind = 0;
+            sequence.Scan((off, obj) =>
             {
-                int key = nelements - i - 1;
-                offsets[i] = sequence.AppendElement(new object[] {key , "Иванов" + key, rnd.Next(1, 110) });
-                keys[i] = key;
-            }
+                offsets[ind] = off;
+                keys[ind] = (int)((object[])obj)[0];
+                ind++;
+                return true;
+            });
 
             // отсортируем пару массивов keys, offsets по ключам
             Array.Sort(keys, offsets);
@@ -61,11 +53,11 @@ namespace GetStarted3
             // Будем делать выборку элементов по ключу
             sw.Restart();
             int ntests = 10_000;
-            for (int j=0; j<ntests; j++)
+            for (int j = 0; j < ntests; j++)
             {
                 int key = rnd.Next(nelements);
-                int ind = Array.BinarySearch(keys, key);
-                long off = offsets[ind];
+                int nom = Array.BinarySearch(keys, key);
+                long off = offsets[nom];
                 object[] fields = (object[])sequence.GetElement(off);
                 //Console.WriteLine($"key={key} {fields[0]} {fields[1]} {fields[2]}");
             }
