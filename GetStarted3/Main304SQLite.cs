@@ -25,10 +25,10 @@ namespace GetStarted3
             DbCommand comm = connection.CreateCommand();
             DbTransaction transaction;
 
-            int npersons = 100_000_000;
+            int npersons = 400_000_000;
 
 
-            bool toload = false;
+            bool toload = true;
 
             if (toload)
             {
@@ -52,11 +52,14 @@ namespace GetStarted3
 
                 for (int i = 0; i < npersons; i++)
                 {
+                    int kwant = 1_000_000;
+                    if (i % kwant == 0) Console.Write((i / kwant) + " ");
                     int k = npersons - i - 1;
                     comm.CommandText = "INSERT INTO persons VALUES (" + k + ",'" + k + "', 21);";
                     //Console.Write($"{comm.CommandText}");
                     comm.ExecuteNonQuery();
                 }
+                Console.WriteLine();
                 transaction.Commit();
                 connection.Close();
                 sw.Stop();
@@ -122,5 +125,13 @@ namespace GetStarted3
 
         // Без загрузки
         // Выборка 1 тыс. - 9205 мс.     - в одной транзакции
+
+        // ============ Рабочий комп. 5i, 16 Gb
+        // 100_000 Load     1.4 s,    50 ms
+        // 1_000_000 Load   9.4 s,    56 ms
+        // 10_000_000 Load  85 s,     79 ms
+        // 100_000_000 Load 874 s,    80 ms
+        // 200_000_000 Load 1800 s,   68 ms
+        // 400_000_000 Load 3672 s, 6641 ms
     }
 }
