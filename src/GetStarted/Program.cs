@@ -14,9 +14,10 @@ namespace GetStarted
         private static string dbpath = @"D:/Home/data/GetStarted/";
         public static void Main(string[] args)
         {
-            //Main21();
+            //Main3();
+            Main21();
             //Test(args);
-            Demo103();
+            //Demo103();
         }
         public static void Main1()
         {

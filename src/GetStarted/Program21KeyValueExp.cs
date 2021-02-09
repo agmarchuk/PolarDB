@@ -14,7 +14,7 @@ namespace GetStarted
             Console.WriteLine("Start Program21KeyValueExp");
             Random rnd = new Random();
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-            string path = "Databases/";
+            string path = dbpath + "Databases/";
             int cnt = 0;
             Func<Stream> genStream = () => File.Open(path + "data" + (cnt++) + ".bin",
                 FileMode.OpenOrCreate, FileAccess.ReadWrite);

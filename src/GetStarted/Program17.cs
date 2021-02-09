@@ -12,11 +12,11 @@ namespace GetStarted
         public static void Main17()
         {
             Console.WriteLine("Start Main17: Testing indexes");
-            string path = ""; //"../../../";
+            //string path = ""; //"../../../";
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
             Random rnd = new Random();
             int cnt = 0;
-            Func<Stream> GenStream = () => new FileStream(path + "Databases/f" + (cnt++) + ".bin",
+            Func<Stream> GenStream = () => new FileStream(dbpath + "Databases/f" + (cnt++) + ".bin",
                 FileMode.OpenOrCreate, FileAccess.ReadWrite);
 
             PType tp_person = new PTypeRecord(
@@ -37,7 +37,7 @@ namespace GetStarted
             //IndexKey32CompImmutable str_index = new IndexKey32CompImmutable(GenStream, table, obj =>
             //    new int[] { Hashfunctions.First4charsRu((string)((object[])obj)[1]) }, comp);
 
-            IndexViewImmutable nameview_index = new IndexViewImmutable(GenStream, table, comp, path + "Databases/", 50_000_000);
+            IndexViewImmutable nameview_index = new IndexViewImmutable(GenStream, table, comp, dbpath + "Databases/", 50_000_000);
 
             Comparer<object> comp_int = Comparer<object>.Create(new Comparison<object>((object a, object b) =>
             {

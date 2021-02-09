@@ -10,9 +10,9 @@ namespace GetStarted3
 {
     partial class Program
     {
-        public static void Main303()
+        public static void Main305()
         {
-            Console.WriteLine("Start Main303");
+            Console.WriteLine("Start Main305");
             // Создадим типы записи и последовательности записей
             PType tp_rec = new PTypeRecord(
                 new NamedType("id", new PType(PTypeEnumeration.integer)),
@@ -21,11 +21,11 @@ namespace GetStarted3
             PType tp_seq = new PTypeSequence(tp_rec);
 
             // ======== Универсальная последовательность ==========
-            Stream stream = File.Open(datadirectory_path + "data303.bin", FileMode.OpenOrCreate);
+            Stream stream = File.Open(datadirectory_path + "data305.bin", FileMode.OpenOrCreate);
             UniversalSequenceBase sequence = new UniversalSequenceBase(tp_rec, stream);
 
             Random rnd = new Random();
-            int nelements = 10_000_000;
+            int nelements = 50_000;
 
             // При заполнении массива, сохраним офсеты элементов в массиве
             long[] offsets = new long[nelements];
@@ -67,12 +67,14 @@ namespace GetStarted3
 
             // Будем делать выборку элементов по ключу
             sw.Restart();
-            int ntests = 1000;
+            int ntests = 10000;
             for (int j = 0; j < ntests; j++)
             {
                 int key = rnd.Next(nelements);
                 int nom = Array.BinarySearch(keys, key);
-                long off = offsets[nom];
+                long nom1 = BinarySearchFirst(0, nelements, key, keys);
+                if (nom1 != (long)nom) throw new Exception();
+                long off = offsets[nom1];
                 object[] fields = (object[])sequence.GetElement(off);
                 if (key != (int)fields[0]) throw new Exception("1233eddf");
                 //Console.WriteLine($"key={key} {fields[0]} {fields[1]} {fields[2]}");
@@ -81,12 +83,34 @@ namespace GetStarted3
             Console.WriteLine($"duration of {ntests} tests is {sw.ElapsedMilliseconds} ms.");
         }
 
-        // Результаты прогонов
-        // Домшний desktop i3, 8 Gb RAM
-        // 1 млн. записей. Загрузка 0.4 сек. 1000 тестов 6.8 мс.
-        // 10 млн. записей. Загрузка 3.6 сек. 1000 тестов 7.5 мс.
-        // 20 млн. записей. Загрузка 7.3 сек. 1000 тестов 7.7 мс.
-        // 50 млн. записей. Загрузка 19 сек. 1000 тестов 5.2 с.
-        // 100 млн. записей. Загрузка 42 сек. 1000 тестов 10.8 с.
+
+        private static long BinarySearchFirst(long start, long number, int key, int[] arr)
+        {
+            long half = number / 2;
+            if (half == 0) // number = 0 или 1
+            {
+                if (arr[start] == key) return start;
+                else if (arr[start + 1] == key) return start + 1;
+                else return -1;
+            }
+
+            long middle = start + half;
+            long rest = number - half - 1;
+            var middle_depth = arr[middle] - key;
+
+            if (middle_depth == 0) // Нашли!
+            {
+                return middle;
+            }
+            if (middle_depth < 0)
+            {
+                return BinarySearchFirst(middle + 1, rest, key, arr);
+            }
+            else
+            {
+                return BinarySearchFirst(start, half, key, arr);
+            }
+        }
+
     }
 }
