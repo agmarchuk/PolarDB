@@ -38,7 +38,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PolarDB.BDLearningCourse", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Getstarted2", "src\GetStarted2\Getstarted2.csproj", "{9F00F447-9E04-491C-9ECF-BD63D7B979D2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GetStarted3", "GetStarted3\GetStarted3.csproj", "{7B271F17-53A4-4F82-AE08-C7E1B05CDD08}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GetStarted3", "GetStarted3\GetStarted3.csproj", "{7B271F17-53A4-4F82-AE08-C7E1B05CDD08}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GetStarted4", "GetStarted4\GetStarted4.csproj", "{A471BE5C-594B-4067-90D8-77FFE5505705}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -106,6 +108,10 @@ Global
 		{7B271F17-53A4-4F82-AE08-C7E1B05CDD08}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7B271F17-53A4-4F82-AE08-C7E1B05CDD08}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7B271F17-53A4-4F82-AE08-C7E1B05CDD08}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A471BE5C-594B-4067-90D8-77FFE5505705}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A471BE5C-594B-4067-90D8-77FFE5505705}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A471BE5C-594B-4067-90D8-77FFE5505705}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A471BE5C-594B-4067-90D8-77FFE5505705}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
