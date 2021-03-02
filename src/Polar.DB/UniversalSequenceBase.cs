@@ -112,7 +112,7 @@ namespace Polar.DB
             if (off != fs.Position) fs.Position = off;
             ByteFlow.Serialize(bw, v, tp);
         }
-        private long append_offset = 8L;
+        private long append_offset = 8L; // Ошибка! надо вычислять в конструкторе
         public long AppendElement(object v)
         {
             nelements += 1;
