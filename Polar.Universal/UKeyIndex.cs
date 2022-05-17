@@ -29,10 +29,18 @@ namespace Polar.Universal
 
             offkey_dic = new Dictionary<IComparable, Tuple<long, IComparable>>();
         }
-        public void Clear() { hkeys.Clear(); offsets.Clear(); offkey_dic.Clear(); }
+
+        private int[] hkeys_arr = null;
+
+        public void Clear() { hkeys.Clear(); hkeys_arr = null; offsets.Clear(); offkey_dic.Clear(); }
         public void Flush() { hkeys.Flush(); offsets.Flush();  }
         public void Close() { hkeys.Close(); offsets.Close();  }
-        
+        public void Refresh() 
+        {
+            hkeys_arr = hkeys.ElementValues().Cast<int>().ToArray(); 
+            offsets.Refresh(); 
+        }
+
         public void Build() 
         {
             // сканируем опорную последовательность, формируем массивы
@@ -44,7 +52,7 @@ namespace Polar.Universal
                 hkeys_list.Add(hashOfKey(keyFunc(obj)));
                 return true;
             });
-            int[] hkeys_arr = hkeys_list.ToArray();
+            hkeys_arr = hkeys_list.ToArray();
             hkeys_list = null;
             long[] offsets_arr = offsets_list.ToArray();
             offsets_list = null;
@@ -55,8 +63,8 @@ namespace Polar.Universal
             hkeys.Clear();
             foreach (var hkey in hkeys_arr) { hkeys.AppendElement(hkey); }
             hkeys.Flush();
-            hkeys_arr = null;
-            GC.Collect();
+            //hkeys_arr = null;
+            //GC.Collect();
 
 
             offsets.Clear();
@@ -65,7 +73,6 @@ namespace Polar.Universal
             offsets_arr = null;
             GC.Collect();
         }
-        public void Refresh() { hkeys.Refresh(); offsets.Refresh(); }
 
         public object GetByKey(IComparable keysample)
         {
@@ -74,17 +81,29 @@ namespace Polar.Universal
                 return sequence.GetByOffset(offkey.Item1);
             }
             int hkey = hashOfKey(keysample);
-            long first = GetFirstNom(hkey);
-            if (first == -1) return null;
-            for (long nom = first; nom < hkeys.Count(); nom++)
+
+            if (hkeys_arr != null)
             {
-                long offset = (long)offsets.GetByIndex(nom);
+                int pos = Array.BinarySearch<int>(hkeys_arr, hkey);
+                long offset = (long)offsets.GetByIndex(pos);
                 object val = sequence.GetByOffset(offset);
-                if (val == null) break;
+                if (val == null) return null;
                 var k = keyFunc(val);
-                if (hashOfKey(k) != hkey) break;
+                if (hashOfKey(k) != hkey) return null;
                 if (k.CompareTo(keysample) == 0) return val;
             }
+
+            //long first = GetFirstNom(hkey);
+            //if (first == -1) return null;
+            //for (long nom = first; nom < hkeys.Count(); nom++)
+            //{
+            //    long offset = (long)offsets.GetByIndex(nom);
+            //    object val = sequence.GetByOffset(offset);
+            //    if (val == null) break;
+            //    var k = keyFunc(val);
+            //    if (hashOfKey(k) != hkey) break;
+            //    if (k.CompareTo(keysample) == 0) return val;
+            //}
             return null;
         }
 

@@ -44,7 +44,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GetStarted4", "GetStarted4\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Polar.OModel", "Polar.OModel\Polar.OModel.csproj", "{F9C177A2-4772-4986-A353-6FBC6CC3A084}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Polar.Universal", "Polar.Unversal\Polar.Universal.csproj", "{5405CBA1-84E8-4533-BE4A-7F08DF9967D4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Polar.Universal", "Polar.Universal\Polar.Universal.csproj", "{C10BAADD-CDF4-461B-9C89-49AEE16D3C6C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -120,10 +120,10 @@ Global
 		{F9C177A2-4772-4986-A353-6FBC6CC3A084}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F9C177A2-4772-4986-A353-6FBC6CC3A084}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F9C177A2-4772-4986-A353-6FBC6CC3A084}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5405CBA1-84E8-4533-BE4A-7F08DF9967D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5405CBA1-84E8-4533-BE4A-7F08DF9967D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5405CBA1-84E8-4533-BE4A-7F08DF9967D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5405CBA1-84E8-4533-BE4A-7F08DF9967D4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C10BAADD-CDF4-461B-9C89-49AEE16D3C6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C10BAADD-CDF4-461B-9C89-49AEE16D3C6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C10BAADD-CDF4-461B-9C89-49AEE16D3C6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C10BAADD-CDF4-461B-9C89-49AEE16D3C6C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

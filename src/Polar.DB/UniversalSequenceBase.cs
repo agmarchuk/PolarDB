@@ -31,26 +31,54 @@ namespace Polar.DB
             { // делаем последовательность с нулевой длиной
                 Clear();
             }
-            else
-            { // считываем количество элементов, устанавливаем Position
+            else 
+            {
                 fs.Position = 0L;
                 nelements = br.ReadInt64();
-                // если длина элементов фиксирована, устанавливаем на условный конец, если нет -устанавливаем на начало пустого
-                if (elem_size > 0) fs.Position = 8 + nelements * elem_size;
-                else
-                {
-                    //fs.Position = fs.Length; // Этот вариант породит ошибку, если реальный размер файла больше, чем занимают элементы
-                    this.Scan((off, ob) => true);
-                }
-                append_offset = fs.Position;
+
+                //// если длина элементов фиксирована, устанавливаем на условный конец, если нет -устанавливаем на начало пустого
+                //if (elem_size > 0) fs.Position = 8 + nelements * elem_size;
+                //else
+                //{
+                //    // fs.Position = fs.Length; // Этот вариант породит ошибку, если реальный размер файла больше, чем занимают элементы
+                //    //this.Scan((off, ob) => true); // Это решение почему-то раз в 15 медленнее следующего
+                //    long cnt = this.Count();
+                //    for (long ii = 0; ii < cnt; ii++)
+                //    {
+                //        GetElement();
+                //    }
+                //}
+
+                append_offset = fs.Length;
+                fs.Position = append_offset;
             }
+
+            // ==== Это не очень экономный вариант вычисления append_offset:
+            //else
+            //{ // считываем количество элементов, устанавливаем Position
+            //    fs.Position = 0L;
+            //    nelements = br.ReadInt64();
+            //    // если длина элементов фиксирована, устанавливаем на условный конец, если нет -устанавливаем на начало пустого
+            //    if (elem_size > 0) fs.Position = 8 + nelements * elem_size;
+            //    else
+            //    {
+            //        // fs.Position = fs.Length; // Этот вариант породит ошибку, если реальный размер файла больше, чем занимают элементы
+            //        //this.Scan((off, ob) => true); // Это решение почему-то раз в 15 медленнее следующего
+            //        long cnt = this.Count();
+            //        for (long ii = 0; ii < cnt; ii++)
+            //        {
+            //            GetElement();
+            //        }
+            //    }
+            //    append_offset = fs.Position;
+            //}
         }
         /// <summary>
         /// Делает последовательность с нулевым количеством элементов
         /// </summary>
         public void Clear()
         {
-            fs.Position = 0L;
+            fs.Position = 0L; fs.SetLength(0);
             bw.Write(0L);
             nelements = 0;
             append_offset = 8L;
@@ -76,10 +104,6 @@ namespace Polar.DB
             fs.CopyTo(Stream.Null); // Это решение плохо тем, что работает с полным файлом даже если занята только часть
             //fs.CopyToAsync(Stream.Null);
 
-            //byte[] buff = new byte[1000000];
-            //int nb;
-            //while ((nb = fs.Read(buff, 0, buff.Length)) > 0);
-
             //Scan((off, obj) => true);
         }
         public long Count() { return nelements; }
@@ -89,7 +113,7 @@ namespace Polar.DB
             if (ind < 0 || ind > nelements || !tp_elem.HasNoTail) throw new Exception("Err in ElementOffset");
             return 8 + ind * elem_size;
         }
-        public long ElementOffset() { return fs.Position; }
+        public long ElementOffset() { return fs.Position; } //TODO: Это ошибка, надо сканировать!
 
         /// <summary>
         /// Запись сериализации значения с текущей позиции. Корректна только если либо значение фиксированного размера, либо запись ведется в конец

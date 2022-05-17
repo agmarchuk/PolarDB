@@ -13,8 +13,10 @@ namespace Polar.Universal
             Random rnd = new Random();
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
 
-            Console.WriteLine("Start Univeral!");
+            Console.WriteLine("Start Universal!");
             string path = @"D:\Home\data\uni\";
+
+            sw.Restart();
             int nom = 0;
             Func<Stream> GenStream = () => File.Open(path +"f" + nom++ + ".bin", FileMode.OpenOrCreate, FileAccess.ReadWrite);
 
@@ -28,10 +30,12 @@ namespace Polar.Universal
                 rec => false,
                 rec => (int)((object[])rec)[0],
                 id => (int)id);
-            
+            sw.Stop();
+            Console.WriteLine($"Start ok. duration={sw.ElapsedMilliseconds}");
+
             int nrecords = 100_000_000;
             
-            bool toload = false;
+            bool toload = true;
             if (toload)
             {
                 sw.Restart();
@@ -41,13 +45,23 @@ namespace Polar.Universal
                     .Select(ii => new object[] { nrecords - ii - 1, "n" + (nrecords - ii - 1), 27 })
                     );
                 sw.Stop();
-                Console.WriteLine($"load ok. duration={sw.ElapsedMilliseconds}");
+                Console.WriteLine($"Load ok. duration={sw.ElapsedMilliseconds}");
+            }
+            else
+            {
+                sw.Restart();
+                sequ.Refresh();
+                sw.Stop();
+                Console.WriteLine($"Refresh ok. duration={sw.ElapsedMilliseconds}");
             }
 
 
+            sw.Restart();
             int key = nrecords / 3 * 2;
             object[] v = (object[])sequ.GetByKey(key);
             Console.WriteLine($"{v[0]} {v[1]} {v[2]} ");
+            sw.Stop();
+            Console.WriteLine($"Refresh ok. duration={sw.ElapsedMilliseconds}");
 
             sw.Restart();
             int nprobes = 1000;

@@ -25,6 +25,7 @@ namespace Polar.Universal
         public void Clear() { sequence.Clear(); primaryKeyIndex.Clear(); }
         public void Flush() { sequence.Flush(); primaryKeyIndex.Flush(); }
         public void Close() { sequence.Close(); primaryKeyIndex.Close(); }
+        public void Refresh() { sequence.Refresh(); primaryKeyIndex.Refresh(); }
 
         public void Load(IEnumerable<object> flow)
         {
