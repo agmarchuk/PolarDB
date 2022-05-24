@@ -14,9 +14,12 @@ namespace Polar.Universal
         // Ключом является объект, порождаемый ключевой функцией. Ключи можно сравнивать!
         private Func<object, IComparable> keyFunc;
         private Func<IComparable, int> hashOfKey;
-        private Dictionary<IComparable, Tuple<long, IComparable>> offkey_dic;
+        // Статическая часть индекса
         private UniversalSequenceBase hkeys;
         private UniversalSequenceBase offsets;
+        // Динамическая часть индекса
+        private Dictionary<IComparable, long> keyoff_dic;
+
         public UKeyIndex(Func<Stream> streamGen, USequence sequence,
             Func<object, IComparable> keyFunc, Func<IComparable, int> hashOfKey)
         {
@@ -27,12 +30,21 @@ namespace Polar.Universal
             hkeys = new UniversalSequenceBase(new PType(PTypeEnumeration.integer), streamGen());
             offsets = new UniversalSequenceBase(new PType(PTypeEnumeration.longinteger), streamGen());
 
-            offkey_dic = new Dictionary<IComparable, Tuple<long, IComparable>>();
+            keyoff_dic = new Dictionary<IComparable, long>();
+        }
+        public void OnAppendElement(IComparable key, long offset)
+        {
+            if (keyoff_dic.ContainsKey(key))
+            {
+                keyoff_dic.Remove(key);
+            }
+            keyoff_dic.Add(key, offset);
         }
 
+        // Массив оптимизации поиска по значению хеша
         private int[] hkeys_arr = null;
 
-        public void Clear() { hkeys.Clear(); hkeys_arr = null; offsets.Clear(); offkey_dic.Clear(); }
+        public void Clear() { hkeys.Clear(); hkeys_arr = null; offsets.Clear(); keyoff_dic.Clear(); }
         public void Flush() { hkeys.Flush(); offsets.Flush();  }
         public void Close() { hkeys.Close(); offsets.Close();  }
         public void Refresh() 
@@ -76,34 +88,45 @@ namespace Polar.Universal
 
         public object GetByKey(IComparable keysample)
         {
-            if (offkey_dic.TryGetValue(keysample, out Tuple<long, IComparable> offkey))
+            if (keyoff_dic.TryGetValue(keysample, out long off))
             {
-                return sequence.GetByOffset(offkey.Item1);
+                return sequence.GetByOffset(off);
             }
             int hkey = hashOfKey(keysample);
 
             if (hkeys_arr != null)
             {
                 int pos = Array.BinarySearch<int>(hkeys_arr, hkey);
-                long offset = (long)offsets.GetByIndex(pos);
-                object val = sequence.GetByOffset(offset);
-                if (val == null) return null;
-                var k = keyFunc(val);
-                if (hashOfKey(k) != hkey) return null;
-                if (k.CompareTo(keysample) == 0) return val;
+                if (pos < 0) return null;
+                // ищем самую левую позицию 
+                int p = pos;
+                while (p >= 0 && hkeys_arr[p] == hkey) { pos = p; p--; }
+                // движемся вправо
+                while (pos < hkeys_arr.Length && hkeys_arr[pos] == hkey)
+                {
+                    long offset = (long)offsets.GetByIndex(pos);
+                    object val = sequence.GetByOffset(offset);
+                    if (val == null) return null; // Непонятно, нужно ли?
+                    var k = keyFunc(val);
+                    if (k.CompareTo(keysample) == 0) return val;
+                    pos++;
+                }
+                return null;
             }
-
-            //long first = GetFirstNom(hkey);
-            //if (first == -1) return null;
-            //for (long nom = first; nom < hkeys.Count(); nom++)
-            //{
-            //    long offset = (long)offsets.GetByIndex(nom);
-            //    object val = sequence.GetByOffset(offset);
-            //    if (val == null) break;
-            //    var k = keyFunc(val);
-            //    if (hashOfKey(k) != hkey) break;
-            //    if (k.CompareTo(keysample) == 0) return val;
-            //}
+            else
+            {
+                long first = GetFirstNom(hkey);
+                if (first == -1) return null;
+                for (long nom = first; nom < hkeys.Count(); nom++)
+                {
+                    long offset = (long)offsets.GetByIndex(nom);
+                    object val = sequence.GetByOffset(offset);
+                    if (val == null) break;
+                    var k = keyFunc(val);
+                    if (hashOfKey(k) != hkey) break;
+                    if (k.CompareTo(keysample) == 0) return val;
+                }
+            }
             return null;
         }
 
@@ -146,14 +169,14 @@ namespace Polar.Universal
         /// <param name="key"></param>
         /// <param name="offset"></param>
         /// <returns></returns>
-        private bool IsOriginal(IComparable key, long offset)
+        public bool IsOriginal(IComparable key, long offset)
         {
-            if (offkey_dic.TryGetValue(key, out Tuple<long, IComparable> offkey))
+            if (keyoff_dic.TryGetValue(key, out long off))
             {
-                if (offkey.Item1 == offset) return true;
+                if (off == offset) return true;
                 return false;
             }
-            return true;
+            return true; //TODO: здесь предполагается, что в основном индексе есть такое значение
         }
 
     }
