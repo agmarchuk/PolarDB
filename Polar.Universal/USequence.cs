@@ -53,18 +53,6 @@ namespace Polar.Universal
         public IEnumerable<object> ElementValues()
         {
             return sequence.ElementOffsetValuePairs()
-                //// проверка на оригинал
-                //.Where(pair => 
-                //{
-                //    long off = pair.Item1;
-                //    IComparable key = keyFunc(pair.Item2);
-                //    return primaryKeyIndex.IsOriginal(key, off);
-                //})
-                //// проверка оригиналов на пустое значение
-                //.Where(pair => 
-                //{
-                //    return !isEmpty(pair.Item2);
-                //})
                 // Оставляем оригиналы и непустые
                 .Where(pair => IsOriginalAndNotEmpty(pair.Item2, pair.Item1))
                 .Select(pair => pair.Item2);
@@ -85,8 +73,8 @@ namespace Polar.Universal
         {
             long off = sequence.AppendElement(element);
             // Корректировка индексов
-            primaryKeyIndex.OnAppendElement(keyFunc(element), off);
-            if (uindexes != null) foreach (var uind in uindexes) uind.OnAppendElement(keyFunc(element), off);
+            primaryKeyIndex.OnAppendElement(element, off);
+            if (uindexes != null) foreach (var uind in uindexes) uind.OnAppendElement(element, off);
         }
 
         public object GetByKey(IComparable keysample)
@@ -98,10 +86,10 @@ namespace Polar.Universal
         {
             return sequence.GetElement(off);
         }
-        public IEnumerable<object> GetAllByIndex(int nom, object sample)
+        public IEnumerable<object> GetAllByValue(int nom, IComparable value)
         {
-            var uind = (UVectorIndex)uindexes[nom];
-            IEnumerable<object> query = uind.GetAllByValue((IComparable)sample)
+            var uind = (SVectorIndex)uindexes[nom];
+            IEnumerable<object> query = uind.GetAllByValue((IComparable)value)
                 .Where(obof => IsOriginalAndNotEmpty(obof.obj, obof.off))
                 .Select(obof => obof.obj);
             return query;
@@ -109,17 +97,9 @@ namespace Polar.Universal
         public IEnumerable<object> GetAllByLike(int nom, object sample)
         {
             var uind = uindexes[nom];
-            if (uind is UIndex)
+            if (uind is SVectorIndex)
             {
-                //var query = ((UIndex)uind).GetAllByLike(sample, comp_like)
-                //    .Where(obof => IsOriginalAndNotEmpty(obof.obj, obof.off))
-                //    .Select(obof => obof.obj);
-                //return query;
-                throw new NotImplementedException("28738");
-            }
-            else if (uind is UVectorIndex)
-            {
-                var query = ((UVectorIndex)uind).GetAllByLike((string)sample)
+                var query = ((SVectorIndex)uind).GetAllByLike((string)sample)
                     .Where(obof => IsOriginalAndNotEmpty(obof.obj, obof.off))
                     .Select(obof => obof.obj);
                 return query;

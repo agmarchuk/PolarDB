@@ -181,14 +181,9 @@ namespace Polar.Universal
                 else break;
             }
         }
-        public void OnAppendElement(IComparable key, long offset)
+        public void OnAppendElement(object element, long offset)
         {
-            //long off = -1;
-            //if (keyoff_dic.TryGetValue(key, out off))
-            //{
-            //    keyoff_dic.Remove(key);
-            //}
-            //keyoff_dic.Add(key, off);
+            throw new NotImplementedException("21298");
         }
 
 

@@ -20,7 +20,7 @@ namespace Polar.Universal
         void Close();
         void Refresh();
         void Build();
-        void OnAppendElement(IComparable key, long offset);
+        void OnAppendElement(object element, long offset);
         //IEnumerable<ObjOff> GetAllByValue(IComparable valuesample);
         //IEnumerable<ObjOff> GetAllBySample(object sample);
     }

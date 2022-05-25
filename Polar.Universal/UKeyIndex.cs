@@ -32,8 +32,9 @@ namespace Polar.Universal
 
             keyoff_dic = new Dictionary<IComparable, long>();
         }
-        public void OnAppendElement(IComparable key, long offset)
+        public void OnAppendElement(object element, long offset)
         {
+            var key = keyFunc(element);
             if (keyoff_dic.ContainsKey(key))
             {
                 keyoff_dic.Remove(key);

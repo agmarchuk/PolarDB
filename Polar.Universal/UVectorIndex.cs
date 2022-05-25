@@ -39,37 +39,20 @@ namespace Polar.Universal
             element_offsets = new UniversalSequenceBase(new PType(PTypeEnumeration.longinteger), streamGen());
 
             valueoffs_dic = new Dictionary<IComparable, long[]>();
-
-            comp_string = Comparer<IComparable>.Create(new Comparison<IComparable>((IComparable v1, IComparable v2) =>
-            {
-                string a = (string)v1;
-                string b = (string)v2;
-                if (string.IsNullOrEmpty(b)) return 0;
-                return string.Compare(a, b, StringComparison.OrdinalIgnoreCase);
-            }));
-
-            comp_string_like = Comparer<IComparable>.Create(new Comparison<IComparable>((IComparable v1, IComparable v2) =>
-            {
-                string a = (string)v1;
-                string b = (string)v2;
-                if (string.IsNullOrEmpty(b)) return 0;
-                int len = b.Length;
-                return string.Compare(
-                    a, 0,
-                    b, 0, len, StringComparison.OrdinalIgnoreCase);
-            }));
         }
         
-        private Comparer<IComparable> comp_string;
-        private Comparer<IComparable> comp_string_like;
-
-        public void OnAppendElement(IComparable key, long offset)
+        public void OnAppendElement(object element, long offset)
         {
-            if (valueoffs_dic.TryGetValue(key, out long[] offsets))
+            var values = valuesFunc(element);
+            foreach (var value in values)
             {
-                offsets = offsets.Append(offset).ToArray();
+                IComparable key = value;
+                if (valueoffs_dic.TryGetValue(key, out long[] offsets))
+                {
+                    offsets.Append(offset).ToArray();
+                }
+                else valueoffs_dic.Add(key, new long[] { offset });
             }
-            valueoffs_dic.Add(key, new long[] { offset });
         }
 
         // Массив оптимизации поиска по значению value
@@ -105,7 +88,7 @@ namespace Polar.Universal
             offsets_list = null;
             GC.Collect();
 
-            Array.Sort(values_arr, offsets_arr, comp_string);
+            Array.Sort(values_arr, offsets_arr);
 
             values.Clear();
             foreach (var v in values_arr) { values.AppendElement(v); }
@@ -127,48 +110,22 @@ namespace Polar.Universal
                     yield return oo;
                 }
             }
-
-            int pos = Array.BinarySearch<IComparable>(values_arr, valuesample, comp_string);
-            // ищем самую левую позицию 
-            int p = pos;
-            while (p >= 0 && values_arr[p].CompareTo(valuesample) == 0) { pos = p; p--; }
-            // движемся вправо
-            while (pos < values_arr.Length && values_arr[pos].CompareTo(valuesample) == 0)
+            int pos = Array.BinarySearch<IComparable>(values_arr, valuesample);
+            if (pos >= 0) 
             {
-                long offset = (long)element_offsets.GetByIndex(pos);
-                object ob = sequence.GetByOffset(offset);
-                yield return new ObjOff(ob, offset);
-                pos++;
+                // ищем самую левую позицию 
+                int p = pos;
+                while (p >= 0 && values_arr[p].CompareTo(valuesample) == 0) { pos = p; p--; }
+                // движемся вправо
+                while (pos < values_arr.Length && values_arr[pos].CompareTo(valuesample) == 0)
+                {
+                    long offset = (long)element_offsets.GetByIndex(pos);
+                    object ob = sequence.GetByOffset(offset);
+                    yield return new ObjOff(ob, offset);
+                    pos++;
+                }
             }
         }
-
-        internal IEnumerable<ObjOff> GetAllByLike(string valuesample)
-        {
-            string[] strings_arr = values_arr.Cast<string>().ToArray();
-            //if (valueoffs_dic.TryGetValue(valuesample, out long[] offs))
-            //{
-            //    foreach (var oo in offs.Select(o => new ObjOff(sequence.GetByOffset(o), o)))
-            //    {
-            //        yield return oo;
-            //    }
-            //} StringComparison.OrdinalIgnoreCase
-            
-            int pos = Array.BinarySearch<string>(strings_arr, valuesample, comp_string_like);
-            if (pos < 0) goto Fin;
-            // ищем самую левую позицию 
-            int p = pos;
-            while (p >= 0 && comp_string_like.Compare(values_arr[p], valuesample) == 0) { pos = p; p--; }
-            // движемся вправо
-            while (pos < values_arr.Length && comp_string_like.Compare(values_arr[pos], valuesample) == 0)
-            {
-                long offset = (long)element_offsets.GetByIndex(pos);
-                object ob = sequence.GetByOffset(offset);
-                yield return new ObjOff(ob, offset);
-                pos++;
-            }
-            Fin: { }
-        }
-
     }
 
 }

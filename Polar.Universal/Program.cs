@@ -10,9 +10,88 @@ namespace Polar.Universal
     {
         public static void Main()
         {
-            Main1();
-            //Main2();
+            //Main1();
+            Main2();
+            //Main3();
         }
+        public static void Main3()
+        {
+            System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+            Random rnd = new Random();
+            Console.WriteLine("Start Main3 of Universal tests");
+
+            // Директория для данных и генератор потоков
+            string path = @"D:\Home\data\uni\";
+            int nom = 0;
+            Func<Stream> GenStream = () => File.Open(path + "d" + nom++ + ".bin", FileMode.OpenOrCreate, FileAccess.ReadWrite);
+
+            // Создаем тип элемента последовательности, саму последовательность
+            PType tp = new PTypeRecord(
+                new NamedType("Id", new PType(PTypeEnumeration.sstring)),
+                new NamedType("Tp", new PType(PTypeEnumeration.sstring)),
+                new NamedType("Props", new PTypeSequence(new PTypeRecord(
+                    new NamedType("Prop", new PType(PTypeEnumeration.sstring)),
+                    new NamedType("Value", new PType(PTypeEnumeration.sstring))))),
+                new NamedType("sentence", new PType(PTypeEnumeration.sstring)));
+            USequence sequence = new USequence(tp, GenStream,
+                ob => (string)((object[])ob)[1] == "deleted",
+                ob => (string)((object[])ob)[0],
+                ke => Hashfunctions.HashRot13((string)ke));
+            sequence.uindexes = new IUIndex[]
+            {
+            };
+
+            // Загрузим последовательность тестовым материалом
+            int nelements = 10;
+            bool toload = true;
+            if (toload)
+            {
+                sw.Start();
+                var flow = Enumerable.Range(0, nelements).Select(ii =>
+                {
+                    nom = nelements - ii - 1;
+                    object[] rec = new object[] 
+                    { 
+                        "" + nom, 
+                        "person", 
+                        new object[] { new object[] { "name", "n" + nom } }, 
+                        "" 
+                    };
+                    return rec;
+                });
+                sequence.Load(flow);
+                sequence.Flush();
+                sw.Stop(); Console.WriteLine("load ok. duration=" + sw.ElapsedMilliseconds);
+            }
+            else
+            {
+                sequence.Refresh();
+            }
+
+            int key = nelements * 2 / 3;
+            var va = sequence.GetByKey("" + key);
+            Console.WriteLine(tp.Interpret(va));
+
+            int nprobe = 1000;
+            sw.Restart();
+            for (int i=0; i<nprobe; i++)
+            {
+                int k = rnd.Next(nelements);
+                var v = sequence.GetByKey("" + k);
+            }
+            sw.Stop(); Console.WriteLine($"{nprobe} gets ok. duration=" + sw.ElapsedMilliseconds);
+
+            sequence.AppendElement(new object[] { "2", "deleted", new object[0], "" });
+            sequence.AppendElement(new object[] { "4", "person", new object[0], "" });
+            sequence.AppendElement(new object[] { "aaa", "person", new object[0], "" });
+
+            foreach (var v in sequence.ElementValues())
+            {
+                Console.WriteLine(tp.Interpret(v));
+            }
+        }
+
+
         /// <summary>
         /// Тест на слабую динамику
         /// </summary>
@@ -38,21 +117,14 @@ namespace Polar.Universal
                 ob => (int)ob);
             seq.uindexes = new IUIndex[] 
             { 
-                new UIndex(GenStream, seq, ob => true, null,
-                    Comparer<object>.Create(new Comparison<object>((object a, object b) =>
-                    {
-                        string val1 = (string)((object[])a)[2];
-                        string val2 = (string)((object[])b)[2];
-                        return string.Compare(val1, val2, StringComparison.OrdinalIgnoreCase);
-                    }))),
-                new UVectorIndex(GenStream, seq, new PType(PTypeEnumeration.sstring), 
+                new SVectorIndex(GenStream, seq,  
                     ob =>
                     {
                         string sentence = (string)((object[])ob)[3];
                         string[] words = sentence.Split(' ');
                         return words;
                     }),
-                new UVectorIndex(GenStream, seq, new PType(PTypeEnumeration.sstring),
+                new SVectorIndex(GenStream, seq,
                     ob =>
                     {
                         string name = (string)((object[])ob)[2];
@@ -95,21 +167,14 @@ namespace Polar.Universal
                     b, 0, len, StringComparison.OrdinalIgnoreCase);
             }));
 
-            //var query = seq.GetAllByLike(0, new object[] { -1, false, "f", null } , comp_like);
-            //foreach (object[] r in query)
-            //{
-            //    Console.WriteLine($"{r[0]} {r[1]} {r[2]}");
-            //}
-            //Console.WriteLine();
-
-            var qu = seq.GetAllByIndex(1, "это");
+            var qu = seq.GetAllByValue(0, "это");
             foreach (object[] r in qu)
             {
                 Console.WriteLine($"{r[0]} {r[1]} {r[2]} {r[3]}");
             }
             Console.WriteLine("ok.");
 
-            var q3 = seq.GetAllByLike(2, "s");
+            var q3 = seq.GetAllByLike(1, "s");
             foreach (object[] r in q3)
             {
                 Console.WriteLine($"{r[0]} {r[1]} {r[2]} {r[3]}");
