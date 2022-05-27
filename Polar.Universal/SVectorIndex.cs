@@ -43,7 +43,7 @@ namespace Polar.Universal
             {
                 string a = (string)v1;
                 string b = (string)v2;
-                if (string.IsNullOrEmpty(b)) return 0;
+                //if (string.IsNullOrEmpty(b)) return 0;
                 return string.Compare(a, b, StringComparison.OrdinalIgnoreCase);
             }));
             comp_string_like = Comparer<IComparable>.Create(new Comparison<IComparable>((IComparable v1, IComparable v2) =>
