@@ -83,6 +83,7 @@ namespace Polar.Universal
                 var vals = valuesFunc(obj);
                 foreach (var v in vals)
                 {
+                    if (string.IsNullOrEmpty(v)) continue;
                     offsets_list.Add(off);
                     values_list.Add(v);
                 }
