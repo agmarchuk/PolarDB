@@ -19,7 +19,7 @@ namespace Polar.DB
                 case PTypeEnumeration.integer: { bw.Write((int)v); return; }
                 case PTypeEnumeration.longinteger: { bw.Write((long)v); return; }
                 case PTypeEnumeration.real: { bw.Write((double)v); return; }
-                case PTypeEnumeration.sstring: { bw.Write((string)v); return; }
+                case PTypeEnumeration.sstring: { if (v == null) v = ""; bw.Write((string)v); return; }
                 case PTypeEnumeration.record:
                     {
                         object[] rec = (object[])v;

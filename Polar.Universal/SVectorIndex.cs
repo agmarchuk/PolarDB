@@ -43,7 +43,7 @@ namespace Polar.Universal
             {
                 string a = (string)v1;
                 string b = (string)v2;
-                if (string.IsNullOrEmpty(b)) return 0;
+                //if (string.IsNullOrEmpty(b)) return 0;
                 return string.Compare(a, b, StringComparison.OrdinalIgnoreCase);
             }));
             comp_string_like = Comparer<IComparable>.Create(new Comparison<IComparable>((IComparable v1, IComparable v2) =>
@@ -138,9 +138,9 @@ namespace Polar.Universal
             {
                 // ищем самую левую позицию 
                 int p = pos;
-                while (p >= 0 && values_arr[p].CompareTo(svalue) == 0) { pos = p; p--; }
+                while (p >= 0 && comp_string.Compare(values_arr[p], svalue) == 0) { pos = p; p--; }
                 // движемся вправо
-                while (pos < values_arr.Length && values_arr[pos].CompareTo(svalue) == 0)
+                while (pos < values_arr.Length && comp_string.Compare(values_arr[pos], svalue) == 0)
                 {
                     long offset = (long)element_offsets.GetByIndex(pos);
                     object ob = sequence.GetByOffset(offset);
