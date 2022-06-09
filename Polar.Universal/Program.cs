@@ -11,8 +11,8 @@ namespace Polar.Universal
         public static void Main()
         {
             //Main1();
-            Main2();
-            //Main3();
+            //Main2();
+            Main3();
         }
         public static void Main3()
         {
