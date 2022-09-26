@@ -176,7 +176,6 @@ namespace Polar.Universal
             int ind = Array.BinarySearch(values_arr, valuesample, comp_s);
             if (ind >= 0)
             {
-
                 // Выдаем это решение
                 long off = (long)element_offsets.GetByIndex(ind);
                 object rec = sequence.GetByOffset(off);
@@ -225,7 +224,7 @@ namespace Polar.Universal
             {
                 yield return v;
             }
-            var qu = GetAllByComp(svalue, comp_string_like).ToArray();
+            var qu = GetAllByComp(svalue, comp_string_like);
             foreach (var v in qu)
             {
                 yield return v;
