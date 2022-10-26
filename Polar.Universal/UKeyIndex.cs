@@ -19,13 +19,15 @@ namespace Polar.Universal
         private UniversalSequenceBase offsets;
         // Динамическая часть индекса
         private Dictionary<IComparable, long> keyoff_dic;
+        private bool keysinmemory;
 
         public UKeyIndex(Func<Stream> streamGen, USequence sequence,
-            Func<object, IComparable> keyFunc, Func<IComparable, int> hashOfKey)
+            Func<object, IComparable> keyFunc, Func<IComparable, int> hashOfKey, bool keysinmemory = true)
         {
             this.sequence = sequence;
             this.keyFunc = keyFunc;
             this.hashOfKey = hashOfKey;
+            this.keysinmemory = keysinmemory;
 
             hkeys = new UniversalSequenceBase(new PType(PTypeEnumeration.integer), streamGen());
             offsets = new UniversalSequenceBase(new PType(PTypeEnumeration.longinteger), streamGen());
@@ -50,7 +52,8 @@ namespace Polar.Universal
         public void Close() { hkeys.Close(); offsets.Close();  }
         public void Refresh() 
         {
-            hkeys_arr = hkeys.ElementValues().Cast<int>().ToArray(); 
+            if (keysinmemory) hkeys_arr = hkeys.ElementValues().Cast<int>().ToArray();
+            else hkeys.Refresh();
             offsets.Refresh(); 
         }
 
@@ -76,8 +79,11 @@ namespace Polar.Universal
             hkeys.Clear();
             foreach (var hkey in hkeys_arr) { hkeys.AppendElement(hkey); }
             hkeys.Flush();
-            //hkeys_arr = null;
-            //GC.Collect();
+            if (!keysinmemory)
+            {
+                hkeys_arr = null;
+                GC.Collect();
+            }
 
 
             offsets.Clear();

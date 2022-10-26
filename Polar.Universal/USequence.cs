@@ -17,14 +17,15 @@ namespace Polar.Universal
         private Func<object, IComparable> keyFunc;
         private UKeyIndex primaryKeyIndex;
         public IUIndex[] uindexes = null;
-        
+        private bool optimise = true;
         public USequence(PType tp_el, Func<Stream> streamGen, Func<object, bool> isEmpty,
-            Func<object, IComparable> keyFunc, Func<IComparable, int> hashOfKey)
+            Func<object, IComparable> keyFunc, Func<IComparable, int> hashOfKey, bool optimise = true)
         {
             sequence = new UniversalSequenceBase(tp_el, streamGen());
             this.isEmpty = isEmpty;
             this.keyFunc = keyFunc;
-            primaryKeyIndex = new UKeyIndex(streamGen, this, keyFunc, hashOfKey);
+            this.optimise = optimise;
+            primaryKeyIndex = new UKeyIndex(streamGen, this, keyFunc, hashOfKey, optimise);
         }
         public void Clear() { sequence.Clear(); primaryKeyIndex.Clear(); if (uindexes != null) foreach (var ui in uindexes) ui.Clear(); }
         public void Flush() { sequence.Flush(); primaryKeyIndex.Flush(); if (uindexes != null) foreach (var ui in uindexes) ui.Flush(); }
@@ -38,12 +39,6 @@ namespace Polar.Universal
             {
                 if (!isEmpty(element)) sequence.AppendElement(element);
             }
-            //primaryKeyIndex.Build();
-            //if (uindexes != null) 
-            //    foreach (var ui in uindexes)
-            //    {
-            //        ui.Build();
-            //    }
             Flush();
         }
         private bool IsOriginalAndNotEmpty(object element, long off) =>
