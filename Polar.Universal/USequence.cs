@@ -71,6 +71,13 @@ namespace Polar.Universal
             primaryKeyIndex.OnAppendElement(element, off);
             if (uindexes != null) foreach (var uind in uindexes) uind.OnAppendElement(element, off);
         }
+        public void CorrectOnAppendElement(long off)
+        {
+            object element = sequence.GetElement(off);
+            // Корректировка индексов
+            primaryKeyIndex.OnAppendElement(element, off);
+            if (uindexes != null) foreach (var uind in uindexes) uind.OnAppendElement(element, off);
+        }
 
         public object GetByKey(IComparable keysample)
         {
