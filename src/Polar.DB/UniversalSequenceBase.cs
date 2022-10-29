@@ -206,6 +206,16 @@ namespace Polar.DB
                 yield return new Tuple<long, object>(off, pobject);
             }
         }
+        public IEnumerable<Tuple<long, object>> ElementOffsetValuePairs(long offset, long number)
+        {
+            fs.Position = offset;
+            for (long i = 0; i < number; i++)
+            {
+                long off = fs.Position;
+                object pobject = GetElement();
+                yield return new Tuple<long, object>(off, pobject);
+            }
+        }
 
         /// Если размер элемента фиксированный и есть функция ключа с целочисленным значением
         /// TODO: Вроде S32 вполне может работать для произвольных записей, но только на полном диапазоне.

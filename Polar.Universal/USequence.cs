@@ -18,6 +18,7 @@ namespace Polar.Universal
         private UKeyIndex primaryKeyIndex;
         public IUIndex[] uindexes = null;
         private bool optimise = true;
+        
         public USequence(PType tp_el, Func<Stream> streamGen, Func<object, bool> isEmpty,
             Func<object, IComparable> keyFunc, Func<IComparable, int> hashOfKey, bool optimise = true)
         {
@@ -27,6 +28,31 @@ namespace Polar.Universal
             this.optimise = optimise;
             primaryKeyIndex = new UKeyIndex(streamGen, this, keyFunc, hashOfKey, optimise);
         }
+        
+        // Файл для сохранения параметров состояния. Команда сохранения выполняется в конце Load()
+        public string StateFile { get; set; }
+        public void RestoreDynamic()
+        {
+            FileStream statefile = new FileStream(StateFile, FileMode.OpenOrCreate, FileAccess.Read);
+            BinaryReader reader = new BinaryReader(statefile);
+            long statenelements = reader.ReadInt64(); //old sequence.Count();
+            long elementoffset = reader.ReadInt64(); // sequence.ElementOffset();
+            statefile.Close();
+            // А текущий размер:
+            long nelements = sequence.Count();
+            // Динамику надо воспроизводить только если размер увеличился
+            Console.WriteLine($"{nelements - statenelements} elements added");
+            if (nelements > statenelements)
+            {
+                var additional = sequence.ElementOffsetValuePairs(elementoffset, nelements - statenelements);
+                foreach (var pair in additional)
+                {
+                    primaryKeyIndex.OnAppendElement(pair.Item2, pair.Item1);
+                    if (uindexes != null) foreach (var uind in uindexes) uind.OnAppendElement(pair.Item2, pair.Item1);
+                }
+            }
+        }
+
         public void Clear() { sequence.Clear(); primaryKeyIndex.Clear(); if (uindexes != null) foreach (var ui in uindexes) ui.Clear(); }
         public void Flush() { sequence.Flush(); primaryKeyIndex.Flush(); if (uindexes != null) foreach (var ui in uindexes) ui.Flush(); }
         public void Close() { sequence.Close(); primaryKeyIndex.Close(); if (uindexes != null) foreach (var ui in uindexes) ui.Close(); }
@@ -40,6 +66,12 @@ namespace Polar.Universal
                 if (!isEmpty(element)) sequence.AppendElement(element);
             }
             Flush();
+            // =========== Зафиксируем состояние в файле. Запомним текущее число элементов и офсет следующего ====
+            FileStream statefile = new FileStream(StateFile, FileMode.OpenOrCreate, FileAccess.Write);
+            BinaryWriter writer = new BinaryWriter(statefile);
+            writer.Write(sequence.Count());
+            writer.Write(sequence.ElementOffset());
+            statefile.Close();
         }
         private bool IsOriginalAndNotEmpty(object element, long off) =>
             primaryKeyIndex.IsOriginal(keyFunc(element), off) && !isEmpty(element); // сначала на оригинал, потом на пустое, может можно и иначе 
