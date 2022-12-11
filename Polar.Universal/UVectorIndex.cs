@@ -44,8 +44,8 @@ namespace Polar.Universal
         
         public void OnAppendElement(object element, long offset)
         {
-            var values = valuesFunc(element);
-            foreach (var value in values)
+            var vals = valuesFunc(element);
+            foreach (var value in vals)
             {
                 IComparable key = value;
                 if (valueoffs_dic.TryGetValue(key, out long[] offsets))

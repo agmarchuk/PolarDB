@@ -140,12 +140,39 @@ namespace Polar.Universal
 
         public IEnumerable<object> GetAllByValue(int nom, IComparable value)
         {
-            var uind = (SVectorIndex)uindexes[nom];
-            IEnumerable<object> query = uind.GetAllByValue((IComparable)value)
-                .Where(obof => IsOriginalAndNotEmpty(obof.obj, obof.off))
-                .Select(obof => ConvertNaming(obof.obj))
-                ;
-            return query;
+            if (uindexes[nom] is SVectorIndex)
+            {
+                var sind = (SVectorIndex)uindexes[nom];
+                IEnumerable<object> query = sind.GetAllByValue((IComparable)value)
+                    .Where(obof => IsOriginalAndNotEmpty(obof.obj, obof.off))
+                    .Select(obof => ConvertNaming(obof.obj)) //TODO: Это какая-то специфика нейминга, здесь ничего такого быть не должно
+                    ;
+                return query;
+            }
+            if (uindexes[nom] is UVectorIndex)
+            {
+                var uind = (UVectorIndex)uindexes[nom];
+                IEnumerable<object> query = uind.GetAllByValue((IComparable)value)
+                    .Where(obof => IsOriginalAndNotEmpty(obof.obj, obof.off))
+                    .Select(obof => obof.obj)
+                    ;
+                return query;
+            }
+            else throw new Exception("93394");
+        }
+        public IEnumerable<object> GetAllBySample(int nom, object osample)
+        {
+            if (uindexes[nom] is UIndex)
+            {
+                var uind = (UIndex)uindexes[nom];
+                IEnumerable<object> query = uind.GetAllBySample(osample)
+                    .Where(obof => IsOriginalAndNotEmpty(obof.obj, obof.off))
+                    .Select(obof => obof.obj)
+                    //.Select(obof => ConvertNaming(obof.obj))
+                    ;
+                return query;
+            }
+            else throw new Exception("93394");
         }
         public IEnumerable<object> GetAllByLike(int nom, object sample)
         {
