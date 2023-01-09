@@ -73,7 +73,7 @@ namespace Polar.Universal
             writer.Write(sequence.ElementOffset());
             statefile.Close();
         }
-        private bool IsOriginalAndNotEmpty(object element, long off) =>
+        internal bool IsOriginalAndNotEmpty(object element, long off) =>
             primaryKeyIndex.IsOriginal(keyFunc(element), off) && !isEmpty(element); // сначала на оригинал, потом на пустое, может можно и иначе 
 
 
