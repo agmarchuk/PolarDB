@@ -144,13 +144,17 @@ namespace Polar.Universal
                 }
                 return true;
             });
-            values_arr = values_list.ToArray();
+            values_arr = values_list
+                .Select(s => s.ToUpper())
+                .ToArray();
             values_list = null;
             long[] offsets_arr = offsets_list.ToArray();
             offsets_list = null;
             GC.Collect();
 
-            Array.Sort(values_arr, offsets_arr, comp_string);
+            Array.Sort(values_arr, offsets_arr, StringComparer.OrdinalIgnoreCase);
+            //Array.Sort(values_arr, offsets_arr);
+            //Array.Sort(values_arr, offsets_arr, comp_string_like); // ДОпустима только LIKE-сортировка
 
             values.Clear();
             foreach (var v in values_arr) { values.AppendElement(v); }
