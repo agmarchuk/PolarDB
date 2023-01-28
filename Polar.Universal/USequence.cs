@@ -143,7 +143,7 @@ namespace Polar.Universal
             if (uindexes[nom] is SVectorIndex)
             {
                 var sind = (SVectorIndex)uindexes[nom];
-                IEnumerable<object> query = sind.GetAllByValue((IComparable)value)
+                IEnumerable<object> query = sind.GetAllByValue((string)value)
                     .Where(obof => IsOriginalAndNotEmpty(obof.obj, obof.off))
                     .Select(obof => ConvertNaming(obof.obj)) //TODO: Это какая-то специфика нейминга, здесь ничего такого быть не должно
                     ;

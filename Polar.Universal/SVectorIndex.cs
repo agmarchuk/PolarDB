@@ -19,14 +19,14 @@ namespace Polar.Universal
         private UniversalSequenceBase element_offsets;
 
         // Компараторы для строк
-        public static Comparer<IComparable> comp_string = Comparer<IComparable>.Create(new Comparison<IComparable>((IComparable v1, IComparable v2) =>
+        public static Comparer<string> comp_string = Comparer<string>.Create(new Comparison<string>((string v1, string v2) =>
         {
             string a = (string)v1;
             string b = (string)v2;
             //if (string.IsNullOrEmpty(b)) return 0;
-            return string.Compare(a, b, StringComparison.OrdinalIgnoreCase);
+            return string.Compare(a, b, StringComparison.Ordinal);
         }));
-        public static Comparer<IComparable> comp_string_like = Comparer<IComparable>.Create(new Comparison<IComparable>((IComparable v1, IComparable v2) =>
+        public static Comparer<string> comp_string_like = Comparer<string>.Create(new Comparison<string>((string v1, string v2) =>
         {
             string a = (string)v1;
             string b = (string)v2;
@@ -34,7 +34,7 @@ namespace Polar.Universal
             int len = b.Length;
             return string.Compare(
                 a, 0,
-                b, 0, len, StringComparison.OrdinalIgnoreCase);
+                b, 0, len, StringComparison.Ordinal);
         }));
 
         // Динамическая часть индекса
@@ -62,7 +62,7 @@ namespace Polar.Universal
                 Array.Sort(vals, offs, comp_string);
                 svalues = vals; offsets = offs;
             }
-            private IEnumerable<ObjOff> GetAllByComp(IComparable valuesample, Comparer<IComparable> comp_s)
+            private IEnumerable<ObjOff> GetAllByComp(string valuesample, Comparer<string> comp_s)
             {
                 // Определяем начальный индекс
                 int ind = Array.BinarySearch(svalues, valuesample, comp_s);
@@ -92,8 +92,8 @@ namespace Polar.Universal
                     }
                 }
             }
-            internal IEnumerable<ObjOff> GetAllByValue(IComparable valuesample) => GetAllByComp(valuesample, comp_string);
-            internal IEnumerable<ObjOff> GetAllByLike(IComparable valuesample) => GetAllByComp(valuesample, comp_string_like);
+            internal IEnumerable<ObjOff> GetAllByValue(string valuesample) => GetAllByComp(valuesample, comp_string);
+            internal IEnumerable<ObjOff> GetAllByLike(string valuesample) => GetAllByComp(valuesample, comp_string_like);
         }
         DynPairsSet dynindex; 
 
@@ -152,7 +152,7 @@ namespace Polar.Universal
             offsets_list = null;
             GC.Collect();
 
-            Array.Sort(values_arr, offsets_arr, StringComparer.OrdinalIgnoreCase);
+            Array.Sort(values_arr, offsets_arr, StringComparer.Ordinal);
             //Array.Sort(values_arr, offsets_arr);
             //Array.Sort(values_arr, offsets_arr, comp_string_like); // ДОпустима только LIKE-сортировка
 
@@ -174,7 +174,7 @@ namespace Polar.Universal
             dynindex.OnAppendValues(values.ToArray(), offset);
         }
 
-        private IEnumerable<ObjOff> GetAllByComp(IComparable valuesample, Comparer<IComparable> comp_s)
+        private IEnumerable<ObjOff> GetAllByComp(string valuesample, Comparer<string> comp_s)
         {
             // Определяем начальный индекс
             int ind = Array.BinarySearch(values_arr, valuesample, comp_s);
@@ -206,9 +206,9 @@ namespace Polar.Universal
                 }
             }
         }
-        internal IEnumerable<ObjOff> GetAllByValue(IComparable valuesample)
+        internal IEnumerable<ObjOff> GetAllByValue(string valuesample)
         {
-            string svalue = (string)valuesample;
+            string svalue = valuesample.ToUpper();
             var query = dynindex.GetAllByValue(valuesample);
             foreach (var v in query)
             {
@@ -223,6 +223,7 @@ namespace Polar.Universal
 
         internal IEnumerable<ObjOff> GetAllByLike(string svalue)
         {
+            svalue = svalue.ToUpper();
             var query = dynindex.GetAllByLike(svalue);
             foreach (var v in query)
             {
