@@ -170,7 +170,7 @@ namespace Polar.Universal
 
         public void OnAppendElement(object element, long offset)
         {
-            var values = valuesFunc(element);
+            var values = valuesFunc(element).Select(v => v.ToUpper());
             dynindex.OnAppendValues(values.ToArray(), offset);
         }
 
