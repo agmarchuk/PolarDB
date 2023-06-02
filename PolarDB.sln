@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29418.71
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33502.453
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Polar.DB", "src\Polar.DB\Polar.DB.csproj", "{9C5E2BEA-1BCC-41D7-99D8-83D37A239B8F}"
 EndProject
@@ -45,6 +45,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Polar.OModel", "Polar.OModel\Polar.OModel.csproj", "{F9C177A2-4772-4986-A353-6FBC6CC3A084}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Polar.Universal", "Polar.Universal\Polar.Universal.csproj", "{C10BAADD-CDF4-461B-9C89-49AEE16D3C6C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GetStarted5", "GetStarted5\GetStarted5.csproj", "{6F4D235D-3A65-48D9-8804-E697B43E7344}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -124,6 +126,10 @@ Global
 		{C10BAADD-CDF4-461B-9C89-49AEE16D3C6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C10BAADD-CDF4-461B-9C89-49AEE16D3C6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C10BAADD-CDF4-461B-9C89-49AEE16D3C6C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F4D235D-3A65-48D9-8804-E697B43E7344}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F4D235D-3A65-48D9-8804-E697B43E7344}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F4D235D-3A65-48D9-8804-E697B43E7344}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F4D235D-3A65-48D9-8804-E697B43E7344}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
