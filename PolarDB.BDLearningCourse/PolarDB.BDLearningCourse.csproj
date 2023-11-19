@@ -51,14 +51,6 @@
     <Compile Include="Task03.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\src\Polar.CellIndexes\Polar.CellIndexes.csproj">
-      <Project>{0d28003e-d246-47a0-8fa4-af0eac6084c4}</Project>
-      <Name>Polar.CellIndexes</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\src\Polar.Cells\Polar.Cells.csproj">
-      <Project>{36479907-7059-4eac-ac9e-72a29e3f03ee}</Project>
-      <Name>Polar.Cells</Name>
-    </ProjectReference>
     <ProjectReference Include="..\src\Polar.Common\Polar.Common.csproj">
       <Project>{51883e5d-4826-405c-acfc-99dc2a096ecd}</Project>
       <Name>Polar.Common</Name>
@@ -66,10 +58,6 @@
     <ProjectReference Include="..\src\Polar.DB\Polar.DB.csproj">
       <Project>{9c5e2bea-1bcc-41d7-99d8-83d37a239b8f}</Project>
       <Name>Polar.DB</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\src\Polar.PagedStreams\Polar.PagedStreams.csproj">
-      <Project>{3c2a6821-5239-4296-86e0-7d869dbb46b8}</Project>
-      <Name>Polar.PagedStreams</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

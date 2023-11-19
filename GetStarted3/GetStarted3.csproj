@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,6 +11,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PolarDB\PolarDB.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="experiments\" />
   </ItemGroup>
 
 </Project>

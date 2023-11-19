@@ -1,13 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
+    <OutputType>Library</OutputType>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>alexander.g.marchuk</Authors>
     <Company>iis</Company>
     <Product>PolarDB</Product>
     <Description>Kernel library of PolarDB product: polar types, binary and text serialization and deserialization, UniversalSequence</Description>
-    <Version>1.1.1</Version>
+    <Version>1.2.0</Version>
     <PackageLicenseUrl></PackageLicenseUrl>
     <NeutralLanguage>ru</NeutralLanguage>
   </PropertyGroup>

@@ -1,20 +1,20 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
-    <ApplicationIcon />
     <OutputType>Library</OutputType>
-    <StartupObject />
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>1.0.4</Version>
     <Authors>alexander.g.marchuk</Authors>
     <Company>iis</Company>
     <Product>PolarDB</Product>
-    <!-- <PackageLicenseUrl>http://mag.iis.nsk.su/mag_license.htm</PackageLicenseUrl> -->
+    <Description>Factograph Data library using Polar.DB</Description>
+    <Version>1.0.0</Version>
+    <PackageLicenseUrl></PackageLicenseUrl>
+    <NeutralLanguage>ru</NeutralLanguage>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Polar.DB\Polar.DB.csproj" />
+    <PackageReference Include="Polar.DB" Version="1.1.0" />
   </ItemGroup>
 
 </Project>
