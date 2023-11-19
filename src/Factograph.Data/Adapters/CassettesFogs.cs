@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace Polar.Factograph.Data.Adapters
+namespace Factograph.Data.Adapters
 {
     public class CassInfo
     {

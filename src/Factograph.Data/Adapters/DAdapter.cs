@@ -1,11 +1,11 @@
-﻿using Polar.Factograph.Data.Adapters;
+﻿using Factograph.Data.Adapters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 
-namespace Polar.Factograph.Data.Adapters
+namespace Factograph.Data.Adapters
 {
     abstract public class DAdapter
     {

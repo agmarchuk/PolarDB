@@ -1,5 +1,5 @@
-﻿using Polar.Factograph.Data.Adapters;
-using Polar.Factograph.Data;
+﻿using Factograph.Data.Adapters;
+using Factograph.Data;
 //using RDFEngine;
 using System;
 using System.Collections.Generic;
@@ -10,27 +10,30 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 
-namespace Polar.Factograph.Data
+namespace Factograph.Data
 {
     public class FDataService : IFDataService
     {
-        //public TTreeBuilder ttreebuilder;
-        //public TTreeBuilder TreeBuilder { get { return ttreebuilder; } }
+        // public FDataService() : this("wwwroot/") { }
 
-        public FDataService() : this("wwwroot/") { }
-        public FDataService(string path)
+        /// <summary>
+        /// Главный класс всего пакета. Описывает источник данных, загрузку данных, доступ к данным и некоторые манипуляции с данными.
+        /// Кроме того, он содержит ссылку на онтологию загружаемую в XML-формате, а также некоторые методы получения информации из онтологии
+        /// Конструктур задает path директории, в которой находятся: конфигуратор config.xml, и лог-файл редактирования данных logfile_put.txt
+        /// Там же будут разворачиваться некоторые другие (временные) файлы.  Параметры конструктуора также задают файл онтологии и файл словаря (может не быть)
+        /// </summary>
+        public FDataService(string path, string ontology_filepath, string dictionary)
         {
             this.path = path;
+            this.dictionary = dictionary;
             Console.WriteLine("mag: FDataService Constructing " + DateTime.Now);
             //path = "wwwroot/";
             Init(path);
-            string ontology_path = path + "Ontology_iis-v14.xml";
+            string ontology_path = ontology_filepath; //path + "Ontology_iis-v14.xml";
             ontology = new RXOntology(ontology_path);
             if (adapter is UpiAdapter)
             {
                 _tbuilder = new TRecordBuilder((UpiAdapter)this.adapter, ontology);
-                //ttreebuilder = new TTreeBuilder((UpiAdapter)this.adapter, ontology);
-                // var qqq = ttreebuilder.GetTTree("famwf1233_1001");
             }
         }
 
@@ -40,6 +43,7 @@ namespace Polar.Factograph.Data
         private DAdapter adapter = null;
 
         private string path;
+        private string dictionary;
         private XElement _xconfig = null;
         private XElement XConfig { get { return _xconfig; } }
 
@@ -69,10 +73,17 @@ namespace Polar.Factograph.Data
         public void Init()
         {
             // Создание словаря если есть файл zaliznyak_shortform.zip
-            if (File.Exists(path + "zaliznyak_shortform.zip"))
+            //if (File.Exists(path + "zaliznyak_shortform.zip"))
+            if (dictionary != null && File.Exists(dictionary))
             {
-                System.IO.Compression.ZipFile.ExtractToDirectory(path + "zaliznyak_shortform.zip", path);
-                var reader = new StreamReader(path + "zaliznyak_shortform.txt");
+                string shortname = dictionary.Split('/', '\\').Last();
+                bool zipped = dictionary.EndsWith(".zip") ? true : false;
+                if (zipped)
+                {
+                    System.IO.Compression.ZipFile.ExtractToDirectory(dictionary, path);
+                    shortname = shortname.Substring(0, dictionary.Length - 4) + ".txt";
+                }
+                var reader = new StreamReader(path + shortname);
                 toNormalForm = new Dictionary<string, string>();
                 string line = null;
                 string normal = null;

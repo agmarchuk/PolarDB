@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 
-namespace Polar.Factograph.Data
+namespace Factograph.Data
 {
     public interface IFDataService
     {
@@ -21,7 +21,7 @@ namespace Polar.Factograph.Data
         XElement GetItemById(string id, XElement format);
         IEnumerable<XElement> GetAll();
 
-        Polar.Factograph.Data.Adapters.DAdapter GetAdapter();
+        Factograph.Data.Adapters.DAdapter GetAdapter();
 
         // ============== Загрузка базы данных ===============
         //void StartFillDb(Action<string> turlog);

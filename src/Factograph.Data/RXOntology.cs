@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using System.Threading.Tasks;
-using Polar.Factograph.Data;
+using Factograph.Data;
 //using RDFEngine;
 
-namespace Polar.Factograph.Data
+namespace Factograph.Data
 {
     public class RXOntology : IOntology
     {

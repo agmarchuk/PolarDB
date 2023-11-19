@@ -4,12 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
-using Polar.Factograph.Data;
+using Factograph.Data;
 using Polar.DB;
-using Polar.Factograph.Data.Adapters;
+using Factograph.Data.Adapters;
 using Polar.Universal;
 
-namespace Polar.Factograph.Data.Adapters
+namespace Factograph.Data.Adapters
 {
     public class UpiAdapter : DAdapter
     {

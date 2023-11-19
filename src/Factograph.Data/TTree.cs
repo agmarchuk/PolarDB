@@ -1,11 +1,11 @@
-﻿using Polar.Factograph.Data;
+﻿using Factograph.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 
-namespace Polar.Factograph.Data
+namespace Factograph.Data
 {
     public class TTree
     {
@@ -162,10 +162,10 @@ namespace Polar.Factograph.Data
 
     public class TRecordBuilder
     {
-        private Polar.Factograph.Data.Adapters.UpiAdapter adapter;
+        private Factograph.Data.Adapters.UpiAdapter adapter;
         private IOntology ontology;
         // Класс позволяет строить деревья TTree, опираясь на базу данных и онтологию
-        public TRecordBuilder(Polar.Factograph.Data.Adapters.UpiAdapter adapter, IOntology ontology)
+        public TRecordBuilder(Factograph.Data.Adapters.UpiAdapter adapter, IOntology ontology)
         {
             this.adapter = adapter;
             this.ontology = ontology;

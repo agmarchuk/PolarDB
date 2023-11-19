@@ -1,6 +1,6 @@
 ﻿using System.Xml.Linq;
 
-namespace Polar.Factograph.Data.Adapters
+namespace Factograph.Data.Adapters
 {
     public class ONames
     {

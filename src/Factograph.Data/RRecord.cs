@@ -1,4 +1,4 @@
-﻿using Polar.Factograph.Data;
+﻿using Factograph.Data;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Polar.Factograph.Data
+namespace Factograph.Data
 {
     public class RRecord
     {

@@ -1,10 +1,10 @@
-﻿using Polar.Factograph.Data.Adapters;
+﻿using Factograph.Data.Adapters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 
-namespace Polar.Factograph.Data.Adapters
+namespace Factograph.Data.Adapters
 {
     /// <summary>
     /// Простая база данных на основе Xml-построения. Xml база данных объединяет записи fog-документов

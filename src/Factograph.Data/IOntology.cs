@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Polar.Factograph.Data
+namespace Factograph.Data
 {
     public interface IOntology
     {

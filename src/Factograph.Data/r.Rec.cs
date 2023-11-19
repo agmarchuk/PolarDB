@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using System;
-using Polar.Factograph.Data;
+using Factograph.Data;
 
-namespace Polar.Factograph.Data.r
+namespace Factograph.Data.r
 {
     // ========== Rec классы ==========
     public class Rec
