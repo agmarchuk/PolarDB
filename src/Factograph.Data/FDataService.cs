@@ -14,7 +14,7 @@ namespace Factograph.Data
 {
     public class FDataService : IFDataService
     {
-        // public FDataService() : this("wwwroot/") { }
+        public FDataService() : this("wwwroot/", "wwwroot/ontology.xml", "wwwroot/dictionary.zip") { }
 
         /// <summary>
         /// Главный класс всего пакета. Описывает источник данных, загрузку данных, доступ к данным и некоторые манипуляции с данными.
