@@ -506,6 +506,7 @@ namespace Factograph.Data
 
             XElement[] els = xflow.ToArray();
             adapter.LoadXFlow(els, orig_ids);
+            Console.WriteLine("LoadXFlow: " + els.Count());
             //LoadXFlow(xflow, orig_ids);
 
         }
