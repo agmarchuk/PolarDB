@@ -315,7 +315,11 @@ namespace Factograph.Data.Adapters
 
         public override IEnumerable<XElement> SearchByWords(string searchwords)
         {
-            throw new NotImplementedException();
+            return SearchWords(searchwords)
+                .Select(re =>
+                {
+                    return ORecToXRec((object[])re, false);
+                });
         }
 
         public override XElement GetItemByIdBasic(string id, bool addinverse)
