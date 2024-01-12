@@ -59,7 +59,7 @@ namespace Factograph.Data.Adapters
         }
 
         // Главный инициализатор. Используем connectionstring 
-        bool nodatabase = false;
+        //bool nodatabase = false; // Есть в абстрактном классе
         private string dbfolder;
         private int file_no = 0;
         private char[] delimeters;

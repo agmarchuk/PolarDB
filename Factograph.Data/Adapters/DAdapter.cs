@@ -9,7 +9,7 @@ namespace Factograph.Data.Adapters
 {
     abstract public class DAdapter
     {
-        public bool nodatabase = true;
+        public bool nodatabase = true; // Опасное это дело - объявлять переменную в абстрактном классе!!!
         public abstract void Init(string connectionstring);
         public abstract void Close();
         // ============== Основные методы доступа к БД =============

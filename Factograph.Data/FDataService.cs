@@ -179,7 +179,7 @@ namespace Factograph.Data
                 }
                 else if (pre == "rr")
                 {
-                    if (directreload || !nodatabase) //Load
+                    if (directreload || nodatabase) //Load
                     {
                         Load();
                         // Надо сохранить точку записи, это делается в конце загрузки.
