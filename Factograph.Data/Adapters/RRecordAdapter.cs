@@ -392,7 +392,36 @@ namespace Factograph.Data.Adapters
 
         public override XElement? PutItem(XElement record)
         {
-            throw new NotImplementedException();
+            // Какой элемент изменяется?
+            string? id = record.Attribute("{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about")?.Value;
+            if (id == null) throw new ArgumentNullException("id"); // return null;
+
+            // Вычисляем новую запись в объектном представлении
+            object[] nrec;
+            if (record.Name == "delete")
+            {
+                nrec = new object[] { id, "delete", new object[0] };
+            }
+            else if (record.Name.LocalName == "substitute")
+            {
+                return null;
+            }
+            else
+            {
+                nrec = XRecToORec(record);
+            }
+            PutItem(nrec);
+            records.Flush();
+            return null;
+        }
+        /// <summary>
+        /// Задача состоит в том, чтобы полученную в объектном представлении запись "довести до ума"
+        /// </summary>
+        /// <param name="nrec"></param>
+        public void PutItem(object[] nrec)
+        {
+            records.AppendElement(nrec);
+            records.Flush();
         }
 
         public XElement ORecToXRec(object[] ob, bool addinverse)
@@ -423,11 +452,74 @@ namespace Factograph.Data.Adapters
                     return null;
                 }));
         }
+        private object[] XRecToORec(XElement xrec)
+        {
+            string? id = xrec.Attribute(ONames.rdfabout)?.Value;
+            if (id == null) return new object[0];
+            object[] orec = new object[]
+            {
+                id,
+                xrec.Name.NamespaceName + xrec.Name.LocalName,
+                xrec.Elements()
+                    .Select<XElement, object>(el =>
+                    {
+                        string prop = el.Name.NamespaceName + el.Name.LocalName;
+                        string? resource = el.Attribute(ONames.rdfresource)?.Value;
+                        if (resource == null)
+                        {  // Поле
+                            string? lang = el.Attribute(ONames.xmllang)?.Value;
+                            return new object[] { 1, new object?[] { prop, el.Value, lang } };
+                        }
+                        else
+                        {  // Объектная ссылка
+                            return new object[] { 2, new object[] { prop, resource } };
+                        }
+                    }).ToArray()
+            };
+            return orec;
+        }
+
         public void RestoreDynamic()
         {
             // Восстановить динаические значения в индексах можно так:
             records.RestoreDynamic();
         }
+
+        private class DirectPropComparer : IEqualityComparer<object>
+        {
+            public new bool Equals(object? x, object? y)
+            {
+                if (x == null && y == null)
+                    return true;
+                else if (x == null || y == null)
+                    return false;
+                return ((string)((object[])x)[1]).Equals((string)((object[])y)[1]) &&
+                    ((string)((object[])x)[0]).Equals((string)((object[])y)[0]);
+            }
+
+            public int GetHashCode(object obj)
+            {
+                return ((string)((object[])obj)[1]).GetHashCode();
+            }
+        }
+        public class RRecordSame : EqualityComparer<object>
+        {
+            public override bool Equals(object? b1, object? b2)
+            {
+                if (b1 == null && b2 == null)
+                    return true;
+                else if (b1 == null || b2 == null)
+                    return false;
+                return ((string)((object[])b1)[0] ==
+                        (string)((object[])b2)[0]);
+            }
+            public override int GetHashCode(object bx)
+            {
+                string hCode = (string)((object[])bx)[0];
+                return hCode.GetHashCode();
+            }
+        }
+
     }
 }
 
