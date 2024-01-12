@@ -1,0 +1,938 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Онтология Ontology_iis-v14.xml Изменения 20230902:
+  - Убрал reg-phone-code и прилегающие
+  - Убрал post-address и прилегающие свойства
+  - Вставил http://fogid.net/o/code как единое поле для коммуникационного адреса
+  - Уьрал http://fogid.net/o/phone и другие варианты коммуникации
+  - Убрал http://fogid.net/o/scanned-page
+  
+  Правки http://fogid.net/o/some-date заменена на http://fogid.net/o/date
+  Правки 20220113: В документ добавил свойства uri и docmetainfo 
+-->
+<Ontology dbid="ontology_iis-v6" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+  <Class rdf:about="http://fogid.net/o/entity" abstract="yes" />
+  <DatatypeProperty rdf:about="http://fogid.net/o/comment" priority="z">
+    <label xml:lang="ru">комментарий</label>
+    <label xml:lang="en">comment</label>
+    <domain rdf:resource="http://fogid.net/o/entity"/>
+    <range rdf:resource="http://fogid.net/o/text"/>
+  </DatatypeProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/from-date" priority="r">
+    <label xml:lang="ru">нач.дата</label>
+    <label xml:lang="en">initial date</label>
+    <domain rdf:resource="http://fogid.net/o/entity"/>
+    <range rdf:resource="http://fogid.net/o/date"/>
+  </DatatypeProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/to-date" priority="t">
+    <label xml:lang="ru">кон.дата</label>
+    <label xml:lang="en">final date</label>
+    <domain rdf:resource="http://fogid.net/o/entity"/>
+    <range rdf:resource="http://fogid.net/o/date"/>
+  </DatatypeProperty>
+  <Class rdf:about="http://fogid.net/o/sys-obj" abstract="yes">
+    <SubClassOf rdf:resource="http://fogid.net/o/entity"/>
+  </Class>
+  <DatatypeProperty rdf:about="http://fogid.net/o/name" priority="a" essential="yes">
+    <label xml:lang="ru">имя</label>
+    <label xml:lang="en">name</label>
+    <domain rdf:resource="http://fogid.net/o/sys-obj"/>
+    <range rdf:resource="http://fogid.net/o/text"/>
+  </DatatypeProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/description" priority="s">
+    <label xml:lang="ru">описание</label>
+    <label xml:lang="en">description</label>
+    <domain rdf:resource="http://fogid.net/o/sys-obj"/>
+    <range rdf:resource="http://fogid.net/o/text" style="textarea"/>
+  </DatatypeProperty>
+  <Class rdf:about="http://fogid.net/o/person">
+    <label xml:lang="ru">Персона</label>
+    <label xml:lang="en">Person</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/sys-obj"/>
+  </Class>
+  <DatatypeProperty rdf:about="http://fogid.net/o/sex" priority="u">
+    <label xml:lang="ru">пол</label>
+    <label xml:lang="en">sex</label>
+    <domain rdf:resource="http://fogid.net/o/person"/>
+    <range rdf:resource="http://fogid.net/o/person-sex"/>
+  </DatatypeProperty>
+  <EnumerationType rdf:about="http://fogid.net/o/person-sex">
+    <state value="m" xml:lang="ru">муж.</state>
+    <state value="f" xml:lang="ru">жен.</state>
+    <state value="m" xml:lang="en">male</state>
+    <state value="f" xml:lang="en">female</state>
+  </EnumerationType>
+  <ObjectProperty rdf:about="http://fogid.net/o/father" priority="t" weight="10">
+    <label xml:lang="ru">отец</label>
+    <label xml:lang="en">father</label>
+    <inverse-label xml:lang="ru">ребенок</inverse-label>
+    <inverse-label xml:lang="en">child</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/person"/>
+    <range rdf:resource="http://fogid.net/o/person"/>
+  </ObjectProperty>
+  <ObjectProperty rdf:about="http://fogid.net/o/mother" priority="t" weight="10">
+    <label xml:lang="ru">мать</label>
+    <label xml:lang="en">mother</label>
+    <inverse-label xml:lang="ru">ребенок</inverse-label>
+    <inverse-label xml:lang="en">child</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/person"/>
+    <range rdf:resource="http://fogid.net/o/person"/>
+  </ObjectProperty>
+  <Class rdf:about="http://fogid.net/o/org-sys">
+    <label xml:lang="ru">Организационная система</label>
+    <label xml:lang="en">Organization system</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/sys-obj"/>
+  </Class>
+  <DatatypeProperty rdf:about="http://fogid.net/o/org-classification" priority="ab">
+    <label xml:lang="ru">классификатор орг.</label>
+    <label xml:lang="en">organization classifier</label>
+    <domain rdf:resource="http://fogid.net/o/org-sys"/>
+    <range rdf:resource="http://fogid.net/o/org-classificator"/>
+  </DatatypeProperty>
+  <EnumerationType rdf:about="http://fogid.net/o/org-classificator">
+    <state value="team" xml:lang="ru">группа</state>
+    <state value="team" xml:lang="en">group</state>
+    <state value="arrangement" xml:lang="ru">мероприятие</state>
+    <state value="arrangement" xml:lang="en">event</state>
+    <state value="club" xml:lang="ru">клуб</state>
+    <state value="club" xml:lang="en">club</state>
+    <state value="department" xml:lang="ru">отдел</state>
+    <state value="department" xml:lang="en">department</state>
+    <state value="organization" xml:lang="ru">организация</state>
+    <state value="organization" xml:lang="en">organization</state>
+    <state value="association" xml:lang="ru">ассоциация</state>
+    <state value="assotiation" xml:lang="en">association</state>
+    <state value="holding" xml:lang="ru">холдинг</state>
+    <state value="holding" xml:lang="en">holding</state>
+    <state value="mastersk" xml:lang="ru">мастерская</state>
+    <state value="mastersk" xml:lang="en">workshop</state>
+  </EnumerationType>
+  <DatatypeProperty rdf:about="http://fogid.net/o/org-category" priority="ac">
+    <label xml:lang="ru">вид.орг.</label>
+    <label xml:lang="en">organization form</label>
+    <domain rdf:resource="http://fogid.net/o/org-sys"/>
+    <range rdf:resource="http://fogid.net/o/text"/>
+  </DatatypeProperty>
+  <Class rdf:about="http://fogid.net/o/geosys" abstract="yes">
+    <label xml:lang="ru">Геосистема</label>
+    <label xml:lang="en">Geosystem</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/sys-obj"/>
+  </Class>
+  <Class rdf:about="http://fogid.net/o/country">
+    <label xml:lang="ru">Страна</label>
+    <label xml:lang="en">Country</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/geosys"/>
+  </Class>
+  <Class rdf:about="http://fogid.net/o/region">
+    <label xml:lang="ru">Регион</label>
+    <label xml:lang="en">Region</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/geosys"/>
+  </Class>
+  <Class rdf:about="http://fogid.net/o/city">
+    <label xml:lang="ru">Город</label>
+    <label xml:lang="en">City</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/geosys"/>
+  </Class>
+  <Class rdf:about="http://fogid.net/o/geosys-special">
+    <label xml:lang="ru">Геосистема специальная</label>
+    <label xml:lang="en">Geosystem special</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/geosys"/>
+  </Class>
+  <DatatypeProperty rdf:about="http://fogid.net/o/geosys-category" priority="ac">
+    <label xml:lang="ru">категория геосистемы</label>
+    <label xml:lang="en">geosystem category</label>
+    <domain rdf:resource="http://fogid.net/o/geosys-special"/>
+    <range rdf:resource="http://fogid.net/o/text"/>
+  </DatatypeProperty>
+
+  <Class rdf:about="http://fogid.net/o/archive">
+    <SubClassOf rdf:resource="http://fogid.net/o/sys-obj"/>
+    <label xml:lang="ru">Архив</label>
+    <label xml:lang="en">Archive</label>
+  </Class>
+  <ObjectProperty rdf:about="http://fogid.net/o/in-archive" essential="yes" priority="a">
+    <label xml:lang="ru">в архиве</label>
+    <label xml:lang="en">in archive</label>
+    <inverse-label xml:lang="ru">архив для</inverse-label>
+    <inverse-label xml:lang="en">archive for</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/archive-member"/>
+    <range rdf:resource="http://fogid.net/o/archive"/>
+  </ObjectProperty>
+  <ObjectProperty rdf:about="http://fogid.net/o/archive-item" essential="yes"  priority="a">
+    <label xml:lang="ru">содержит</label>
+    <label xml:lang="en">contains</label>
+    <inverse-label xml:lang="ru">элемент архива</inverse-label>
+    <inverse-label xml:lang="en">element for</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/archive-member"/>
+    <range rdf:resource="http://fogid.net/o/sys-obj"/>
+  </ObjectProperty>
+  <Class rdf:about="http://fogid.net/o/archive-member">
+    <label xml:lang="ru">Элемент архива</label>
+    <label xml:lang="en">Archive's element</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/entity"/>
+  </Class>
+  <DatatypeProperty rdf:about="http://fogid.net/o/concernment">
+    <label xml:lang="ru">значимость</label>
+    <label xml:lang="en">importance</label>
+    <domain rdf:resource="http://fogid.net/o/archive-member"/>
+    <range rdf:resource="http://fogid.net/o/string"/>
+  </DatatypeProperty>
+  <ObjectProperty rdf:about="http://fogid.net/o/info-source">
+    <label xml:lang="ru">источник инф.</label>
+    <label xml:lang="en">information source</label>
+    <inverse-label xml:lang="ru">источник инф. для</inverse-label>
+    <inverse-label xml:lang="en">information source for</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/archive-member"/>
+    <range rdf:resource="http://fogid.net/o/sys-obj"/>
+  </ObjectProperty>
+
+  <Class rdf:about="http://fogid.net/o/collection">
+    <label xml:lang="ru">Коллекция</label>
+    <label xml:lang="en">Collection</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/sys-obj"/>
+  </Class>
+  <Class rdf:about="http://fogid.net/o/collection-member">
+    <label xml:lang="ru">Элемент коллекции</label>
+    <label xml:lang="en">Collection's element</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/entity"/>
+  </Class>
+  <ObjectProperty rdf:about="http://fogid.net/o/in-collection" essential="yes" priority="a" weight="200">
+    <label xml:lang="ru">в коллекции</label>
+    <label xml:lang="en">in collection</label>
+    <inverse-label xml:lang="ru">коллекция для</inverse-label>
+    <inverse-label xml:lang="en">collection for</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/collection-member"/>
+    <range rdf:resource="http://fogid.net/o/collection"/>
+  </ObjectProperty>
+  <ObjectProperty rdf:about="http://fogid.net/o/collection-item" essential="yes" priority="a" weight="200">
+    <label xml:lang="ru">содержит</label>
+    <label xml:lang="en">contains</label>
+    <inverse-label xml:lang="ru">элемент коллекции</inverse-label>
+    <inverse-label xml:lang="en">collection's element</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/collection-member"/>
+    <range rdf:resource="http://fogid.net/o/sys-obj"/>
+  </ObjectProperty>
+
+  <!-- Убрал 20230902:
+  <Class rdf:about="http://fogid.net/o/reg-phone-code">
+    <label xml:lang="ru">Региональный тел. код</label>
+    <label xml:lang="en">Regional phone code</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/entity"/>
+  </Class>
+  <ObjectProperty rdf:about="http://fogid.net/o/geo-place" priority="m" essential="yes">
+    <label xml:lang="ru">Регион</label>
+    <label xml:lang="en">Region</label>
+    <inverse-label xml:lang="ru">код региона</inverse-label>
+    <inverse-label xml:lang="en">region code</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/reg-phone-code"/>
+    <range rdf:resource="http://fogid.net/o/geosys"/>
+  </ObjectProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/code" priority="p" essential="yes">
+    <label xml:lang="ru">код</label>
+    <label xml:lang="en">code</label>
+    <domain rdf:resource="http://fogid.net/o/reg-phone-code"/>
+    <range rdf:resource="http://fogid.net/o/string"/>
+  </DatatypeProperty>
+-->
+
+  <Class rdf:about="http://fogid.net/o/document">
+    <label xml:lang="ru">Документ</label>
+    <label xml:lang="en">Document</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/sys-obj"/>
+  </Class>
+  <!--                   Вставка онтологии ontology_iis-v13                   -->
+  <DatatypeProperty rdf:about="http://fogid.net/o/uri" priority="c" essential="yes">
+    <label xml:lang="ru">опубликован в</label>
+    <label xml:lang="en">published in</label>
+    <domain rdf:resource="http://fogid.net/o/document"/>
+    <range rdf:resource="http://fogid.net/o/URI"/>
+  </DatatypeProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/docmetainfo" priority="d" essential="yes">
+    <label xml:lang="ru">метаинформ.</label>
+    <label xml:lang="en">meta info</label>
+    <domain rdf:resource="http://fogid.net/o/document"/>
+    <range rdf:resource="http://fogid.net/o/URI"/>
+  </DatatypeProperty>
+  <!-- конец вставки -->
+  <DatatypeProperty rdf:about="http://fogid.net/o/doc-content" priority="u">
+    <label xml:lang="ru">текст документа</label>
+    <label xml:lang="en">document text</label>
+    <domain rdf:resource="http://fogid.net/o/document"/>
+    <range rdf:resource="http://fogid.net/o/text" style="textarea"/>
+  </DatatypeProperty>
+
+  <Class rdf:about="http://fogid.net/o/photo-doc">
+    <label xml:lang="ru">Фотодокумент</label>
+    <label xml:lang="en">Photo document</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/document"/>
+  </Class>
+  <Class rdf:about="http://fogid.net/o/video-doc">
+    <label xml:lang="ru">Видеодокумент</label>
+    <label xml:lang="en">Video document</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/document"/>
+  </Class>
+  <Class rdf:about="http://fogid.net/o/audio-doc">
+    <label xml:lang="ru">Аудиодокумент</label>
+    <label xml:lang="en">Audio document</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/document"/>
+  </Class>
+  <Class rdf:about="http://fogid.net/o/speech">
+    <label xml:lang="ru">Выступление</label>
+    <label xml:lang="en">Speech</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/document"/>
+  </Class>
+  <ObjectProperty rdf:about="http://fogid.net/o/at-meeting" essential="yes">
+    <label xml:lang="ru">на встрече в</label>
+    <label xml:lang="en">at meeting</label>
+    <inverse-label xml:lang="ru">выступление</inverse-label>
+    <inverse-label xml:lang="en">speech</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/speech"/>
+    <range rdf:resource="http://fogid.net/o/org-sys"/>
+  </ObjectProperty>
+
+  <Class rdf:about="http://fogid.net/o/titled">
+    <label xml:lang="ru">Титулован</label>
+    <label xml:lang="en">Entitled</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/entity"/>
+  </Class>
+  <ObjectProperty rdf:about="http://fogid.net/o/has-title" priority="m" essential="yes">
+    <label xml:lang="ru">субъект</label>
+    <label xml:lang="en">subject</label>
+    <inverse-label xml:lang="ru">степень/титул</inverse-label>
+    <inverse-label xml:lang="en">degree/title</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/titled"/>
+    <range rdf:resource="http://fogid.net/o/sys-obj"/>
+  </ObjectProperty>
+  <ObjectProperty rdf:about="http://fogid.net/o/support-org" priority="o">
+    <label xml:lang="ru">поддерж. орг.</label>
+    <label xml:lang="en">supporting organization</label>
+    <inverse-label xml:lang="ru">поддерживает</inverse-label>
+    <inverse-label xml:lang="en">supports</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/titled"/>
+    <range rdf:resource="http://fogid.net/o/org-sys"/>
+  </ObjectProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/degree" priority="n" essential="yes">
+    <label xml:lang="ru">степень</label>
+    <label xml:lang="en">degree</label>
+    <domain rdf:resource="http://fogid.net/o/titled"/>
+    <range rdf:resource="http://fogid.net/o/text"/>
+  </DatatypeProperty>
+
+  <Class rdf:about="http://fogid.net/o/business-activity">
+    <label xml:lang="ru">Сфера деятельности</label>
+    <label xml:lang="en">Field of activity</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/entity"/>
+  </Class>
+  <ObjectProperty rdf:about="http://fogid.net/o/has-activity" priority="m" essential="yes">
+    <label xml:lang="ru">субъект</label>
+    <label xml:lang="en">subject</label>
+    <inverse-label xml:lang="ru">специалист в</inverse-label>
+    <inverse-label xml:lang="en">specialist in</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/business-activity"/>
+    <range rdf:resource="http://fogid.net/o/sys-obj"/>
+  </ObjectProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/business" priority="n" essential="yes">
+    <label xml:lang="ru">деятельность</label>
+    <label xml:lang="en">activity</label>
+    <domain rdf:resource="http://fogid.net/o/business-activity"/>
+    <range rdf:resource="http://fogid.net/o/text"/>
+  </DatatypeProperty>
+
+  <Class rdf:about="http://fogid.net/o/family">
+    <label xml:lang="ru">Семья</label>
+    <label xml:lang="en">Family</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/entity"/>
+  </Class>
+  <ObjectProperty rdf:about="http://fogid.net/o/husband" priority="m" essential="yes" weight="10">
+    <label xml:lang="ru">муж</label>
+    <label xml:lang="en">husband</label>
+    <inverse-label xml:lang="ru">муж для</inverse-label>
+    <inverse-label xml:lang="en">husband for</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/family"/>
+    <range rdf:resource="http://fogid.net/o/person"/>
+  </ObjectProperty>
+  <ObjectProperty rdf:about="http://fogid.net/o/wife" priority="n" essential="yes" weight="10">
+    <label xml:lang="ru">жена</label>
+    <label xml:lang="en">wife</label>
+    <inverse-label xml:lang="ru">жена для</inverse-label>
+    <inverse-label xml:lang="en">wife for</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/family"/>
+    <range rdf:resource="http://fogid.net/o/person"/>
+  </ObjectProperty>
+
+  <Class rdf:about="http://fogid.net/o/participation">
+    <label xml:lang="ru">Участие</label>
+    <label xml:lang="en">Participation</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/entity"/>
+  </Class>
+  <ObjectProperty rdf:about="http://fogid.net/o/participant" priority="m" essential="yes" weight="30">
+    <label xml:lang="ru">участник</label>
+    <label xml:lang="en">participant</label>
+    <inverse-label xml:lang="ru">участник в орг.</inverse-label>
+    <inverse-label xml:lang="en">participant in organization</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/participation"/>
+    <range rdf:resource="http://fogid.net/o/sys-obj"/>
+  </ObjectProperty>
+  <ObjectProperty rdf:about="http://fogid.net/o/in-org" priority="n" essential="yes" weight="30">
+    <label xml:lang="ru">в орг. сист.</label>
+    <label xml:lang="en">in organization system</label>
+    <inverse-label xml:lang="ru">работник/участник</inverse-label>
+    <inverse-label xml:lang="en">worker/participant</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/participation"/>
+    <range rdf:resource="http://fogid.net/o/org-sys"/>
+  </ObjectProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/role" priority="o" essential="yes">
+    <label xml:lang="ru">роль</label>
+    <label xml:lang="en">role</label>
+    <domain rdf:resource="http://fogid.net/o/participation"/>
+    <range rdf:resource="http://fogid.net/o/text"/>
+  </DatatypeProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/role-classification" priority="o">
+    <label xml:lang="ru">клсф.роли</label>
+    <label xml:lang="en">role classifier</label>
+    <domain rdf:resource="http://fogid.net/o/participation"/>
+    <range rdf:resource="http://fogid.net/o/role-classificator"/>
+  </DatatypeProperty>
+  <EnumerationType rdf:about="http://fogid.net/o/role-classificator">
+    <state value="director" xml:lang="ru">первое лицо</state>
+    <state value="director" xml:lang="en">director</state>
+    <state value="organizer" xml:lang="ru">организатор</state>
+    <state value="organizer" xml:lang="en">organizer</state>
+    <state value="basic" xml:lang="ru">участник</state>
+    <state value="basic" xml:lang="en">participant</state>
+    <state value="guest" xml:lang="ru">гость</state>
+    <state value="guest" xml:lang="en">guest</state>
+    <state value="client" xml:lang="ru">клиент</state>
+    <state value="client" xml:lang="en">client</state>
+    <state value="sponsor" xml:lang="ru">спонсор</state>
+    <state value="sponsor" xml:lang="en">sponsor</state>
+  </EnumerationType>
+  <Class rdf:about="http://fogid.net/o/learn" abstract="yes">
+    <label xml:lang="ru">Учеба</label>
+    <label xml:lang="en">Education</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/entity"/>
+  </Class>
+  <ObjectProperty rdf:about="http://fogid.net/o/learner" priority="m" essential="yes" weight="40">
+    <label xml:lang="ru">ученик</label>
+    <label xml:lang="en">pupil</label>
+    <inverse-label xml:lang="ru">образование в</inverse-label>
+    <inverse-label xml:lang="en">education in</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/learn"/>
+    <range rdf:resource="http://fogid.net/o/person"/>
+  </ObjectProperty>
+  <ObjectProperty rdf:about="http://fogid.net/o/learning-org" priority="n" essential="yes" weight="40">
+    <label xml:lang="ru">в уч. заведении</label>
+    <label xml:lang="en">in educational organization</label>
+    <inverse-label xml:lang="ru">учащийся</inverse-label>
+    <inverse-label xml:lang="en">learner</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/learn"/>
+    <range rdf:resource="http://fogid.net/o/org-sys"/>
+  </ObjectProperty>
+  <Class rdf:about="http://fogid.net/o/pupil">
+    <label xml:lang="ru">Школьник</label>
+    <label xml:lang="en">Schoolchild</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/learn"/>
+  </Class>
+  <Class rdf:about="http://fogid.net/o/student">
+    <label xml:lang="ru">Студент</label>
+    <label xml:lang="en">Student</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/learn"/>
+  </Class>
+  <Class rdf:about="http://fogid.net/o/aspirant">
+    <label xml:lang="ru">Аспирант</label>
+    <label xml:lang="en">Graduate student</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/learn"/>
+  </Class>
+  <Class rdf:about="http://fogid.net/o/learn-special">
+    <label xml:lang="ru">Учеба спец.</label>
+    <label xml:lang="en">Education special</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/learn"/>
+  </Class>
+  <DatatypeProperty rdf:about="http://fogid.net/o/learn-category" priority="o">
+    <label xml:lang="ru">тип обучения</label>
+    <label xml:lang="en">education type</label>
+    <domain rdf:resource="http://fogid.net/o/learn-special"/>
+    <range rdf:resource="http://fogid.net/o/text"/>
+  </DatatypeProperty>
+
+  <Class rdf:about="http://fogid.net/o/location">
+    <label xml:lang="ru">Расположение</label>
+    <label xml:lang="en">Location</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/entity"/>
+  </Class>
+  <ObjectProperty rdf:about="http://fogid.net/o/something" priority="m" essential="yes">
+    <label xml:lang="ru">размещаемое</label>
+    <label xml:lang="en">settable</label>
+    <inverse-label xml:lang="ru">находится в</inverse-label>
+    <inverse-label xml:lang="en">located in</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/location"/>
+    <range rdf:resource="http://fogid.net/o/sys-obj"/>
+  </ObjectProperty>
+  <ObjectProperty rdf:about="http://fogid.net/o/location-place" priority="n" essential="yes">
+    <label xml:lang="ru">место</label>
+    <label xml:lang="en">place</label>
+    <inverse-label xml:lang="ru">место для</inverse-label>
+    <inverse-label xml:lang="en">place for</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/location"/>
+    <range rdf:resource="http://fogid.net/o/geosys"/>
+  </ObjectProperty>
+
+  <!-- Возможно, котегорию надо сделать преречислимым и указать, в частности такие места, как место рождения, место смерти, место захоронения   -->
+  <DatatypeProperty rdf:about="http://fogid.net/o/location-category" priority="o">
+    <label xml:lang="ru">тип размещения</label>
+    <label xml:lang="en">location type</label>
+    <domain rdf:resource="http://fogid.net/o/location"/>
+    <range rdf:resource="http://fogid.net/o/text"/>
+  </DatatypeProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/location-classification" priority="o">
+    <label xml:lang="ru">клсф.размещ.</label>
+    <label xml:lang="en">location classifier</label>
+    <domain rdf:resource="http://fogid.net/o/location"/>
+    <range rdf:resource="http://fogid.net/o/location-classificator"/>
+  </DatatypeProperty>
+  <EnumerationType rdf:about="http://fogid.net/o/location-classificator">
+    <state value="born" xml:lang="ru">родился</state>
+    <state value="born" xml:lang="en">was born</state>
+    <state value="live" xml:lang="ru">проживание</state>
+    <state value="live" xml:lang="en">accomodation</state>
+    <state value="visit" xml:lang="ru">посещение</state>
+    <state value="visit" xml:lang="en">visit</state>
+    <state value="died" xml:lang="ru">умер</state>
+    <state value="died" xml:lang="en">died</state>
+    <state value="buried" xml:lang="ru">похоронен</state>
+    <state value="buried" xml:lang="en">buried</state>
+  </EnumerationType>
+
+
+  <!-- Убрал 20230902: 
+  <Class rdf:about="http://fogid.net/o/post-address">
+    <label xml:lang="ru">Почтовый адрес</label>
+    <label xml:lang="en">Postal address</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/entity"/>
+  </Class>
+  <ObjectProperty rdf:about="http://fogid.net/o/post-target" priority="m" essential="yes">
+    <label xml:lang="ru">что</label>
+    <label xml:lang="en">what</label>
+    <inverse-label xml:lang="ru">по адресу</inverse-label>
+    <inverse-label xml:lang="en">at the address</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/post-address"/>
+    <range rdf:resource="http://fogid.net/o/location"/>
+  </ObjectProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/post-index" priority="n" essential="yes">
+    <label xml:lang="ru">почт.индекс</label>
+    <label xml:lang="en">postal index</label>
+    <domain rdf:resource="http://fogid.net/o/post-address"/>
+    <range rdf:resource="http://fogid.net/o/string"/>
+  </DatatypeProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/address" priority="o" essential="yes">
+    <label xml:lang="ru">адрес</label>
+    <label xml:lang="en">address</label>
+    <domain rdf:resource="http://fogid.net/o/post-address"/>
+    <range rdf:resource="http://fogid.net/o/text"/>
+  </DatatypeProperty>
+  -->
+
+  <Class rdf:about="http://fogid.net/o/naming">
+    <label xml:lang="ru">Именование</label>
+    <label xml:lang="en">Naming</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/entity"/>
+  </Class>
+  <ObjectProperty rdf:about="http://fogid.net/o/referred-sys" priority="m" essential="yes">
+    <label xml:lang="ru">именуемое</label>
+    <label xml:lang="en">by name</label>
+    <inverse-label xml:lang="ru">именуется</inverse-label>
+    <inverse-label xml:lang="en">beeing called</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/naming"/>
+    <range rdf:resource="http://fogid.net/o/sys-obj"/>
+  </ObjectProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/alias" priority="n" essential="yes">
+    <label xml:lang="ru">друг. имя</label>
+    <label xml:lang="en">another name</label>
+    <domain rdf:resource="http://fogid.net/o/naming"/>
+    <range rdf:resource="http://fogid.net/o/text"/>
+  </DatatypeProperty>
+
+  <Class rdf:about="http://fogid.net/o/dating">
+    <label xml:lang="ru">Датирование</label>
+    <label xml:lang="en">Dating</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/entity"/>
+  </Class>
+  <ObjectProperty rdf:about="http://fogid.net/o/referred" priority="m" essential="yes">
+    <label xml:lang="ru">датируемое</label>
+    <label xml:lang="en">by date</label>
+    <inverse-label xml:lang="ru">датируется</inverse-label>
+    <inverse-label xml:lang="en">is dated</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/dating"/>
+    <range rdf:resource="http://fogid.net/o/entity"/>
+  </ObjectProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/dating-specificator">
+    <label xml:lang="ru">спецификатор датирования</label>
+    <label xml:lang="en">dating specifier</label>
+    <domain rdf:resource="http://fogid.net/o/dating"/>
+    <range rdf:resource="http://fogid.net/o/dating-variants"/>
+  </DatatypeProperty>
+  <EnumerationType rdf:about="http://fogid.net/o/dating-variants">
+    <state value="before" xml:lang="ru">до начала</state>
+    <state value="before" xml:lang="en">before</state>
+    <state value="from" xml:lang="ru">начало</state>
+    <state value="from" xml:lang="en">from</state>
+    <state value="in" xml:lang="ru">текущая</state>
+    <state value="in" xml:lang="en">current</state>
+    <state value="to" xml:lang="ru">конец</state>
+    <state value="to" xml:lang="en">to</state>
+    <state value="after" xml:lang="ru">после конца</state>
+    <state value="after" xml:lang="en">after</state>
+  </EnumerationType>
+  <DatatypeProperty rdf:about="http://fogid.net/o/date" priority="n" essential="yes">
+    <label xml:lang="ru">дата</label>
+    <label xml:lang="en">date</label>
+    <domain rdf:resource="http://fogid.net/o/dating"/>
+    <range rdf:resource="http://fogid.net/o/text"/>
+  </DatatypeProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/dating-accuracy">
+    <label xml:lang="ru">точность датирования</label>
+    <label xml:lang="en">dating accuracy</label>
+    <domain rdf:resource="http://fogid.net/o/dating"/>
+    <range rdf:resource="http://fogid.net/o/string"/>
+  </DatatypeProperty>
+
+  <Class rdf:about="http://fogid.net/o/authority">
+    <label xml:lang="ru">Полномочия</label>
+    <label xml:lang="en">Authority</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/entity"/>
+  </Class>
+  <ObjectProperty rdf:about="http://fogid.net/o/adoc" priority="m" essential="yes" weight="40">
+    <label xml:lang="ru">документ</label>
+    <label xml:lang="en">document</label>
+    <inverse-label xml:lang="ru">субъект</inverse-label>
+    <inverse-label xml:lang="en">subject</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/authority"/>
+    <range rdf:resource="http://fogid.net/o/document"/>
+  </ObjectProperty>
+  <ObjectProperty rdf:about="http://fogid.net/o/author" priority="n" essential="yes" weight="40">
+    <label xml:lang="ru">автор/получатель</label>
+    <label xml:lang="en">sender/receiver</label>
+    <inverse-label xml:lang="ru">субъект документа</inverse-label>
+    <inverse-label xml:lang="en">document in/out person/org</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/authority"/>
+    <range rdf:resource="http://fogid.net/o/sys-obj"/>
+  </ObjectProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/authority-specificator">
+    <label xml:lang="ru">спецификатор полномочий</label>
+    <label xml:lang="en">authority specificator</label>
+    <domain rdf:resource="http://fogid.net/o/authority"/>
+    <range rdf:resource="http://fogid.net/o/authority-variants"/>
+  </DatatypeProperty>
+  <EnumerationType rdf:about="http://fogid.net/o/authority-variants">
+    <state value="author" xml:lang="ru">автор</state>
+    <state value="author" xml:lang="en">author</state>
+    <state value="recipient" xml:lang="ru">получатель</state>
+    <state value="recipient" xml:lang="en">recipient</state>
+    <state value="out-org" xml:lang="ru">исходящая орг.</state>
+    <state value="out-org" xml:lang="en">outbound org.</state>
+    <state value="in-org" xml:lang="ru">входящая орг.</state>
+    <state value="in-org" xml:lang="en">inbound org.</state>
+  </EnumerationType>
+
+  <!-- сомнительные построения -->
+  <Class rdf:about="http://fogid.net/o/communication" abstract="yes">
+    <SubClassOf rdf:resource="http://fogid.net/o/entity"/>
+  </Class>
+  <ObjectProperty rdf:about="http://fogid.net/o/user" priority="m" essential="yes">
+    <label xml:lang="ru">абонент</label>
+    <label xml:lang="en">user</label>
+    <inverse-label xml:lang="ru">абонент</inverse-label>
+    <inverse-label xml:lang="en">user</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/communication"/>
+    <range rdf:resource="http://fogid.net/o/sys-obj"/>
+  </ObjectProperty>
+  <!-- Вставил 20230902: -->
+  <DatatypeProperty rdf:about="http://fogid.net/o/code" priority="n" essential="yes">
+    <label xml:lang="ru">номер/код</label>
+    <label xml:lang="en">code</label>
+    <domain rdf:resource="http://fogid.net/o/communication"/>
+    <range rdf:resource="http://fogid.net/o/string"/>
+  </DatatypeProperty>
+
+  <!-- Убрал 20230902:
+  <Class rdf:about="http://fogid.net/o/phone">
+    <SubClassOf rdf:resource="http://fogid.net/o/communication"/>
+    <label xml:lang="ru">Телефон</label>
+    <label xml:lang="en">Phone</label>
+  </Class>
+  <DatatypeProperty rdf:about="http://fogid.net/o/phone-number" priority="n" essential="yes">
+    <label xml:lang="ru">номер</label>
+    <label xml:lang="en">phone number</label>
+    <domain rdf:resource="http://fogid.net/o/phone"/>
+    <range rdf:resource="http://fogid.net/o/string"/>
+  </DatatypeProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/specific" priority="o" essential="yes">
+    <label xml:lang="ru">вид</label>
+    <label xml:lang="en">type</label>
+    <domain rdf:resource="http://fogid.net/o/phone"/>
+    <range rdf:resource="http://fogid.net/o/phone-specific"/>
+  </DatatypeProperty>
+  <EnumerationType rdf:about="http://fogid.net/o/phone-specific">
+    <state value="h" xml:lang="ru">дом</state>
+    <state value="h" xml:lang="en">home</state>
+    <state value="o" xml:lang="ru">офис</state>
+    <state value="o" xml:lang="en">office</state>
+    <state value="m" xml:lang="ru">моб.</state>
+    <state value="m" xml:lang="en">mobile</state>
+    <state value="f" xml:lang="ru">факс</state>
+    <state value="f" xml:lang="en">fax</state>
+  </EnumerationType>
+  <Class rdf:about="http://fogid.net/o/email">
+    <label xml:lang="ru">Электронная почта</label>
+    <label xml:lang="en">E-mail</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/communication"/>
+  </Class>
+  <DatatypeProperty rdf:about="http://fogid.net/o/email-code" priority="n" essential="yes">
+    <label xml:lang="ru">email-код</label>
+    <label xml:lang="en">e-mail address</label>
+    <domain rdf:resource="http://fogid.net/o/email"/>
+    <range rdf:resource="http://fogid.net/o/Email"/>
+  </DatatypeProperty>
+  <Class rdf:about="http://fogid.net/o/url">
+    <label xml:lang="ru">Веб ресурс</label>
+    <label xml:lang="en">WEB-page</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/communication"/>
+  </Class>
+  <DatatypeProperty rdf:about="http://fogid.net/o/url-code" priority="n" essential="yes">
+    <label xml:lang="ru">URL-код</label>
+    <label xml:lang="en">URL</label>
+    <domain rdf:resource="http://fogid.net/o/url"/>
+    <range rdf:resource="http://fogid.net/o/URI"/>
+  </DatatypeProperty>
+-->
+
+  <Class rdf:about="http://fogid.net/o/org-relatives">
+    <label xml:lang="ru">Родственные организации</label>
+    <label xml:lang="en">Related organizations</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/entity"/>
+  </Class>
+  <ObjectProperty rdf:about="http://fogid.net/o/org-parent" priority="m" essential="yes">
+    <label xml:lang="ru">орг.родитель</label>
+    <label xml:lang="en">parent organization</label>
+    <inverse-label xml:lang="ru">орг.родитель для</inverse-label>
+    <inverse-label xml:lang="en">parent organization for</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/org-relatives"/>
+    <range rdf:resource="http://fogid.net/o/org-sys"/>
+  </ObjectProperty>
+  <ObjectProperty rdf:about="http://fogid.net/o/org-child" priority="n" essential="yes">
+    <label xml:lang="ru">орг.ребенок</label>
+    <label xml:lang="en">child organization</label>
+    <inverse-label xml:lang="ru">орг.ребенок для</inverse-label>
+    <inverse-label xml:lang="en">child organization for</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/org-relatives"/>
+    <range rdf:resource="http://fogid.net/o/org-sys"/>
+  </ObjectProperty>
+
+  <Class rdf:about="http://fogid.net/o/reflection">
+    <label xml:lang="ru">Отражение</label>
+    <label xml:lang="en">Reflection</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/entity"/>
+  </Class>
+  <ObjectProperty rdf:about="http://fogid.net/o/reflected" priority="a" essential="yes" weight="35">
+    <label xml:lang="ru">отражаемое</label>
+    <label xml:lang="en">reflected item</label>
+    <inverse-label xml:lang="ru">отраж. в документе</inverse-label>
+    <inverse-label xml:lang="en">reflected in document</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/reflection"/>
+    <range rdf:resource="http://fogid.net/o/sys-obj"/>
+  </ObjectProperty>
+  <ObjectProperty rdf:about="http://fogid.net/o/in-doc" priority="a" essential="yes"  weight="35">
+    <label xml:lang="ru">в документе</label>
+    <label xml:lang="en">in document</label>
+    <inverse-label xml:lang="ru">отраж. персонаж</inverse-label>
+    <inverse-label xml:lang="en">reflected personage</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/reflection"/>
+    <range rdf:resource="http://fogid.net/o/document"/>
+  </ObjectProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/ground" priority="o">
+    <label xml:lang="ru">план</label>
+    <label xml:lang="en">ground</label>
+    <domain rdf:resource="http://fogid.net/o/reflection"/>
+    <range rdf:resource="http://fogid.net/o/personage-ground"/>
+  </DatatypeProperty>
+  <EnumerationType rdf:about="http://fogid.net/o/personage-ground">
+    <state value="official" xml:lang="ru">официальный</state>
+    <state value="official" xml:lang="en">official</state>
+    <state value="portrait" xml:lang="ru">портрет</state>
+    <state value="portrait" xml:lang="en">portrait</state>
+    <state value="foreground" xml:lang="ru">первый план</state>
+    <state value="foreground" xml:lang="en">foreground</state>
+    <state value="background" xml:lang="ru">задний план</state>
+    <state value="background" xml:lang="en">background</state>
+    <state value="casual" xml:lang="ru">случайно</state>
+    <state value="casual" xml:lang="en">casual</state>
+    <state value="place" xml:lang="ru">место</state>
+    <state value="place" xml:lang="en">place</state>
+  </EnumerationType>
+
+  <!-- Убрал 20230902:    
+  <Class rdf:about="http://fogid.net/o/scanned-page">
+    <label xml:lang="ru">Страница сканирования</label>
+    <label xml:lang="en">Scanend page</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/entity"/>
+  </Class>
+  <ObjectProperty rdf:about="http://fogid.net/o/scanned-document" priority="m" essential="yes">
+    <label xml:lang="ru">документ</label>
+    <label xml:lang="en">document</label>
+    <inverse-label xml:lang="ru">страница</inverse-label>
+    <inverse-label xml:lang="en">page</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/scanned-page"/>
+    <range rdf:resource="http://fogid.net/o/document"/>
+  </ObjectProperty>
+  <ObjectProperty rdf:about="http://fogid.net/o/photo-page" priority="m" essential="yes">
+    <label xml:lang="ru">фото-страница</label>
+    <label xml:lang="en">photo page</label>
+    <inverse-label xml:lang="ru">страница документа</inverse-label>
+    <inverse-label xml:lang="en">document's page</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/scanned-page"/>
+    <range rdf:resource="http://fogid.net/o/photo-doc"/>
+  </ObjectProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/page-number" essential="yes">
+    <label xml:lang="ru">номер страницы</label>
+    <label xml:lang="en">page number</label>
+    <domain rdf:resource="http://fogid.net/o/scanned-page"/>
+    <range rdf:resource="http://fogid.net/o/string"/>
+  </DatatypeProperty>
+  <Class rdf:about="http://fogid.net/o/letter">
+    <label xml:lang="ru">Письмо</label>
+    <label xml:lang="en">Letter</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/document"/>
+  </Class>
+  <Class rdf:about="http://fogid.net/o/is-recipient">
+    <label xml:lang="ru">Получатель</label>
+    <label xml:lang="en">Recipient</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/entity"/>
+  </Class>
+  <ObjectProperty rdf:about="http://fogid.net/o/of-letter" priority="m" essential="yes">
+    <label xml:lang="ru">документ</label>
+    <label xml:lang="en">document</label>
+    <inverse-label xml:lang="ru">получатель</inverse-label>
+    <inverse-label xml:lang="en">recipient</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/is-recipient"/>
+    <range rdf:resource="http://fogid.net/o/letter"/>
+  </ObjectProperty>
+  <ObjectProperty rdf:about="http://fogid.net/o/recipient" priority="n" essential="yes">
+    <label xml:lang="ru">получатель</label>
+    <label xml:lang="en">recipient</label>
+    <inverse-label xml:lang="ru">получатель документа</inverse-label>
+    <inverse-label xml:lang="en">document's recipient</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/is-recipient"/>
+    <range rdf:resource="http://fogid.net/o/person"/>
+  </ObjectProperty>
+-->
+
+  <!-- Вставка многостранчиного документа и многостраничной иерархии  2012-06-13, 2022-06-07                   -->
+  <Class rdf:about="http://fogid.net/o/DocumentPart">
+    <label xml:lang="ru">Раздел документа</label>
+    <label xml:lang="en">Part of document</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/entity"/>
+  </Class>
+  <ObjectProperty rdf:about="http://fogid.net/o/inDocument" priority="m" essential="yes">
+    <label xml:lang="ru">в сборке</label>
+    <label xml:lang="en">in document</label>
+    <inverse-label xml:lang="ru">разделы</inverse-label>
+    <inverse-label xml:lang="en">parts</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/DocumentPart"/>
+    <range rdf:resource="http://fogid.net/o/document"/>
+  </ObjectProperty>
+  <ObjectProperty rdf:about="http://fogid.net/o/partItem" priority="m" essential="yes">
+    <label xml:lang="ru">часть документа</label>
+    <label xml:lang="en">part of document</label>
+    <inverse-label xml:lang="ru">является частью</inverse-label>
+    <inverse-label xml:lang="en">is a part</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/DocumentPart"/>
+    <range rdf:resource="http://fogid.net/o/document"/>
+  </ObjectProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/pageNumbers" essential="yes">
+    <label xml:lang="ru">номера страниц</label>
+    <label xml:lang="en">page numbers</label>
+    <domain rdf:resource="http://fogid.net/o/DocumentPart"/>
+    <range rdf:resource="http://fogid.net/o/string"/>
+  </DatatypeProperty>
+
+  <!--                  Онтология для кассет                       -->
+  <Class rdf:about="http://fogid.net/o/cassette">
+    <label xml:lang="ru">Кассета</label>
+    <label xml:lang="en">Cassette</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/collection"/>
+  </Class>
+  <!-- Это будет спрятано, чтобы пользователи не редактировали
+        <DatatypeProperty rdf:about="http://fogid.net/o/cassetteUri">
+                <label xml:lang="ru">Системное имя кассеты</label>
+                <label xml:lang="en">System name of cassette</label>
+                <domain rdf:resource="http://fogid.net/o/cassette"/>
+                <range rdf:resource="http://fogid.net/o/string"/>
+        </DatatypeProperty>
+        <DatatypeProperty rdf:about="http://fogid.net/o/cassetteLocation">
+                <label xml:lang="ru">Координата кассеты</label>
+                <label xml:lang="en">Coordinate of cassette</label>
+                <domain rdf:resource="http://fogid.net/o/cassette"/>
+                <range rdf:resource="http://fogid.net/o/string"/>
+        </DatatypeProperty>
+        <Class rdf:about="http://fogid.net/o/cassetteSection">
+        </Class>
+        <DatatypeProperty rdf:about="http://fogid.net/o/forCassette">
+                <label xml:lang="ru">URI кассеты</label>
+                <label xml:lang="en">URI of cassette</label>
+                <domain rdf:resource="http://fogid.net/o/cassetteSection"/>
+                <range rdf:resource="http://fogid.net/o/string"/>
+        </DatatypeProperty>
+        <DatatypeProperty rdf:about="http://fogid.net/o/sectionType">
+                <label xml:lang="ru">Тип секции кассеты</label>
+                <label xml:lang="en">Type of cassette section</label>
+                <domain rdf:resource="http://fogid.net/o/cassetteSection"/>
+                <range rdf:resource="http://fogid.net/o/string"/>
+        </DatatypeProperty>
+        <DatatypeProperty rdf:about="http://fogid.net/o/sectionLocation">
+                <label xml:lang="ru">Координата секции кассеты</label>
+                <label xml:lang="en">Coordinate of cassette section</label>
+                <domain rdf:resource="http://fogid.net/o/cassetteSection"/>
+                <range rdf:resource="http://fogid.net/o/string"/>
+        </DatatypeProperty>
+        конец спрятанного -->
+
+
+  <!--<Class rdf:about="http://fogid.net/o/FileStore">
+    <label xml:lang="ru">Файл документа</label>
+    <label xml:lang="en">File of document</label>
+    <SubClassOf rdf:resource="http://fogid.net/o/entity"/>
+  </Class>
+  <ObjectProperty rdf:about="http://fogid.net/o/forDocument" priority="a" essential="yes" weight="35">
+    <label xml:lang="ru">для документа</label>
+    <label xml:lang="en">for document</label>
+    <inverse-label xml:lang="ru">контент</inverse-label>
+    <inverse-label xml:lang="en">content</inverse-label>
+    <domain rdf:resource="http://fogid.net/o/FileStore"/>
+    <range rdf:resource="http://fogid.net/o/document"/>
+  </ObjectProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/uri" priority="o">
+    <label xml:lang="ru">uri</label>
+    <label xml:lang="en">uri</label>
+    <domain rdf:resource="http://fogid.net/o/FileStore"/>
+    <range rdf:resource="http://fogid.net/o/string"/>
+  </DatatypeProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/contentType" priority="o">
+    <label xml:lang="ru">content type</label>
+    <label xml:lang="en">content type</label>
+    <domain rdf:resource="http://fogid.net/o/FileStore"/>
+    <range rdf:resource="http://fogid.net/o/string"/>
+  </DatatypeProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/owner" priority="o">
+    <label xml:lang="ru">owner</label>
+    <label xml:lang="en">owner</label>
+    <domain rdf:resource="http://fogid.net/o/FileStore"/>
+    <range rdf:resource="http://fogid.net/o/string"/>
+  </DatatypeProperty>
+  <DatatypeProperty rdf:about="http://fogid.net/o/docmetainfo" priority="o">
+    <label xml:lang="ru">docmetainfo</label>
+    <label xml:lang="en">docmetainfo</label>
+    <domain rdf:resource="http://fogid.net/o/FileStore"/>
+    <range rdf:resource="http://fogid.net/o/string"/>
+  </DatatypeProperty>-->
+
+</Ontology>

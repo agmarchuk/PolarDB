@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>alexander.g.marchuk</Authors>
+    <Company>iis</Company>
+    <Product>PolarDB</Product>
+    <Description>Factograph Data library using Polar.DB</Description>
+    <Version>1.0.2</Version>
+    <PackageLicenseUrl></PackageLicenseUrl>
+    <NeutralLanguage>ru</NeutralLanguage>
+  </PropertyGroup>
+
+</Project>
