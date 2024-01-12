@@ -102,7 +102,7 @@ namespace Factograph.Data.Adapters
                 rec => (string)((object[])rec)[1] == "delete", // признак уничтоженности
                 rec => (string)((object[])rec)[0], // как брать ключ
                 kval => (int)Hashfunctions.HashRot13((string)kval), // как делать хеш от ключа
-                true);
+                false);
             // ====== Добавим дополнительные индексы 
             // Заведем функцию вычисления полей name и alias (поле векторное, поэтому выдаем массив)
             Func<object, IEnumerable<string>> skey = obj =>
