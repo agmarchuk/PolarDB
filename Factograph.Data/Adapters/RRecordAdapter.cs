@@ -23,7 +23,8 @@ namespace Factograph.Data.Adapters
         private USequence records;
         private SVectorIndex names;
         private SVectorIndex svwords;
-        private SVectorIndex inverse_index;
+        //private SVectorIndex inverse_index;
+        private UVecIndex inverse_index;
 
         private RRecordSame rSame; // носитель компаратора для RRecord-записей
 
@@ -193,7 +194,8 @@ namespace Factograph.Data.Adapters
                     .Select(p => (string)p[1]).ToArray();
                 return query;
             };
-            inverse_index = new SVectorIndex(GenStream2, records, ext_keys, false);
+            //inverse_index = new SVectorIndex(GenStream2, records, ext_keys, false);
+            inverse_index = new UVecIndex(GenStream2, records, ext_keys, v => Hashfunctions.HashRot13((string)v));
             inverse_index.Refresh();
 
             records.uindexes = new IUIndex[]

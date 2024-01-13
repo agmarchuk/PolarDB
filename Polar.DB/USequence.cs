@@ -160,6 +160,16 @@ namespace Polar.Universal
                     ;
                 return query;
             }
+            if (uindexes[nom] is UVecIndex)
+            {
+                var uvind = (UVecIndex)uindexes[nom];
+                IEnumerable<object> query = uvind.GetAllByValue(value)
+                    //.Where(obof => (string)((object[])obof.obj)[0] == value)
+                    .Where(obof => IsOriginalAndNotEmpty(obof.obj, obof.off))
+                    .Select(obof => obof.obj)
+                    ;
+                return query;
+            }
             else throw new Exception("93394");
         }
         public IEnumerable<object> GetAllBySample(int nom, object osample)

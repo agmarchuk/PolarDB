@@ -20,7 +20,71 @@ namespace Polar.Universal
         private UniversalSequenceBase hkeys;
         private UniversalSequenceBase offsets;
         // Динамическая часть индекса
-        private List<KeyValuePair<int, long>> hkeyoff_list;
+        //private Dictionary<int, HashSet<long>> hkeyoffs_dic;
+
+        // ============== Динамическая часть индекса =============
+        class DynPairsSet
+        {
+            private int[] hvalues;
+            private long[] offsets;
+            private USequence sequ;
+            Func<IComparable, int> hashOfKey;
+            internal DynPairsSet(USequence sequ, Func<IComparable, int> hashOfKey)
+            {
+                this.sequ = sequ;
+                hvalues = new int[0]; offsets = new long[0];
+                this.hashOfKey = hashOfKey;
+            }
+            internal void Clear() { hvalues = new int[0]; offsets = new long[0]; }
+            internal void OnAppendValues(IComparable[] adds, long offset)
+            {
+                int len = hvalues.Length;
+                int nplus = adds.Length;
+                if (nplus == 0) return;
+                // расширим массивы
+                int[] vals = new int[len + nplus];
+                long[] offs = new long[len + nplus];
+                for (int i = 0; i < len; i++) { vals[i] = hvalues[i]; offs[i] = offsets[i]; }
+                for (int i = 0; i < nplus; i++) { vals[len + i] = hashOfKey(adds[i]); offs[len + i] = offset; }
+                Array.Sort(vals, offs);
+                hvalues = vals; offsets = offs;
+            }
+            private IEnumerable<ObjOff> GetAllByValue(IComparable valuesample)
+            {
+                // Определяем начальный индекс
+                int ind = Array.BinarySearch(hvalues, hashOfKey(valuesample));
+                if (ind >= 0)
+                {
+
+                    // Выдаем это решение
+                    object rec = sequ.GetByOffset(offsets[ind]);
+                    yield return new ObjOff(rec, offsets[ind]);
+                    // Идем влево
+                    int i = ind - 1;
+                    while (i >= 0)
+                    {
+                        if (hvalues[i] != hashOfKey(valuesample)) break;
+                        rec = sequ.GetByOffset(offsets[i]);
+                        yield return new ObjOff(rec, offsets[i]);
+                        i--;
+                    }
+                    // Идем вправо
+                    i = ind + 1;
+                    while (i < hvalues.Length)
+                    {
+                        if (hvalues[i] != hashOfKey(valuesample)) break;
+                        rec = sequ.GetByOffset(offsets[i]);
+                        yield return new ObjOff(rec, offsets[i]);
+                        i++;
+                    }
+                }
+            }
+        }
+        DynPairsSet dynindex;
+        // ============ конец динамической части индекса ============
+
+
+
         private bool keysinmemory;
 
         public UVecIndex(Func<Stream> streamGen, USequence sequence,
@@ -35,22 +99,13 @@ namespace Polar.Universal
             hkeys = new UniversalSequenceBase(new PType(PTypeEnumeration.integer), streamGen());
             offsets = new UniversalSequenceBase(new PType(PTypeEnumeration.longinteger), streamGen());
 
-            hkeyoff_list = new List<KeyValuePair<int, long>>();
-        }
-        public void OnAppendElement(object element, long offset)
-        {
-            IEnumerable<IComparable> keys = keysFunc(element);
-            foreach (var key in keys)
-            {
-                int h = hashOfKey(key);
-                hkeyoff_list.Add(new KeyValuePair<int, long>(h, offset));
-            }
+            dynindex = new DynPairsSet(sequence, hashOfKey);
         }
 
         // Массив оптимизации поиска по значению хеша
-        private int[] hkeys_arr = null;
+        private int[]? hkeys_arr = null;
 
-        public void Clear() { hkeys.Clear(); hkeys_arr = null; offsets.Clear(); hkeyoff_list.Clear(); }
+        public void Clear() { hkeys.Clear(); hkeys_arr = null; offsets.Clear(); dynindex.Clear(); }
         public void Flush() { hkeys.Flush(); offsets.Flush(); }
         public void Close() { hkeys.Close(); offsets.Close(); }
         public void Refresh()
@@ -60,11 +115,14 @@ namespace Polar.Universal
             offsets.Refresh();
         }
 
+
+
+
         public void Build()
         {
             // сканируем опорную последовательность, формируем массивы
-            List<int> hkeys_list = new List<int>();
-            List<long> offsets_list = new List<long>();
+            List<int>? hkeys_list = new List<int>();
+            List<long>? offsets_list = new List<long>();
             sequence.Scan((off, obj) =>
             {
                 var keys = keysFunc(obj);
@@ -77,7 +135,7 @@ namespace Polar.Universal
             });
             hkeys_arr = hkeys_list.ToArray();
             hkeys_list = null;
-            long[] offsets_arr = offsets_list.ToArray();
+            long[]? offsets_arr = offsets_list.ToArray();
             offsets_list = null;
             GC.Collect();
 
@@ -100,46 +158,51 @@ namespace Polar.Universal
             GC.Collect();
         }
 
+        public void OnAppendElement(object element, long offset)
+        {
+            IEnumerable<IComparable> keys = keysFunc(element);
+            dynindex.OnAppendValues(keys.ToArray(), offset);
+        }
+
         private static IEnumerable<long> LRange(long start, long numb)
         {
             for (long ii = start; ii < start + numb; ii++) yield return ii;
         }
-        public IEnumerable<object> GetByKey(IComparable keysample)
+        public IEnumerable<ObjOff> GetAllByValue(IComparable valuesample)
         {
-            int hkey = hashOfKey(keysample);
-            IEnumerable<long> offsets1 = hkeyoff_list.Where(ho => ho.Key == hkey).Select(ho => ho.Value);
-
-            IEnumerable<long> offsets2 = Enumerable.Empty<long>();
+            // Определяем начальный индекс
             if (hkeys_arr != null)
             {
-                int pos = Array.BinarySearch<int>(hkeys_arr, hkey);
-                if (pos < 0) return null;
-                // ищем самую левую позицию 
-                int p1 = pos;
-                while (p1 >= 0 && hkeys_arr[p1] == hkey) { p1--; }
-                // движемся вправо, находим правую позицию
-                int p2 = pos;
-                while (p2 < hkeys_arr.Length && hkeys_arr[p2] == hkey) { p2--; }
-
-                // Порождаем поток офсетов
-                offsets2 = Enumerable.Range(p1, p2 - p1 + 1)
-                    .Select(p => (long)offsets.GetByIndex(p));
-            }
-            else
-            {
-                long first = GetFirstNom(hkey);
-                if (first != -1)
+                int ind = Array.BinarySearch(hkeys_arr, hashOfKey(valuesample));
+                if (ind >= 0)
                 {
-                    offsets2 = LRange(first, first + hkeys.Count())
-                        .Select(nom => (long)offsets.GetByIndex(nom));
+                    // Выдаем это решение
+                    long off = (long)offsets.GetByIndex(ind);
+                    object rec = sequence.GetByOffset(off);
+                    yield return new ObjOff(rec, off);
+                    // Идем влево
+                    int i = ind - 1;
+                    while (i >= 0)
+                    {
+                        if (hkeys_arr[i] != hashOfKey(valuesample)) break;
+                        off = (long)offsets.GetByIndex(i);
+                        rec = sequence.GetByOffset(off);
+                        yield return new ObjOff(rec, off);
+                        i--;
+                    }
+                    // Идем вправо
+                    i = ind + 1;
+                    while (i < hkeys_arr.Length)
+                    {
+                        if (hkeys_arr[i] != hashOfKey(valuesample)) break;
+                        off = (long)offsets.GetByIndex(i);
+                        rec = sequence.GetByOffset(off);
+                        yield return new ObjOff(rec, off);
+                        i++;
+                    }
                 }
             }
-            return offsets1.Concat(offsets2)
-                .Select(off => (off, sequence.GetByOffset(off)))
-                .Where(pair => sequence.IsOriginalAndNotEmpty(pair.Item2, pair.off))
-                .Select(pair => pair.Item2);
         }
-
         /// <summary>
         /// Определение номера первого индекса последовательности hkeys, с которого значения РАВНЫ hkey (хешу от ключа)
         /// Если нет таких, то -1L
