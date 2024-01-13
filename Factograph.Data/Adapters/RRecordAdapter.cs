@@ -22,9 +22,12 @@ namespace Factograph.Data.Adapters
         //private PType tp_triple;
         private USequence records;
         private SVectorIndex names;
-        private SVectorIndex svwords;
+        //private SVectorIndex svwords;
+        private UVecIndex svwords;
         //private SVectorIndex inverse_index;
         private UVecIndex inverse_index;
+
+        private Func<object, IEnumerable<string>> toWords;
 
         private RRecordSame rSame; // носитель компаратора для RRecord-записей
 
@@ -143,7 +146,7 @@ namespace Factograph.Data.Adapters
                 "http://fogid.net/o/description",
                 "http://fogid.net/o/doc-content"
             };
-            Func<object, IEnumerable<string>> toWords = obj =>
+            toWords = obj =>
             {
                 object[] props = (object[])((object[])obj)[2];
                 var query = props
@@ -168,7 +171,8 @@ namespace Factograph.Data.Adapters
                     }).ToArray();
                 return query;
             };
-            svwords = new SVectorIndex(GenStream2, records, toWords);
+            svwords = new UVecIndex(GenStream2, records, toWords,
+                v => Hashfunctions.HashRot13((string)v), true);
             svwords.Refresh();
 
             GC.Collect();
@@ -296,7 +300,7 @@ namespace Factograph.Data.Adapters
                 {
                     wrd = Normalize(w);
                 }
-                var qu = records.GetAllByValue(1, wrd).Select(r => new { obj = r, wrd = wrd })
+                var qu = records.GetAllByValue(1, wrd, toWords, true).Select(r => new { obj = r, wrd = wrd })
                     .ToArray();
                 return qu;
             })
@@ -312,7 +316,14 @@ namespace Factograph.Data.Adapters
         }
         public IEnumerable<object> GetInverseRecords(string id)
         {
-            return records.GetAllByValue(2, id);
+            var qu = records.GetAllByValue(2, id, ob =>
+            {
+                var q = ((object[])((object[])ob)[2])
+                    .Where(p => (int)((object[])p)[0] == 2)
+                    .Select(p => (string)((object[])((object[])p)[1])[1]);
+                return q;
+            }).ToArray();
+            return qu;
         }
 
         public override void Close()

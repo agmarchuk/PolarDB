@@ -21,6 +21,8 @@ namespace Factograph.Data.Adapters
         private SVectorIndex names;
         private SVectorIndex svwords;
 
+        private Func<object, IEnumerable<string>> toWords;
+
         private RRecordSame rSame;
 
         // Может быть null или будет преобразовывать слова в "нормализованные" слова
@@ -141,7 +143,7 @@ namespace Factograph.Data.Adapters
                 "http://fogid.net/o/description",
                 "http://fogid.net/o/doc-content"
             };
-            Func<object, IEnumerable<string>> toWords = obj =>
+            toWords = obj =>
             {
                 object[] props = (object[])((object[])obj)[2];
                 var query = props
@@ -317,7 +319,7 @@ namespace Factograph.Data.Adapters
                 {
                     wrd = Normalize(w);
                 }
-                var qu = records.GetAllByValue(1, wrd).Select(r => new { obj = r, wrd = wrd })
+                var qu = records.GetAllByValue(1, wrd, toWords).Select(r => new { obj = r, wrd = wrd })
                     .ToArray();
                 return qu;
             })

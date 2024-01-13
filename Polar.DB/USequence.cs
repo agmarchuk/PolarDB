@@ -139,7 +139,8 @@ namespace Polar.Universal
         //    return oo;
         //}
 
-        public IEnumerable<object> GetAllByValue(int nom, IComparable value)
+        public IEnumerable<object> GetAllByValue(int nom, IComparable value,
+            Func<object, IEnumerable<IComparable>> keysFunc, bool ignorecase = false)
         {
             if (uindexes[nom] is SVectorIndex)
             {
@@ -165,29 +166,37 @@ namespace Polar.Universal
                 var uvind = (UVecIndex)uindexes[nom];
 
                 //var q1 = uvind.GetAllByValue(value).ToArray();
-                //var q11 = q1.Where(obof =>
-                //{
-                //    object[] unis = (object[])((object[])obof.obj)[2];
-                //    if (unis.Any(u => (int)((object[])u)[0] == 2
-                //        && (string)((object[])((object[])u)[1])[1] == (string)value))
-                //        return true;
-                //    else return false;
-                //}).ToArray();
+                //var q01 = q1.Where(obof => 
+                //    keysFunc(obof.obj)
+                //    .Select(w => ignorecase ? ((string)w).ToUpper() : w)
+                //    .Any(W => W.CompareTo(value) == 0)).ToArray();
+                //var q10 = q1.Select(obof => 
+                //    new 
+                //    { words = keysFunc(obof.obj)
+                //        .Select(w => ignorecase ? ((string)w).ToUpper() : w)
+                //        .ToArray(), 
+                //        off = obof.off 
+                //    }).ToArray();
+
+                //var qq = uvind.GetAllByValue(value)
+                //    .Where(obof =>
+                //        keysFunc(obof.obj)
+                //        .Select(w => ignorecase ? ((string)w).ToUpper() : w)
+                //        .Any(W => W.CompareTo(value) == 0))
+                //    .Where(obof => IsOriginalAndNotEmpty(obof.obj, obof.off))
+                //    .Select(obof => obof.obj)
+                //    .ToArray();
+
                 //var q2 = q1.Where(obof => IsOriginalAndNotEmpty(obof.obj, obof.off)).ToArray();
                 //var q3 = q2.Select(obof => obof.obj).ToArray();
 
                 IEnumerable<object> query = uvind.GetAllByValue(value)
-                    .Where(obof =>
-                    {
-                        object[] unis = (object[])((object[])obof.obj)[2];
-                        if (unis.Any(u => (int)((object[])u)[0] == 2 
-                            && (string)((object[])((object[])u)[1])[1] == (string)value))
-                            return true;
-                        else return false;
-                    })
+                    .Where(obof => keysFunc(obof.obj)
+                        .Select(w => ignorecase ? ((string)w).ToUpper() : w)
+                        .Any(W => W.CompareTo(value) == 0))
                     .Where(obof => IsOriginalAndNotEmpty(obof.obj, obof.off))
                     .Select(obof => obof.obj)
-                    ;
+                    .ToArray();
                 return query;
             }
             else throw new Exception("93394");

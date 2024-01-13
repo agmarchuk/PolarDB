@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -128,10 +129,12 @@ namespace Polar.Universal
             sequence.Scan((off, obj) =>
             {
                 var keys = keysFunc(obj);
-                foreach (var key in keys)
+                foreach (IComparable key in keys)
                 {
+                    IComparable k = key;
+                    if (ignorecase) { k = ((string)k).ToUpper(); }
                     offsets_list.Add(off);
-                    hkeys_list.Add(hashOfKey(key));
+                    hkeys_list.Add(hashOfKey(k));
                 }
                 return true;
             });
@@ -172,6 +175,7 @@ namespace Polar.Universal
         }
         public IEnumerable<ObjOff> GetAllByValue(IComparable valuesample)
         {
+            if (ignorecase) { valuesample = ((string)valuesample).ToUpper(); }
             // Определяем начальный индекс
             if (hkeys_arr != null)
             {
