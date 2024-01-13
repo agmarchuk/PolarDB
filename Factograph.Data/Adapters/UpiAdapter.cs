@@ -122,8 +122,14 @@ namespace Factograph.Data.Adapters
             };
             records.Refresh();
 
+            GC.Collect();
+            Console.WriteLine("======After Records Init === Total Memory: " + GC.GetTotalMemory(true));
+
             names = new SVectorIndex(GenStream, records, skey);
             names.Refresh();
+
+            GC.Collect();
+            Console.WriteLine("======After names Init === Total Memory: " + GC.GetTotalMemory(true));
 
             delimeters = new char[] { ' ', '\n', '\t', ',', '.', ':', '-', '!', '?', '\"', '\'', '=', '\\', '|', '/',
                 '(', ')', '[', ']', '{', '}', ';', '*', '<', '>'};
@@ -162,11 +168,19 @@ namespace Factograph.Data.Adapters
             };
             svwords = new SVectorIndex(GenStream, records, toWords);
             svwords.Refresh();
+
+            GC.Collect();
+            Console.WriteLine("======After svwords Init === Total Memory: " + GC.GetTotalMemory(true));
+
             records.uindexes = new IUIndex[]
             {
                 names,
                 svwords
             };
+
+            GC.Collect();
+            Console.WriteLine("======After Init === Total Memory: " + GC.GetTotalMemory(true));
+
         }
         public override void Close()
         {

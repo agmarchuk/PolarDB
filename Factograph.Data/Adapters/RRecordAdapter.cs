@@ -103,6 +103,11 @@ namespace Factograph.Data.Adapters
                 rec => (string)((object[])rec)[0], // как брать ключ
                 kval => (int)Hashfunctions.HashRot13((string)kval), // как делать хеш от ключа
                 false);
+            records.Refresh();
+
+            GC.Collect();
+            Console.WriteLine("======After records Init === Total Memory: " + GC.GetTotalMemory(true));
+
             // ====== Добавим дополнительные индексы 
             // Заведем функцию вычисления полей name и alias (поле векторное, поэтому выдаем массив)
             Func<object, IEnumerable<string>> skey = obj =>
@@ -119,6 +124,9 @@ namespace Factograph.Data.Adapters
 
             var names_ind = new SVectorIndex(GenStream2, records, skey);
             names_ind.Refresh();
+
+            GC.Collect();
+            Console.WriteLine("======After names_ind Init === Total Memory: " + GC.GetTotalMemory(true));
 
             // Компаратор
             //rSame = new RRecordSame(); -- уже определял
@@ -162,6 +170,9 @@ namespace Factograph.Data.Adapters
             svwords = new SVectorIndex(GenStream2, records, toWords);
             svwords.Refresh();
 
+            GC.Collect();
+            Console.WriteLine("======After svwords Init === Total Memory: " + GC.GetTotalMemory(true));
+
             // Обратный индекс состоит из множества пар { predicate, resource } PredResourcePair (см. в конце),
             // Там же функция GetPredResourcePairs, преобразующая запись в поток пар. Пары будут 
             // упорядоченны по ресурсам и снабженных целочисленным хешем (тоже по ресурсам) - НЕ ПОЛУЧИЛОСЬ!
@@ -191,14 +202,18 @@ namespace Factograph.Data.Adapters
                 svwords,  // Для поиска по словам
                 inverse_index  // Обратный индекс
             };
+
+            GC.Collect();
+            Console.WriteLine("======After Init === Total Memory: " + GC.GetTotalMemory(true));
+
         }
 
-        public void Load(IEnumerable<object> flow)
-        {
-            records.Clear();
-            records.Load(flow);
-            records.Build();
-        }
+        //public void Load(IEnumerable<object> flow)
+        //{
+        //    records.Clear();
+        //    records.Load(flow);
+        //    records.Build();
+        //}
         public override void LoadXFlow(IEnumerable<XElement> xflow, Dictionary<string, string> orig_ids)
         {
             records.Clear();
@@ -233,7 +248,9 @@ namespace Factograph.Data.Adapters
                 .Where(ob => ob != null)
                 );
             records.Flush();
-            records.Build();
+            //records.Build();
+            GC.Collect();
+            Console.WriteLine("======= After Load ===== Total Memory: " + GC.GetTotalMemory(true));
         }
         public void Refresh() { records.Refresh(); }  
 
