@@ -163,8 +163,28 @@ namespace Polar.Universal
             if (uindexes[nom] is UVecIndex)
             {
                 var uvind = (UVecIndex)uindexes[nom];
+
+                //var q1 = uvind.GetAllByValue(value).ToArray();
+                //var q11 = q1.Where(obof =>
+                //{
+                //    object[] unis = (object[])((object[])obof.obj)[2];
+                //    if (unis.Any(u => (int)((object[])u)[0] == 2
+                //        && (string)((object[])((object[])u)[1])[1] == (string)value))
+                //        return true;
+                //    else return false;
+                //}).ToArray();
+                //var q2 = q1.Where(obof => IsOriginalAndNotEmpty(obof.obj, obof.off)).ToArray();
+                //var q3 = q2.Select(obof => obof.obj).ToArray();
+
                 IEnumerable<object> query = uvind.GetAllByValue(value)
-                    //.Where(obof => (string)((object[])obof.obj)[0] == value)
+                    .Where(obof =>
+                    {
+                        object[] unis = (object[])((object[])obof.obj)[2];
+                        if (unis.Any(u => (int)((object[])u)[0] == 2 
+                            && (string)((object[])((object[])u)[1])[1] == (string)value))
+                            return true;
+                        else return false;
+                    })
                     .Where(obof => IsOriginalAndNotEmpty(obof.obj, obof.off))
                     .Select(obof => obof.obj)
                     ;

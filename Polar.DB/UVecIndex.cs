@@ -86,15 +86,17 @@ namespace Polar.Universal
 
 
         private bool keysinmemory;
+        private bool ignorecase;
 
         public UVecIndex(Func<Stream> streamGen, USequence sequence,
             Func<object, IEnumerable<IComparable>> keysFunc, Func<IComparable, int> hashOfKey, 
-            bool keysinmemory = true)
+            bool ignorecase = false)
         {
             this.sequence = sequence;
             this.keysFunc = keysFunc;
             this.hashOfKey = hashOfKey;
-            this.keysinmemory = keysinmemory;
+            this.keysinmemory = true;
+            this.ignorecase = ignorecase;
 
             hkeys = new UniversalSequenceBase(new PType(PTypeEnumeration.integer), streamGen());
             offsets = new UniversalSequenceBase(new PType(PTypeEnumeration.longinteger), streamGen());
