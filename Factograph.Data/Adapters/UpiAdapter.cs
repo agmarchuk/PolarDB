@@ -631,6 +631,17 @@ namespace Factograph.Data.Adapters
             records.Flush();
             return null;
         }
+
+        public override object GetRecord(string id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override object GetInverseRecord(string id)
+        {
+            throw new NotImplementedException();
+        }
+
         private class DirectPropComparer : IEqualityComparer<object>
         {
             public new bool Equals(object? x, object? y)

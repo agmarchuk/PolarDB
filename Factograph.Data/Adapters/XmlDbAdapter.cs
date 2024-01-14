@@ -566,5 +566,15 @@ namespace Factograph.Data.Adapters
         {
             throw new NotImplementedException();
         }
+
+        public override object GetRecord(string id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override object GetInverseRecord(string id)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -50,7 +50,7 @@ namespace Polar.Universal
                 Array.Sort(vals, offs);
                 hvalues = vals; offsets = offs;
             }
-            private IEnumerable<ObjOff> GetAllByValue(IComparable valuesample)
+            internal IEnumerable<ObjOff> GetAllByValue(IComparable valuesample)
             {
                 // Определяем начальный индекс
                 int ind = Array.BinarySearch(hvalues, hashOfKey(valuesample));
@@ -176,6 +176,12 @@ namespace Polar.Universal
         public IEnumerable<ObjOff> GetAllByValue(IComparable valuesample)
         {
             if (ignorecase) { valuesample = ((string)valuesample).ToUpper(); }
+            // Сначала из динамического индекса
+            var query = dynindex.GetAllByValue(valuesample);
+            foreach (var v in query)
+            {
+                yield return v;
+            }
             // Определяем начальный индекс
             if (hkeys_arr != null)
             {

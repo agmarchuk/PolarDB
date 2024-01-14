@@ -20,6 +20,8 @@ namespace Factograph.Data.Adapters
         //public abstract XElement GetItemByIdSpecial(string id);
         public abstract IEnumerable<XElement> GetAll();
         public abstract object GetRecord(string id, bool addinverse);
+        public abstract object GetRecord(string id); // Простая запись
+        public abstract object GetInverseRecord(string id); // Все записи, ссылающиеся на id
 
         // ============== Загрузка базы данных ===============
         public abstract void StartFillDb(Action<string> turlog);

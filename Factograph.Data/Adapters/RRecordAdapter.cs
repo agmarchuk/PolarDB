@@ -106,7 +106,7 @@ namespace Factograph.Data.Adapters
                 rec => (string)((object[])rec)[1] == "delete", // признак уничтоженности
                 rec => (string)((object[])rec)[0], // как брать ключ
                 kval => (int)Hashfunctions.HashRot13((string)kval), // как делать хеш от ключа
-                false);
+                true);
             records.Refresh();
 
             GC.Collect();
@@ -129,8 +129,6 @@ namespace Factograph.Data.Adapters
             var names_ind = new SVectorIndex(GenStream2, records, skey);
             names_ind.Refresh();
 
-            GC.Collect();
-            Console.WriteLine("======After names_ind Init === Total Memory: " + GC.GetTotalMemory(true));
 
             // Компаратор
             //rSame = new RRecordSame(); -- уже определял
@@ -175,9 +173,6 @@ namespace Factograph.Data.Adapters
                 v => Hashfunctions.HashRot13((string)v), true);
             svwords.Refresh();
 
-            GC.Collect();
-            Console.WriteLine("======After svwords Init === Total Memory: " + GC.GetTotalMemory(true));
-
             // Обратный индекс состоит из множества пар { predicate, resource } PredResourcePair (см. в конце),
             // Там же функция GetPredResourcePairs, преобразующая запись в поток пар. Пары будут 
             // упорядоченны по ресурсам и снабженных целочисленным хешем (тоже по ресурсам) - НЕ ПОЛУЧИЛОСЬ!
@@ -211,7 +206,6 @@ namespace Factograph.Data.Adapters
 
             GC.Collect();
             Console.WriteLine("======After Init === Total Memory: " + GC.GetTotalMemory(true));
-
         }
 
         //public void Load(IEnumerable<object> flow)
@@ -454,6 +448,38 @@ namespace Factograph.Data.Adapters
         /// <param name="nrec"></param>
         public void PutItem(object[] nrec)
         {
+            //// ======= Попытка что-то вставить...
+            //DirectPropComparer pcomparer = new DirectPropComparer();
+
+            //// Вычисляем старую запись в объектном представлении. Ее или нет, или она в динамическом наборе или она в статическом
+            //if (nrec.Length == 0) return;
+            //var orec = GetRecord((string)nrec[0], false);
+
+            //// Соберем прямые ссылки из nrec и orec (O и N) в три множества: Те которые были removed, те которые появляются appeared
+            //// и остальные (сохраняемые). removed = O \ N, appeared = N \ O.
+            //// Делаем множества пар свойство-ссылка: 
+            //object[] O = orec == null ? new object[0] : ((object[])((object[])orec)[2])
+            //    .Where(x => (int)((object[])x)[0] == 2)
+            //    .Select(x => (object[])((object[])x)[1])
+            //    .Distinct(pcomparer)
+            //    .ToArray();
+            //object[] N = ((object[])((object[])nrec)[2])
+            //    .Where(x => (int)((object[])x)[0] == 2)
+            //    .Select(x => (object[])((object[])x)[1])
+            //    .Distinct(pcomparer)
+            //    .ToArray();
+            //var removed = O.Except(N, pcomparer).ToArray();
+            //var appeared = N.Except(O, pcomparer).ToArray();
+
+            //// Если orec не нулл, перенесем из него обратные ссылки (!)
+            //if (orec != null)
+            //{
+            //    ((object[])nrec)[2] = ((object[])((object[])nrec)[2]).Concat(((object[])(((object[])orec)[2]))
+            //        .Where(rprop => (int)((object[])rprop)[0] == 3))
+            //        .ToArray();
+            //}
+            //// ======= конец попытки
+
             records.AppendElement(nrec);
             records.Flush();
         }
@@ -517,6 +543,16 @@ namespace Factograph.Data.Adapters
         {
             // Восстановить динаические значения в индексах можно так:
             records.RestoreDynamic();
+        }
+
+        public override object GetRecord(string id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override object GetInverseRecord(string id)
+        {
+            throw new NotImplementedException();
         }
 
         private class DirectPropComparer : IEqualityComparer<object>
