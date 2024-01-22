@@ -562,17 +562,22 @@ namespace Factograph.Data.Adapters
 
         }
 
-        public override object GetRecord(string id, bool addinverse)
+        public override IEnumerable<object> GetRecord(string id, bool addinverse)
         {
             throw new NotImplementedException();
         }
 
-        public override object GetRecord(string id)
+        public override IEnumerable<object> GetRecord(string id)
         {
             throw new NotImplementedException();
         }
 
-        public override object GetInverseRecord(string id)
+        public override IEnumerable<object> GetInverseRecords(string id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void Save(string filename)
         {
             throw new NotImplementedException();
         }

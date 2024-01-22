@@ -110,7 +110,6 @@ namespace Factograph.Data.Adapters
             records.Refresh();
 
             GC.Collect();
-            Console.WriteLine("======After records Init === Total Memory: " + GC.GetTotalMemory(true));
 
             // ====== Добавим дополнительные индексы 
             // Заведем функцию вычисления полей name и alias (поле векторное, поэтому выдаем массив)
@@ -205,7 +204,7 @@ namespace Factograph.Data.Adapters
             };
 
             GC.Collect();
-            Console.WriteLine("======After Init === Total Memory: " + GC.GetTotalMemory(true));
+            Console.WriteLine($"==={DateTime.Now}===After Init === Total Memory: " + GC.GetTotalMemory(true));
         }
 
         //public void Load(IEnumerable<object> flow)
@@ -250,14 +249,11 @@ namespace Factograph.Data.Adapters
             records.Flush();
             //records.Build();
             GC.Collect();
-            Console.WriteLine("======= After Load ===== Total Memory: " + GC.GetTotalMemory(true));
+            Console.WriteLine($"==={DateTime.Now}==== After Load ===== Total Memory: " + GC.GetTotalMemory(true));
         }
         public void Refresh() { records.Refresh(); }  
 
-        public object GetKey(string key)
-        {
-            return records.GetByKey(key);
-        }
+
 
         public IEnumerable<object> SearchName(string searchstring)
         {
@@ -308,7 +304,26 @@ namespace Factograph.Data.Adapters
                 .Distinct<object>(rSame);
             return query;
         }
-        public IEnumerable<object> GetInverseRecords(string id)
+        public override object? GetRecord(string id)
+        {
+            var qu = records.GetByKey(id);
+            return qu;
+        }
+
+
+        public override void Close()
+        {
+            records?.Close();
+            Console.WriteLine($"mag: RRecordAdapter Closed {DateTime.Now}");
+
+        }
+
+        // ============= ОБъектные интерфесы ============= 
+        public object GetKey(string key)
+        {
+            return records.GetByKey(key);
+        }
+        public override IEnumerable<object> GetInverseRecords(string id)
         {
             var qu = records.GetAllByValue(2, id, ob =>
             {
@@ -319,15 +334,49 @@ namespace Factograph.Data.Adapters
             }).ToArray();
             return qu;
         }
-
-        public override void Close()
+        public override object GetRecord(string id, bool addinverse)
         {
-            Console.WriteLine($"mag: RRecordAdapter Closing {DateTime.Now} {records == null} {names == null} {svwords == null}");
-            records?.Close();
-            Console.WriteLine($"mag: RRecordAdapter Closed {DateTime.Now}");
-
+            // Получение расширенной записи в объектном представлении
+            // Структура записи: три поля верхнего уровня: идентификатор, тип, свойства, свойства - последовательность свойств
+            // Свойство может быть полем, прямой ссылкой, обратной ссылкой
+            // Поле (тег 1): три значения - предикат, текст значения, язык
+            // Прямая ссылка (тег 2): два значения - предикат, идентификатор
+            // Обратная ссылка (тег 3): два значения - предикат, идентификатор источника
+            object[] rec = (object[])GetKey(id);
+            if (addinverse)
+            {
+                IEnumerable<object> inv_recs = GetInverseRecords(id).ToArray();
+                //Func<object[], string, string?> GetInvPred = (r, i) =>
+                //    ((object[])(r[2]))
+                //    .Cast<object[]>()
+                //    .Where(p => (int)p[0] == 2)
+                //    .Select(p => (object[])p[1])
+                //    .Where(pair => (string)pair[1] == i)
+                //    .Select(pair => (string)pair[0])
+                //    .FirstOrDefault();
+                
+                // Нам требуются множество обратных предикатов и ссылочных истоков
+                // Берем множество обратных записей, приводим записи к массивам, вырабатываем поток групп свойств 
+                var inv_props = inv_recs.Cast<object[]>()
+                    .Select(re =>
+                    {
+                        var qu = ((object[])((object[])re)[2])
+                            .First(p => (int)((object[])p)[0] == 2 && (string)((object[])((object[])p)[1])[1] == id);
+                        return new object[] { 3, new object[] { (string)((object[])((object[])qu)[1])[0],
+                                (string)((object[])re)[0] } };
+                    });
+                object[] result = new object[]
+                {
+                    rec[0],
+                    rec[1],
+                    ((object[])(rec[2])).Concat(inv_props).ToArray()
+                };
+                return result;
+            }
+            return rec;
         }
 
+        // ========== XML-интерфейсы ===========
         public override IEnumerable<XElement> SearchByName(string searchstring)
         {
             return SearchName(searchstring)
@@ -359,44 +408,6 @@ namespace Factograph.Data.Adapters
             throw new NotImplementedException();
         }
 
-        public override IEnumerable<XElement> GetAll()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override object GetRecord(string id, bool addinverse)
-        {
-            // Получение расширенной записи в объектном представлении
-            // Структура записи: три поля верхнего уровня: идентификатор, тип, свойства, свойства - последовательность свойств
-            // Свойство может быть полем, прямой ссылкой, обратной ссылкой
-            // Поле (тег 1): три значения - предикат, текст значения, язык
-            // Прямая ссылка (тег 2): два значения - предикат, идентификатор
-            // Обратная ссылка (тег 3): два значения - предикат, идентификатор источника
-            object[] rec = (object[])GetKey(id);
-            if (addinverse)
-            {
-                IEnumerable<object> inv_recs = GetInverseRecords(id).ToArray();
-                Func<object[], string, string?> GetInvPred = (r, i) =>
-                    ((object[])(r[2]))
-                    .Cast<object[]>()
-                    .Where(p => (int)p[0] == 2)
-                    .Select(p => (object[])p[1])
-                    .Where(pair => (string)pair[1] == i)
-                    .Select(pair => (string)pair[0])
-                    .FirstOrDefault();
-                object[] result = new object[]
-                {
-                rec[0],
-                rec[1],
-                ((object[])(rec[2])).Concat(
-                    inv_recs.Select(ir => new object[] { 3, new object[] { GetInvPred((object[])ir, id) ?? "nopred", ((object[])ir)[0] } })
-                    ).ToArray()
-                };
-                return result;
-            }
-            return rec;
-        }
-
         public override void StartFillDb(Action<string> turlog)
         {
             records.Clear();
@@ -411,6 +422,7 @@ namespace Factograph.Data.Adapters
         {
             records.Build();
             GC.Collect();
+            Console.WriteLine($"==={DateTime.Now}===After Build === Total Memory: " + GC.GetTotalMemory(true));
         }
 
         public override XElement Delete(string id)
@@ -545,14 +557,50 @@ namespace Factograph.Data.Adapters
             records.RestoreDynamic();
         }
 
-        public override object GetRecord(string id)
+        public override IEnumerable<XElement> GetAll()
         {
-            throw new NotImplementedException();
+            var query = records.ElementValues()
+                .Select(record => ORecToXRec((object[])record, false));
+            return query;
         }
-
-        public override object GetInverseRecord(string id)
+        public override void Save(string filename)
         {
-            throw new NotImplementedException();
+            Func<string, XName> xn = sn =>
+            {
+                int pos = sn.LastIndexOf('/');
+                XName xn = XName.Get(sn.Substring(pos + 1), sn.Substring(0, pos + 1));
+                return xn;
+            };
+            XElement xall = XElement.Parse(
+@"<?xml version='1.0' encoding='utf-8'?>
+<rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#' xmlns='http://fogid.net/o/' owner='mag4387' prefix='mag4387_' counter='1003'>
+</rdf:RDF>");
+            var xelements = GetAll();
+            xall.Add(xelements.Select(xe =>
+            {
+                if (xe.Name != "record") throw new Exception("Err:kjek");
+                string? id = xe.Attribute("id")?.Value;
+                string? tp = xe.Attribute("type")?.Value;
+                if (id == null || tp == null) throw new Exception("Err:slkf");
+
+                XElement xres = new XElement(xn(tp), new XAttribute("{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about", id), 
+                    xe.Elements().Select(xe => 
+                    {
+                        string? pred = xe.Attribute("prop")?.Value;
+                        if (pred == null) throw new Exception("err: 2938");
+                        if (xe.Name == "field")
+                        {
+                            return new XElement(xn(pred), xe.Value);
+                        }
+                        else if (xe.Name == "direct")
+                        {
+                            return new XElement(xn(pred), new XAttribute("{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource", xe.Element("record")?.Attribute("id")?.Value));
+                        }
+                        else throw new Exception("err:wiuei");
+                    }));
+                return xres;
+            }));
+            xall.Save(filename);
         }
 
         private class DirectPropComparer : IEqualityComparer<object>

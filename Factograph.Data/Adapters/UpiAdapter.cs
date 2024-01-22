@@ -634,10 +634,21 @@ namespace Factograph.Data.Adapters
 
         public override object GetRecord(string id)
         {
-            throw new NotImplementedException();
+            var qu = records.GetByKey(id);
+            return qu;
         }
 
-        public override object GetInverseRecord(string id)
+        public override IEnumerable<object> GetInverseRecords(string id)
+        {
+            var qu = records.GetAllByValue(2, id, ob =>
+                ((object[])((object[])ob)[2])
+                .Where(p => (int)((object[])p)[0] == 2)
+                .Select(p => (string)((object[])((object[])p)[1])[1]))
+                .ToArray();
+            return qu;
+        }
+
+        public override void Save(string filename)
         {
             throw new NotImplementedException();
         }

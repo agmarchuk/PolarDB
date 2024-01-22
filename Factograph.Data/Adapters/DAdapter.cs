@@ -20,8 +20,8 @@ namespace Factograph.Data.Adapters
         //public abstract XElement GetItemByIdSpecial(string id);
         public abstract IEnumerable<XElement> GetAll();
         public abstract object GetRecord(string id, bool addinverse);
-        public abstract object GetRecord(string id); // Простая запись
-        public abstract object GetInverseRecord(string id); // Все записи, ссылающиеся на id
+        public abstract object? GetRecord(string id); // Простая запись формата RRecord
+        public abstract IEnumerable<object> GetInverseRecords(string id); // Все записи, ссылающиеся на id
 
         // ============== Загрузка базы данных ===============
         public abstract void StartFillDb(Action<string> turlog);
@@ -29,6 +29,9 @@ namespace Factograph.Data.Adapters
         //public abstract void FillDb(IEnumerable<FogInfo> fogflow, Action<string> turlog);
         public abstract void LoadXFlow(IEnumerable<XElement> xflow, Dictionary<string, string> orig_ids);
         public abstract void FinishFillDb(Action<string> turlog);
+
+        // =============== Запись базы данных в файл
+        public abstract void Save(string filename);
 
 
         /// <summary>
@@ -45,13 +48,17 @@ namespace Factograph.Data.Adapters
         public void FillDb(IEnumerable<FogInfo> fogflow, Action<string> turlog)
         {
             // Опеределим поток элементов при сканировании фог-файлов
-            var fogelementsflow = fogflow
+            IEnumerable<XElement> fogelementsflow = fogflow
                 .Where(fi => fi.vid == ".fog")
                 .SelectMany(fi =>
                 {
                     XElement xfog = XElement.Load(fi.pth);
                     return xfog.Elements().Select(x => ConvertXElement(x)); ;
                 });
+            
+            //Dictionary<string, string> orig = new Dictionary<string, string>();
+            //LoadXFlow(fogelementsflow, orig);
+            //return;
 
 
             Dictionary<string, string> substitutes = new Dictionary<string, string>();
@@ -113,6 +120,7 @@ namespace Factograph.Data.Adapters
                     }
                 }
             }
+            GC.Collect();
 
             // Функция, добирающаяся до последнего определения или это и есть последнее
             Func<string, string> original = null;
@@ -170,12 +178,10 @@ namespace Factograph.Data.Adapters
                     }
                 }
             }
+            GC.Collect();
 
             // Будем формировать единый поток x-ЗАПИСЕЙ
-            IEnumerable<XElement> xflow = Enumerable.Repeat<XElement>(new XElement("{http://fogid.net/o/}collection",
-                new XAttribute(ONames.rdfabout, "cassetterootcollection"), new XElement("{http://fogid.net/o/}name", "кассеты")), 1)
-                .Concat(
-                    fogelementsflow
+            IEnumerable<XElement> xflow = fogelementsflow.Append(new XElement("{http://fogid.net/o/}collection", new XAttribute(ONames.rdfabout, "cassetterootcollection"), new XElement("{http://fogid.net/o/}name", "кассеты")))
                     .Where(rec => rec.Name != ONames.fogi + "delete" && rec.Name != ONames.fogi + "substitute")
                     .Where(rec =>
                     {
@@ -204,13 +210,49 @@ namespace Factograph.Data.Adapters
                             else return true;
                         }
                         else return true;
-                    })
+                    }
                 );
 
+            //// Будем формировать единый поток x-ЗАПИСЕЙ
+            //IEnumerable<XElement> xflow = Enumerable.Repeat<XElement>(new XElement("{http://fogid.net/o/}collection",
+            //    new XAttribute(ONames.rdfabout, "cassetterootcollection"), new XElement("{http://fogid.net/o/}name", "кассеты")), 1)
+            //    .Concat(
+            //        fogelementsflow
+            //        .Where(rec => rec.Name != ONames.fogi + "delete" && rec.Name != ONames.fogi + "substitute")
+            //        .Where(rec =>
+            //        {
+            //            // Пропустить надо а) записи, идентификаторы которых являются ключами в
+            //            // orig_ids; б) записи, не являющиеся кандидатами на дублирование
+            //            // в) Записи, являюшиеся кандидатами, но не попавшие в lastDefs
+            //            // г) попавшие в lastDefs такие, что отметка времени mt >= dt
+            //            // (наверное достаточно ==). В этом последнем случае надо изменить вход
+            //            // с id
+            //            string id = rec.Attribute(ONames.rdfabout).Value;
+            //            if (orig_ids.ContainsKey(id)) return false;
+            //            if (candidates.Contains(id))
+            //            {
+            //                XAttribute mt_att = rec.Attribute("mT");
+            //                DateTime mt = mt_att == null ? DateTime.MinValue : DateTime.Parse(mt_att.Value);
+            //                if (lastDefs.TryGetValue(id, out DateTime dt))
+            //                {
+            //                    if (mt >= dt)
+            //                    {
+            //                        lastDefs.Remove(id);
+            //                        lastDefs.Add(id, DateTime.MaxValue);
+            //                        return true;
+            //                    }
+            //                    else return false;
+            //                }
+            //                else return true;
+            //            }
+            //            else return true;
+            //        })
+            //    );
 
-            XElement[] els = xflow.ToArray();
-            LoadXFlow(els, orig_ids);
-            //LoadXFlow(xflow, orig_ids);
+
+            //XElement[] els = xflow.ToArray();
+            //LoadXFlow(els, orig_ids);
+            LoadXFlow(xflow, orig_ids);
 
         }
 

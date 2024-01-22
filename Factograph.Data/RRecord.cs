@@ -12,7 +12,7 @@ namespace Factograph.Data
     {
         public string Id { get; private set; } = string.Empty;
         public string Tp { get; private set; } = string.Empty;
-        public RProperty[] Props { get; private set; } = new RProperty[0];
+        public RProperty[] Props { get; private set; } = Array.Empty<RProperty>();
         private IFDataService db;
         public RRecord(string id, string tp, RProperty[] props, IFDataService db)
         {
