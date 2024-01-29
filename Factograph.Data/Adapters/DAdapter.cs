@@ -6,7 +6,7 @@ using System.Text;
 using System.Xml.Linq;
 
 namespace Factograph.Data.Adapters
-{
+{    
     abstract public class DAdapter
     {
         public bool nodatabase = true; // Опасное это дело - объявлять переменную в абстрактном классе!!!
@@ -46,6 +46,11 @@ namespace Factograph.Data.Adapters
         /// <param name="fogflow">Поток fog-файлов</param>
         /// <param name="turlog">лог для сообщений</param>
         public void FillDb(IEnumerable<FogInfo> fogflow, Action<string> turlog)
+        {
+            FillDbScans(fogflow, turlog);
+        }
+
+        public void FillDb0(IEnumerable<FogInfo> fogflow, Action<string> turlog)
         {
             // Опеределим поток элементов при сканировании фог-файлов
             IEnumerable<XElement> fogelementsflow = fogflow
@@ -254,6 +259,212 @@ namespace Factograph.Data.Adapters
             //LoadXFlow(els, orig_ids);
             LoadXFlow(xflow, orig_ids);
 
+        }
+
+        public void FillDbScans(IEnumerable<FogInfo> fogflow, Action<string> turlog)
+        {
+            System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+            string[] fogfiles_arr = fogflow.Select(f => f.pth).ToArray();
+            // Опеределим поток элементов при сканировании фог-файлов
+
+            
+            Dictionary<string, string> substitutes = new Dictionary<string, string>();
+
+            // Готовим битовый массив для отметки того, что хеш id уже "попадал" в этот бит
+            int rang = 28; // пока предполагается, что число записей (много) меньше 16 млн.
+            int mask = ~((-1) << rang);
+            int ba_volume = mask + 1;
+            System.Collections.BitArray bitArr = new System.Collections.BitArray(ba_volume);
+            // Хеш-функция будет ограничена rang разрядами, массив и функция нужны только временно
+            Func<string, int> Hash = s => s.GetHashCode() & mask;
+
+            // Множество кандидатов на многократное определение
+            HashSet<int> candidates = new HashSet<int>();
+
+            sw.Restart();
+            ScanFogfiles scanner1 = new ScanFogfiles(
+                fogfiles_arr,
+                x => x,
+                x => 
+                { x = ConvertXElement(x);
+                    // находим идентификатор
+                    string id = x.Attribute("{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about").Value;
+                    // Находим хеш-код
+                    int code = Hash(id);
+                    //смотрим если такой бит
+                    if (bitArr[code])
+                    {
+                        // Это означает, что код-кандидат выявлен
+                        candidates.Add(code);
+                    }
+                    else
+                    {
+                        bitArr.Set(code, true);
+                    }
+                    return true;
+                });
+            scanner1.Scan();
+            Console.WriteLine("candidates: " + candidates.Count);
+            // Первый проход выполнен. Вычислен набор кодов-кандидатов на многократное опреление 
+            // стоящих за ними идентификатров
+
+
+            // Готовим следующий проход. Его задача вычислить таблицу соответствия для идентификаторов
+            // с кандидатскими кодами {id, mT}. Причем mT должно быть максимальным из всех для данного
+            // идентификатора
+            Dictionary<string, DateTime> lastTime = new Dictionary<string, DateTime>();
+            int redefinitions = 0;
+            ScanFogfiles scanner2 = new ScanFogfiles(
+                fogfiles_arr,
+                //x => x,
+                x => { x = ConvertXElement(x);
+                if (x.Name == ONames.fogi + "delete")
+                {
+                    string idd = x.Attribute(ONames.rdfabout)?.Value;
+                    if (idd == null) idd = x.Attribute("id").Value;
+                    if (substitutes.ContainsKey(idd))
+                    {
+                        substitutes.Remove(idd);
+                    }
+                    substitutes.Add(idd, null);
+                }
+                else if (x.Name == ONames.fogi + "substitute")
+                {
+                    string idold = x.Attribute("old-id").Value;
+                    string idnew = x.Attribute("new-id").Value;
+                    // может old-id уже уничтожен, тогда ничего не менять
+                    if (substitutes.TryGetValue(idold, out string value))
+                    {
+                        substitutes.Remove(idold);
+                    }
+                    // иначе заменить в любом случае
+                    if (!(value == null)) substitutes.Add(idold, idnew);
+                }
+                return x;
+                },
+                x =>
+                {  x = ConvertXElement(x);
+                    // находим идентификатор
+                    string id = x.Attribute("{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about").Value;
+                    XAttribute mt_att = x.Attribute("mT");
+                    DateTime mT =  mt_att?.Value!=null ? DateTime.Parse(mt_att.Value) :  DateTime.MinValue;
+ 
+                    // Находим хеш-код
+                    int code = Hash(id);
+                    //смотрим если такой код в кандидатах
+                    if (candidates.Contains(code)) // или (bitArr[code])
+                    {
+                        // Это означает, что код-кандидат выявлен
+                        if (lastTime.TryGetValue(id, out DateTime mtt))
+                        {   // есть вход, если он null или (mT не null && mT > mtt)
+                            if (mT.CompareTo(mtt) > 0)
+                            {
+                                redefinitions++;
+                                // Убираем и добавляем новое
+                                lastTime.Remove(id);
+                                lastTime.Add(id, mT);
+                            }
+                        }
+                        else
+                        {
+                            // Просто добавляем
+                            lastTime.Add(id, mT);
+                        }
+                    }
+                    return true;
+                });
+            sw.Restart();
+            scanner2.Scan();
+            sw.Stop();
+            Console.WriteLine("duration=" + sw.Elapsed);
+            Console.WriteLine("Dictionary lastTime = " + lastTime.Count + " redefinitions=" + redefinitions);
+
+            // Функция, добирающаяся до последнего определения или это и есть последнее
+            Func<string, string> original = null;
+            original = id =>
+            {
+                if (substitutes.TryGetValue(id, out string idd))
+                {
+                    if (idd == null) return id;
+                    return original(idd);
+                }
+                return id;
+            };
+
+            // Обработаем словарь, формируя новый 
+            Dictionary<string, string> orig_ids = new Dictionary<string, string>();
+            foreach (var pair in substitutes)
+            {
+                string key = pair.Key;
+                string value = pair.Value;
+                if (value != null) value = original(value);
+                orig_ids.Add(key, value);
+            }
+
+            // В итоге, мы построили словарь lastTime где хранятси последние времена для ряда идентификаторв
+            // А также мы построили словарь замен orig_ids, устанавливающий для каких=то
+            // идентификаторов их новые значения. 
+
+            // ============== Подготовка 3-го сканирования ================
+
+            // Для сканирования готовятся две функции: TransformElement и UseElement
+            // В первую фунцию мы поместим все фильтрации и преобразования, которые связаны
+            // с элементами, отфильтровывать будем через возврат нуля. Во вторую фукнцию  мы
+            // поместим использование элемента для загрузки, т.е. мы его напрямцю загрузим в 
+            // базу данных. 
+            
+            // Пропустить надо а) записи, идентификаторы которых являются ключами в
+            // orig_ids; б) записи, не являющиеся кандидатами на дублирование
+            // в) Записи, являюшиеся кандидатами, но не попавшие в lastDefs
+            // г) попавшие в lastTime такие, что отметка времени mT == dt
+            // В этом последнем случае надо изменить вход
+            // с id. Во всех осстальных случаях, фукнция возвращает null, т.е не пропускает.
+            Func<XElement, XElement> filter = xe => 
+            {  xe = ConvertXElement(xe);
+                    // Что-то отфильтруем, остальное пропустим
+                    if ( xe.Name == "{http://fogid.net/o/}substitute") return null;
+                    if ( xe.Name == "{http://fogid.net/o/}delete") return null; //TODO: в этом не уверен, но так сделлано в работающем коде
+                    string id = xe.Attribute("{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about")?.Value;
+                    XAttribute mt_att = xe.Attribute("mT");
+                    DateTime mT =  mt_att.Value!=null ? DateTime.Parse(mt_att.Value) :  DateTime.MinValue;
+                    DateTime mtt; 
+                    if (!orig_ids.ContainsKey(id)) return null;
+                    if (lastTime.TryGetValue(id, out mtt)) 
+                    { 
+                        if (mtt != mT) return null;
+                        else 
+                        {
+                            //TODO: Это некоторая тонкость: опасно, чтобы в выходной поток попадало несколько элементов в одним id
+                            lastTime.Remove(id);
+                            lastTime.Add(id, DateTime.MinValue); // давно это было...
+                            return xe; // первый вариант пропуска 
+                        }
+                    }
+                    else return null;
+                    return xe; // второй вариант пропуска
+            };
+            Func<XElement, bool> useElement = xe =>    // Пишем в основную последовательнсоть базы данных, возвращаем true
+            {
+                xe = ConvertXElement(xe);
+                return true;
+            };
+
+            ScanFogfiles scanner3 = new ScanFogfiles(
+                fogfiles_arr,
+                //x => x,
+                x => 
+                { x = ConvertXElement(x);
+                    return x;
+                },
+                x =>
+                { x = ConvertXElement(x);
+                    return true;
+                });
+            IEnumerable<XElement> xflow = 
+                scanner3.ScanGenerate();            
+                
+
+           LoadXFlow(xflow, orig_ids);
         }
 
 
@@ -496,5 +707,6 @@ namespace Factograph.Data.Adapters
         // Это поле вводится для того, чтобы повторно не обрабатывать определение записи
         public bool processed = false;
     }
-
 }
+
+

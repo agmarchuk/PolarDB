@@ -125,13 +125,13 @@ namespace Factograph.Data.Adapters
             records.Refresh();
 
             GC.Collect();
-            Console.WriteLine("======After Records Init === Total Memory: " + GC.GetTotalMemory(true));
+            Console.WriteLine($"={DateTime.Now}=====After Records Init === Total Memory: " + GC.GetTotalMemory(true));
 
             names = new SVectorIndex(GenStream, records, skey);
             names.Refresh();
 
             GC.Collect();
-            Console.WriteLine("======After names Init === Total Memory: " + GC.GetTotalMemory(true));
+            Console.WriteLine($"={DateTime.Now}=====After names Init === Total Memory: " + GC.GetTotalMemory(true));
 
             delimeters = new char[] { ' ', '\n', '\t', ',', '.', ':', '-', '!', '?', '\"', '\'', '=', '\\', '|', '/',
                 '(', ')', '[', ']', '{', '}', ';', '*', '<', '>'};
@@ -181,7 +181,7 @@ namespace Factograph.Data.Adapters
             };
 
             GC.Collect();
-            Console.WriteLine("======After Init === Total Memory: " + GC.GetTotalMemory(true));
+            Console.WriteLine($"={DateTime.Now}=====After Init === Total Memory: " + GC.GetTotalMemory(true));
 
         }
         public override void Close()
@@ -203,6 +203,7 @@ namespace Factograph.Data.Adapters
             records.Build();
             GC.Collect();
             // Состояние сохраняется в методе Build
+            Console.WriteLine($"={DateTime.Now}=====FinishedBuildDb");
         }
         public void RestoreDynamic()
         {

@@ -149,7 +149,7 @@ namespace Factograph.Data
                 }
                 else if (pre == "rr")
                 {
-                    adapter = new RRecordAdapter(NormalizeWord);
+                    adapter = new RRAdapter(NormalizeWord);//new RRecordAdapter(NormalizeWord);
                 }
 
                 if (adapter == null) return;
@@ -187,7 +187,7 @@ namespace Factograph.Data
                     }
                     else // Connect and restore
                     {
-                        ((RRecordAdapter)adapter).RestoreDynamic();
+                        ((RRAdapter)adapter).RestoreDynamic(); //((RRecordAdapter)adapter).RestoreDynamic();
                     }
                 }
 
