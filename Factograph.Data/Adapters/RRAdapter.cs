@@ -343,19 +343,12 @@ namespace Factograph.Data.Adapters
             // Поле (тег 1): три значения - предикат, текст значения, язык
             // Прямая ссылка (тег 2): два значения - предикат, идентификатор
             // Обратная ссылка (тег 3): два значения - предикат, идентификатор источника
-            object[] rec = (object[])GetKey(id);
+            object re = GetKey(id);
+            if (re == null) return null;
+            object[] rec = (object[])re; 
             if (addinverse)
             {
                 IEnumerable<object> inv_recs = GetInverseRecords(id).ToArray();
-                //Func<object[], string, string?> GetInvPred = (r, i) =>
-                //    ((object[])(r[2]))
-                //    .Cast<object[]>()
-                //    .Where(p => (int)p[0] == 2)
-                //    .Select(p => (object[])p[1])
-                //    .Where(pair => (string)pair[1] == i)
-                //    .Select(pair => (string)pair[0])
-                //    .FirstOrDefault();
-                
                 // Нам требуются множество обратных предикатов и ссылочных истоков
                 // Берем множество обратных записей, приводим записи к массивам, вырабатываем поток групп свойств 
                 var inv_props = inv_recs.Cast<object[]>()

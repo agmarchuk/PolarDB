@@ -461,7 +461,11 @@ namespace Factograph.Data.Adapters
                     return true;
                 });
             IEnumerable<XElement> xflow = 
-                scanner3.ScanGenerate();            
+                scanner3.ScanGenerate()
+                .Concat(Enumerable.Repeat<XElement>(new XElement("{http://fogid.net/o/}collection",
+                    new XAttribute(ONames.rdfabout, "cassetterootcollection"), 
+                    new XElement("{http://fogid.net/o/}name", "кассеты")), 1))
+                ;            
                 
 
            LoadXFlow(xflow, orig_ids);
