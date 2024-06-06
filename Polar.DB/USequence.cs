@@ -19,22 +19,25 @@ namespace Polar.Universal
         public IUIndex[] uindexes { get; set; } = new IUIndex[0];
         private bool optimise = true;
         
-        public USequence(PType tp_el, string stateFile, Func<Stream> streamGen, Func<object, bool> isEmpty,
+        public USequence(PType tp_el, string? stateFileName, Func<Stream> streamGen, Func<object, bool> isEmpty,
             Func<object, IComparable> keyFunc, Func<IComparable, int> hashOfKey, bool optimise = true)
         {
             sequence = new UniversalSequenceBase(tp_el, streamGen());
             this.isEmpty = isEmpty;
             this.keyFunc = keyFunc;
             this.optimise = optimise;
-            this.stateFile = stateFile;
+            this.stateFileName = stateFileName;
             primaryKeyIndex = new UKeyIndex(streamGen, this, keyFunc, hashOfKey, optimise);
         }
 
         // Файл для сохранения параметров состояния. Команда сохранения выполняется в конце Load()
-        private string stateFile;
+        // Имя файла может быть null, тогда это означает, что состояние не фиксируется и не восстанавливается
+        private string? stateFileName;
+        
+        // Следующий метод актуален только если statefile != null
         public void RestoreDynamic()
         {
-            FileStream statefile = new FileStream(stateFile, FileMode.OpenOrCreate, FileAccess.Read);
+            FileStream statefile = new FileStream(stateFileName, FileMode.OpenOrCreate, FileAccess.Read);
             BinaryReader reader = new BinaryReader(statefile);
             long statenelements = reader.ReadInt64(); //old sequence.Count();
             long elementoffset = reader.ReadInt64(); // sequence.ElementOffset();
@@ -67,12 +70,16 @@ namespace Polar.Universal
                 if (!isEmpty(element)) sequence.AppendElement(element);
             }
             Flush();
-            // =========== Зафиксируем состояние в файле. Запомним текущее число элементов и офсет следующего ====
-            FileStream statefile = new FileStream(stateFile, FileMode.OpenOrCreate, FileAccess.Write);
-            BinaryWriter writer = new BinaryWriter(statefile);
-            writer.Write(sequence.Count());
-            writer.Write(sequence.ElementOffset());
-            statefile.Close();
+
+            if (stateFileName != null)
+            {
+                // =========== Зафиксируем состояние в файле. Запомним текущее число элементов и офсет следующего ====
+                FileStream statefile = new FileStream(stateFileName, FileMode.OpenOrCreate, FileAccess.Write);
+                BinaryWriter writer = new BinaryWriter(statefile);
+                writer.Write(sequence.Count());
+                writer.Write(sequence.ElementOffset());
+                statefile.Close();
+            }
         }
         internal bool IsOriginalAndNotEmpty(object element, long off) =>
             primaryKeyIndex.IsOriginal(keyFunc(element), off) && !isEmpty(element); // сначала на оригинал, потом на пустое, может можно и иначе 
@@ -121,23 +128,6 @@ namespace Polar.Universal
         {
             return sequence.GetElement(off);
         }
-        //private object ConvertNaming(object oo)
-        //{
-        //    string tp = (string)((object[])oo)[1];
-        //    if (tp == "http://fogid.net/o/naming")
-        //    {
-        //        var referred_prop = ((object[])((object[])oo)[2])
-        //            .Where(opr => (int)((object[])opr)[0] == 2)
-        //            .Select(opr => ((object[])opr)[1])
-        //            .FirstOrDefault(pr => (string)(((object[])pr)[0]) == "http://fogid.net/o/referred-sys");
-        //        if (referred_prop != null)
-        //        {
-        //            string idd = (string)((object[])referred_prop)[1];
-        //            oo = GetByKey(idd);
-        //        }
-        //    }
-        //    return oo;
-        //}
 
         public IEnumerable<object> GetAllByValue(int nom, IComparable value,
             Func<object, IEnumerable<IComparable>> keysFunc, bool ignorecase = false)
@@ -164,31 +154,6 @@ namespace Polar.Universal
             if (uindexes[nom] is UVecIndex)
             {
                 var uvind = (UVecIndex)uindexes[nom];
-
-                //var q1 = uvind.GetAllByValue(value).ToArray();
-                //var q01 = q1.Where(obof => 
-                //    keysFunc(obof.obj)
-                //    .Select(w => ignorecase ? ((string)w).ToUpper() : w)
-                //    .Any(W => W.CompareTo(value) == 0)).ToArray();
-                //var q10 = q1.Select(obof => 
-                //    new 
-                //    { words = keysFunc(obof.obj)
-                //        .Select(w => ignorecase ? ((string)w).ToUpper() : w)
-                //        .ToArray(), 
-                //        off = obof.off 
-                //    }).ToArray();
-
-                //var qq = uvind.GetAllByValue(value)
-                //    .Where(obof =>
-                //        keysFunc(obof.obj)
-                //        .Select(w => ignorecase ? ((string)w).ToUpper() : w)
-                //        .Any(W => W.CompareTo(value) == 0))
-                //    .Where(obof => IsOriginalAndNotEmpty(obof.obj, obof.off))
-                //    .Select(obof => obof.obj)
-                //    .ToArray();
-
-                //var q2 = q1.Where(obof => IsOriginalAndNotEmpty(obof.obj, obof.off)).ToArray();
-                //var q3 = q2.Select(obof => obof.obj).ToArray();
 
                 IEnumerable<object> query = uvind.GetAllByValue(value)
                     .Where(obof => keysFunc(obof.obj)
