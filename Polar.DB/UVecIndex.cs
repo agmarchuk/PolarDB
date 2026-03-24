@@ -50,10 +50,12 @@ namespace Polar.Universal
                 Array.Sort(vals, offs);
                 hvalues = vals; offsets = offs;
             }
+
             internal IEnumerable<ObjOff> GetAllByValue(IComparable valuesample)
             {
+                var hashofvaluesample = hashOfKey(valuesample);
                 // Определяем начальный индекс
-                int ind = Array.BinarySearch(hvalues, hashOfKey(valuesample));
+                int ind = Array.BinarySearch(hvalues, hashofvaluesample);
                 if (ind >= 0)
                 {
 
@@ -64,7 +66,7 @@ namespace Polar.Universal
                     int i = ind - 1;
                     while (i >= 0)
                     {
-                        if (hvalues[i] != hashOfKey(valuesample)) break;
+                        if (hvalues[i] != hashofvaluesample) break;
                         rec = sequ.GetByOffset(offsets[i]);
                         yield return new ObjOff(rec, offsets[i]);
                         i--;
@@ -73,7 +75,7 @@ namespace Polar.Universal
                     i = ind + 1;
                     while (i < hvalues.Length)
                     {
-                        if (hvalues[i] != hashOfKey(valuesample)) break;
+                        if (hvalues[i] != hashofvaluesample) break;
                         rec = sequ.GetByOffset(offsets[i]);
                         yield return new ObjOff(rec, offsets[i]);
                         i++;
@@ -103,6 +105,7 @@ namespace Polar.Universal
             offsets = new UniversalSequenceBase(new PType(PTypeEnumeration.longinteger), streamGen());
 
             dynindex = new DynPairsSet(sequence, hashOfKey);
+
         }
 
         // Массив оптимизации поиска по значению хеша
@@ -146,6 +149,30 @@ namespace Polar.Universal
 
             Array.Sort(hkeys_arr, offsets_arr);
 
+            // ~~~~~~~~~~~ Отладочная выдача 
+            bool todebug = false;
+            if (todebug)
+            {
+                Console.WriteLine("НАчало обладочной выдачи");
+                int len = hkeys_arr.Length;
+                for (int i = 0; i < len; i++)
+                {
+                    if (i == 3) { }
+                    var hv = hkeys_arr[i]; var offs = offsets_arr[i];
+                    object[] rec = (object[])sequence.GetByOffset(offs);
+                    var query = keysFunc(rec)
+                        .FirstOrDefault(k => hashOfKey(((string)k).ToUpper()) == hv);
+                    string word = query != null ? (string)query : "no word";
+                    Console.Write($"{query} ");
+                    //object[] props = (object[])rec[2];
+                    //foreach (var prop in props)
+                    //{                }
+                    Console.WriteLine();
+                }
+                Console.WriteLine("Конец отладочной выдачи");
+            }
+            // ~~~~~~~~~~~ Конец отладочной выдачи 
+
             hkeys.Clear();
             foreach (var hkey in hkeys_arr) { hkeys.AppendElement(hkey); }
             hkeys.Flush();
@@ -161,7 +188,10 @@ namespace Polar.Universal
             offsets.Flush();
             offsets_arr = null;
             GC.Collect();
+
         }
+
+
 
         public void OnAppendElement(object element, long offset)
         {
@@ -176,6 +206,7 @@ namespace Polar.Universal
         public IEnumerable<ObjOff> GetAllByValue(IComparable valuesample)
         {
             if (ignorecase) { valuesample = ((string)valuesample).ToUpper(); }
+            var hashofvaluesample = hashOfKey(valuesample);
             // Сначала из динамического индекса
             var query = dynindex.GetAllByValue(valuesample);
             foreach (var v in query)
@@ -185,7 +216,7 @@ namespace Polar.Universal
             // Определяем начальный индекс
             if (hkeys_arr != null)
             {
-                int ind = Array.BinarySearch(hkeys_arr, hashOfKey(valuesample));
+                int ind = Array.BinarySearch(hkeys_arr, hashofvaluesample);
                 if (ind >= 0)
                 {
                     // Выдаем это решение
@@ -196,7 +227,7 @@ namespace Polar.Universal
                     int i = ind - 1;
                     while (i >= 0)
                     {
-                        if (hkeys_arr[i] != hashOfKey(valuesample)) break;
+                        if (hkeys_arr[i] != hashofvaluesample) break;
                         off = (long)offsets.GetByIndex(i);
                         rec = sequence.GetByOffset(off);
                         yield return new ObjOff(rec, off);
@@ -206,7 +237,7 @@ namespace Polar.Universal
                     i = ind + 1;
                     while (i < hkeys_arr.Length)
                     {
-                        if (hkeys_arr[i] != hashOfKey(valuesample)) break;
+                        if (hkeys_arr[i] != hashofvaluesample) break;
                         off = (long)offsets.GetByIndex(i);
                         rec = sequence.GetByOffset(off);
                         yield return new ObjOff(rec, off);
