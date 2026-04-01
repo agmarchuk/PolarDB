@@ -98,7 +98,7 @@ namespace Polar.Universal
             this.sequence = sequence;
             this.keysFunc = keysFunc;
             this.hashOfKey = hashOfKey;
-            this.keysinmemory = true;
+            this.keysinmemory = false; //true;
             this.ignorecase = ignorecase;
 
             hkeys = new UniversalSequenceBase(new PType(PTypeEnumeration.integer), streamGen());
@@ -150,7 +150,7 @@ namespace Polar.Universal
             Array.Sort(hkeys_arr, offsets_arr);
 
             // ~~~~~~~~~~~ Отладочная выдача 
-            bool todebug = false;
+            bool todebug = true;
             if (todebug)
             {
                 Console.WriteLine("НАчало обладочной выдачи");
