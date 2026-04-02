@@ -77,7 +77,7 @@ namespace Polar.Universal
                 FileStream statefile = new FileStream(stateFileName, FileMode.OpenOrCreate, FileAccess.Write);
                 BinaryWriter writer = new BinaryWriter(statefile);
                 writer.Write(sequence.Count());
-                writer.Write(sequence.ElementOffset());
+                writer.Write(sequence.AppendOffset);
                 statefile.Close();
             }
         }
