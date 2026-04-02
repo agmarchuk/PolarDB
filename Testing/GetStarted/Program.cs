@@ -291,7 +291,7 @@ if (records.uindexes.Length == 2)
     }
     Console.WriteLine();
     // Поиск по возрасту (использует индекс ages_ind)
-    var results2 = records.GetAllByValue(1, 99, o => [(int)((object[])o)[2]]);
+    var results2 = records.GetAllByValue(1, 99, o => new IComparable [] {(int)((object[])o)[2]});
     foreach (var re in results2)
     {
         Console.WriteLine(tp_rec.Interpret(re));
