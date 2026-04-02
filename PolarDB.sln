@@ -28,6 +28,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GetStarted", "Testing\GetSt
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GetStartedFactographData", "Testing\GetStartedFactographData\GetStartedFactographData.csproj", "{9D94A6D6-200F-4F59-B06D-55903C477C96}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Polar.DB.Tests", "Testing\Polar.DB.Tests\Polar.DB.Tests.csproj", "{4B8D12FE-41C6-4F88-97AF-BD3450A3D927}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Factograph.Data", "oldandunused\Factograph.Data\Factograph.Data.csproj", "{97BA8007-3388-45BE-8D11-CC59F67974EB}"
 EndProject
 Global
@@ -68,6 +70,10 @@ Global
 		{9D94A6D6-200F-4F59-B06D-55903C477C96}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9D94A6D6-200F-4F59-B06D-55903C477C96}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9D94A6D6-200F-4F59-B06D-55903C477C96}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B8D12FE-41C6-4F88-97AF-BD3450A3D927}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B8D12FE-41C6-4F88-97AF-BD3450A3D927}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B8D12FE-41C6-4F88-97AF-BD3450A3D927}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B8D12FE-41C6-4F88-97AF-BD3450A3D927}.Release|Any CPU.Build.0 = Release|Any CPU
 		{97BA8007-3388-45BE-8D11-CC59F67974EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{97BA8007-3388-45BE-8D11-CC59F67974EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{97BA8007-3388-45BE-8D11-CC59F67974EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
