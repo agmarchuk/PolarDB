@@ -28,6 +28,10 @@ namespace Polar.DB
             bw = new BinaryWriter(fs);
             RecalculateAppendOffset();
         }
+        /// <summary>
+        /// Восстанавливает логический конец последовательности (append_offset) из содержимого потока,
+        /// а не из текущей позиции курсора Stream.Position.
+        /// </summary>
         private void RecalculateAppendOffset()
         {
             if (fs.Length == 0)
@@ -51,6 +55,8 @@ namespace Polar.DB
 
             if (elem_size > 0)
             {
+                // Для элементов фиксированного размера конец последовательности вычисляется формулой
+                // header(8 bytes) + count * element_size.
                 append_offset = checked(8L + nelements * (long)elem_size);
                 if (append_offset > fs.Length)
                 {
@@ -61,6 +67,8 @@ namespace Polar.DB
                 return;
             }
 
+            // Для элементов переменного размера реальный конец можно узнать только
+            // последовательным проходом по сериализованным элементам.
             fs.Position = 8L;
             for (long ii = 0; ii < nelements; ii++)
             {
@@ -105,6 +113,7 @@ namespace Polar.DB
             if (ind < 0 || ind > nelements || !tp_elem.HasNoTail) throw new Exception("Err in ElementOffset");
             return 8 + ind * elem_size;
         }
+        // Legacy alias: фактически это logical append offset, а не текущий Stream.Position.
         public long ElementOffset() { return append_offset; }
         public long AppendOffset { get { return append_offset; } }
 

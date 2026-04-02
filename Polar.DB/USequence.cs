@@ -76,6 +76,8 @@ namespace Polar.Universal
                 // =========== Зафиксируем состояние в файле. Запомним текущее число элементов и офсет следующего ====
                 FileStream statefile = new FileStream(stateFileName, FileMode.OpenOrCreate, FileAccess.Write);
                 BinaryWriter writer = new BinaryWriter(statefile);
+                // В state сохраняем именно логический конец уже зафиксированных данных,
+                // а не текущую позицию курсора внутри stream.
                 writer.Write(sequence.Count());
                 writer.Write(sequence.AppendOffset);
                 statefile.Close();
