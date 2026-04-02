@@ -2,17 +2,15 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\" />
-  </ItemGroup>
+    <ProjectReference Include="..\..\oldandunused\Factograph.Data\Factograph.Data.csproj" />
+    <ProjectReference Include="..\..\Polar.DB\Polar.DB.csproj" />
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\Factograph.Data\Factograph.Data.csproj" />
   </ItemGroup>
 
 </Project>
