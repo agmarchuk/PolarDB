@@ -137,6 +137,7 @@ namespace Polar.Universal
                     IComparable k = key;
                     if (ignorecase) { k = ((string)k).ToUpper(); }
                     offsets_list.Add(off);
+                    //string norm_word = 
                     hkeys_list.Add(hashOfKey(k));
                 }
                 return true;
@@ -157,7 +158,6 @@ namespace Polar.Universal
                 int len = hkeys_arr.Length;
                 for (int i = 0; i < len; i++)
                 {
-                    if (i == 3) { }
                     var hv = hkeys_arr[i]; var offs = offsets_arr[i];
                     object[] rec = (object[])sequence.GetByOffset(offs);
                     var query = keysFunc(rec)
@@ -214,6 +214,7 @@ namespace Polar.Universal
                 yield return v;
             }
             // Определяем начальный индекс
+            if (hkeys_arr == null) hkeys_arr = hkeys.ElementValues().Cast<int>().ToArray();
             if (hkeys_arr != null)
             {
                 int ind = Array.BinarySearch(hkeys_arr, hashofvaluesample);
