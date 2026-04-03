@@ -1,3 +1,4 @@
+using System.IO;
 using Xunit;
 
 namespace Polar.DB.Tests;
@@ -239,6 +240,36 @@ public class UniversalSequenceBaseTests
     }
 
     [Fact]
+    public void Refresh_TrimsGarbageTail_ForVariableSizeSequence()
+    {
+        var stream = new MemoryStream();
+        var personType = CreateVariableSequenceType();
+        var sequence = new UniversalSequenceBase(personType, stream);
+
+        sequence.Clear();
+        sequence.AppendElement(new object[] { 1, "A" });
+        sequence.AppendElement(new object[] { 2, "BB" });
+        sequence.Flush();
+
+        long expectedAppendOffset = sequence.AppendOffset;
+        long expectedCount = sequence.Count();
+
+        stream.Position = stream.Length;
+        using (var tailWriter = new BinaryWriter(stream, System.Text.Encoding.Default, true))
+        {
+            ByteFlow.Serialize(tailWriter, new object[] { 3, "CCC" }, personType);
+        }
+
+        stream.Position = 0L;
+        sequence.Refresh();
+
+        Assert.Equal(expectedCount, sequence.Count());
+        Assert.Equal(expectedAppendOffset, sequence.AppendOffset);
+        Assert.Equal(expectedAppendOffset, stream.Length);
+        Assert.Equal(expectedAppendOffset, stream.Position);
+    }
+
+    [Fact]
     public void GetByIndex_ForVariableSizeSequence_ThrowsInvalidOperationException()
     {
         using var stream = new MemoryStream();
@@ -306,13 +337,16 @@ public class UniversalSequenceBaseTests
         Assert.Equal(300L, (long)sequence.GetByIndex(2));
     }
 
-    private static UniversalSequenceBase CreateVariableSequence(MemoryStream stream)
+    private static PType CreateVariableSequenceType()
     {
-        PType personType = new PTypeRecord(
+        return new PTypeRecord(
             new NamedType("id", new PType(PTypeEnumeration.integer)),
             new NamedType("name", new PType(PTypeEnumeration.sstring)));
+    }
 
-        return new UniversalSequenceBase(personType, stream);
+    private static UniversalSequenceBase CreateVariableSequence(MemoryStream stream)
+    {
+        return new UniversalSequenceBase(CreateVariableSequenceType(), stream);
     }
     
     [Fact]
@@ -608,6 +642,93 @@ public class UniversalSequenceBaseTests
         Assert.Equal(32L, reopenedSequence.AppendOffset);
         Assert.Equal(32L, stream.Position);
         Assert.Equal(20L, (long)reopenedSequence.GetByIndex(1));
+    }
+
+    [Fact]
+    public void Recovery_DoesNotCountGarbageTail_ForFixedSizeSequence()
+    {
+        using var stream = new MemoryStream();
+        var writer = new BinaryWriter(stream);
+
+        writer.Write(2L);
+        writer.Write(10);
+        writer.Write(20);
+        writer.Write(30);
+        writer.Flush();
+
+        stream.Position = 0L;
+
+        var sequence = new UniversalSequenceBase(new PType(PTypeEnumeration.integer), stream);
+
+        long expectedLength = 8L + 2 * sizeof(int);
+
+        Assert.Equal(2L, sequence.Count());
+        Assert.Equal(expectedLength, sequence.AppendOffset);
+        Assert.Equal(expectedLength, stream.Length);
+        Assert.Equal(2L, BitConverter.ToInt64(stream.ToArray(), 0));
+    }
+
+    [Fact]
+    public void Recovery_TrimsTail_ForVariableSizeSequence()
+    {
+        using var stream = new MemoryStream();
+        var personType = CreateVariableSequenceType();
+        var sequence = new UniversalSequenceBase(personType, stream);
+
+        sequence.Clear();
+        sequence.AppendElement(new object[] { 1, "A" });
+        sequence.AppendElement(new object[] { 2, "BB" });
+        sequence.Flush();
+
+        long expectedLength = sequence.AppendOffset;
+
+        stream.Position = stream.Length;
+        using (var tailWriter = new BinaryWriter(stream, System.Text.Encoding.Default, true))
+        {
+            ByteFlow.Serialize(tailWriter, new object[] { 3, "CCC" }, personType);
+        }
+
+        stream.Position = 0L;
+        var reopened = new UniversalSequenceBase(personType, stream);
+
+        Assert.Equal(2L, reopened.Count());
+        Assert.Equal(expectedLength, reopened.AppendOffset);
+        Assert.Equal(expectedLength, stream.Length);
+        Assert.Equal(2L, BitConverter.ToInt64(stream.ToArray(), 0));
+    }
+
+    [Fact]
+    public void Recovery_TruncatesOverdeclaredCount_ForFixedSizeStream()
+    {
+        using var stream = new MemoryStream();
+        var writer = new BinaryWriter(stream);
+
+        writer.Write(3L);
+        writer.Write(100);
+        writer.Write(200);
+        writer.Flush();
+
+        stream.Position = 0L;
+        var sequence = new UniversalSequenceBase(new PType(PTypeEnumeration.integer), stream);
+
+        Assert.Equal(2L, sequence.Count());
+        Assert.Equal(8L + 2 * sizeof(int), sequence.AppendOffset);
+        Assert.Equal(2L, BitConverter.ToInt64(stream.ToArray(), 0));
+        Assert.Equal(200, (int)sequence.GetByIndex(1));
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(4)]
+    [InlineData(7)]
+    public void Constructor_ThrowsOnPartialHeader(int headerLength)
+    {
+        var stream = new MemoryStream(new byte[headerLength]);
+
+        Assert.Throws<InvalidDataException>(
+            () => new UniversalSequenceBase(new PType(PTypeEnumeration.integer), stream));
+
+        Assert.Equal(headerLength, stream.Length);
     }
 
     [Fact]

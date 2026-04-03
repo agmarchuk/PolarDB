@@ -125,8 +125,11 @@ public class UniversalSequenceBase
     ///     Метод один раз восстанавливает фактический логический конец последовательности,
     ///     отрезает мусорный хвост, пересчитывает количество валидных элементов
     ///     и переписывает заголовок с корректным количеством элементов.
-    ///     После успешного завершения выполняется инвариант
-    ///     <see cref="AppendOffset" /> == <see cref="Stream.Length" />.
+    ///     Значение declared element count в заголовке рассматривается как намерение о числе элементов,
+    ///     но фактически читаемое количество может оказаться меньше, если данные обрезаны.
+    ///     После нормализации логический конец последовательности, хранящийся в
+    ///     <see cref="AppendOffset" />, совпадает с физической длиной потока,
+    ///     что гарантирует консистентность для всех последующих записей.
     /// </remarks>
     private void RecoverAndNormalizeState()
     {
@@ -138,27 +141,58 @@ public class UniversalSequenceBase
 
         if (fs.Length < 8L)
         {
-            // Частично записанный заголовок считаем мусором и нормализуем в пустую последовательность.
-            Clear();
-            return;
+            // Ни один валидный заголовок не может занимать меньше восьми байт,
+            // поэтому мы не трогаем поток и явно сигнализируем о повреждении.
+            throw new InvalidDataException("Sequence stream is corrupted: header is shorter than 8 bytes.");
         }
 
-        long recoveredCount;
-        long recoveredAppendOffset;
+        fs.Position = 0L;
+        long declaredCount = br.ReadInt64();
+
+        if (declaredCount < 0L)
+            throw new InvalidDataException("Sequence stream is corrupted: negative element count.");
+
+        long recoveredCount = declaredCount;
+        long recoveredAppendOffset = 8L;
 
         if (elem_size > 0)
         {
-            long payloadLength = fs.Length - 8L;
-            recoveredCount = payloadLength / elem_size;
-            recoveredAppendOffset = checked(8L + recoveredCount * elem_size);
+            long expectedLength;
+
+            try
+            {
+                expectedLength = checked(8L + declaredCount * elem_size);
+            }
+            catch (OverflowException)
+            {
+                throw new InvalidDataException(
+                    "Sequence stream is corrupted: declared element count is too large.");
+            }
+
+            long actualLength = fs.Length;
+
+            if (expectedLength <= actualLength)
+            {
+                recoveredAppendOffset = expectedLength;
+                if (actualLength != expectedLength) fs.SetLength(expectedLength);
+                // Дополнительные полноценные записи после declared count считаются мусорным хвостом.
+            }
+            else
+            {
+                long availablePayload = Math.Max(0L, actualLength - 8L);
+                long recoveredFullElements = availablePayload / elem_size;
+                recoveredCount = recoveredFullElements;
+                recoveredAppendOffset = checked(8L + recoveredFullElements * elem_size);
+                if (fs.Length != recoveredAppendOffset) fs.SetLength(recoveredAppendOffset);
+            }
         }
         else
         {
             fs.Position = 8L;
-            recoveredCount = 0L;
             recoveredAppendOffset = 8L;
+            recoveredCount = 0L;
 
-            while (fs.Position < fs.Length)
+            for (long i = 0; i < declaredCount; i++)
             {
                 long recordStart = fs.Position;
 
@@ -184,13 +218,12 @@ public class UniversalSequenceBase
                     break;
                 }
             }
+
+            if (fs.Length != recoveredAppendOffset) fs.SetLength(recoveredAppendOffset);
         }
 
         if (recoveredAppendOffset < 8L || recoveredAppendOffset > fs.Length)
             throw new InvalidDataException("Sequence stream recovery produced an invalid append offset.");
-
-        if (fs.Length != recoveredAppendOffset)
-            fs.SetLength(recoveredAppendOffset);
 
         nelements = recoveredCount;
         AppendOffset = recoveredAppendOffset;
@@ -271,11 +304,11 @@ public class UniversalSequenceBase
     /// <remarks>
     ///     После стартового recovery класс живёт с инвариантом
     ///     <see cref="AppendOffset" /> == <see cref="Stream.Length" />.
-    ///     Поэтому обычный refresh больше не сканирует весь поток,
-    ///     а только перечитывает количество элементов из заголовка
-    ///     и синхронизирует логический конец с физической длиной потока.
-    ///     Для последовательностей фиксированного размера дополнительно
-    ///     проверяется согласованность длины файла и количества элементов.
+    ///     Поэтому Refresh перестраивает внутреннее состояние по declared count из заголовка.
+    ///     При фиксированном размере элементов достаточно сверить физическую длину с ожидаемой,
+    ///     а для переменного размера приходится заново пройти ровно declared count элементов,
+    ///     поскольку <see cref="Stream.Length" /> может включать мусорный хвост и не отражает
+    ///     логический конец последовательности.
     /// </remarks>
     public void Refresh()
     {
@@ -294,17 +327,74 @@ public class UniversalSequenceBase
         if (nelements < 0L)
             throw new InvalidDataException("Sequence stream is corrupted: negative element count.");
 
-        AppendOffset = fs.Length;
-
         if (elem_size > 0)
         {
-            long expectedLength = checked(8L + nelements * elem_size);
+            long expectedLength;
+
+            try
+            {
+                expectedLength = checked(8L + nelements * elem_size);
+            }
+            catch (OverflowException)
+            {
+                throw new InvalidDataException(
+                    "Sequence stream is corrupted: declared element count is too large.");
+            }
+
             if (expectedLength != fs.Length)
                 throw new InvalidDataException(
                     "Sequence stream is corrupted: fixed-size payload length does not match the declared element count.");
+
+            AppendOffset = expectedLength;
+            EnsureAppendOffsetInvariant();
+            fs.Position = AppendOffset;
+            return;
         }
 
+        long declaredCount = nelements;
+        long recoveredCount = 0L;
+        long recoveredAppendOffset = 8L;
+        fs.Position = 8L;
+
+        for (long i = 0; i < declaredCount; i++)
+        {
+            long recordStart = fs.Position;
+
+            try
+            {
+                ByteFlow.Deserialize(br, tp_elem);
+                recoveredCount++;
+                recoveredAppendOffset = fs.Position;
+            }
+            catch (EndOfStreamException ex)
+            {
+                fs.Position = recordStart;
+                throw new InvalidDataException(
+                    "Sequence stream is corrupted: declared element count cannot be read completely.", ex);
+            }
+            catch (IOException ex)
+            {
+                fs.Position = recordStart;
+                throw new InvalidDataException(
+                    "Sequence stream is corrupted: unable to read declared number of elements.", ex);
+            }
+            catch (InvalidDataException)
+            {
+                fs.Position = recordStart;
+                throw;
+            }
+        }
+
+        if (recoveredAppendOffset < 8L || recoveredAppendOffset > fs.Length)
+            throw new InvalidDataException("Sequence stream recovery produced an invalid append offset.");
+
+        if (fs.Length != recoveredAppendOffset) fs.SetLength(recoveredAppendOffset);
+
+        nelements = recoveredCount;
+        AppendOffset = recoveredAppendOffset;
+
         EnsureAppendOffsetInvariant();
+        fs.Flush();
         fs.Position = AppendOffset;
     }
 
@@ -375,8 +465,12 @@ public class UniversalSequenceBase
     /// </value>
     /// <remarks>
     ///     Значение отражает не текущую позицию курсора потока,
-    ///     а фактический логический конец данных последовательности.
-    ///     В нормализованном состоянии совпадает с физической длиной потока.
+    ///     а фактический логический конец данных последовательности и считается
+    ///     единственным источником истины для всех операций записи.
+    ///     После recovery, refresh и append-инструкций инвариант
+    ///     <see cref="AppendOffset" /> == <see cref="Stream.Length" /> активно поддерживается,
+    ///     но до этого физическая длина потока может быть больше из-за мусора,
+    ///     поэтому нельзя полагаться только на <see cref="Stream.Length" />.
     /// </remarks>
     public long AppendOffset { get; private set; } = 8L;
 
@@ -417,6 +511,9 @@ public class UniversalSequenceBase
     ///     Если запись выполняется в хвост и расширяет поток,
     ///     значение <see cref="AppendOffset" /> обновляется.
     ///     При ошибке хвостовая запись откатывается.
+    ///     Защита от записи за <see cref="AppendOffset" /> предотвращает неконтролируемое расширение,
+    ///     но сама по себе не делает безопасным in-place изменение переменного элемента,
+    ///     потому что сериализованная длина элемента и смещения соседей при этом не пересчитываются.
     /// </remarks>
     public void SetElement(object v, long off)
     {
@@ -477,6 +574,9 @@ public class UniversalSequenceBase
     ///     Исходная позиция потока после выполнения восстанавливается.
     ///     При записи в хвост логический конец последовательности обновляется.
     ///     При ошибке хвостовая запись откатывается.
+    ///     Как и в <see cref="SetElement(object,long)" />, защита от выхода за
+    ///     <see cref="AppendOffset" /> не учитывает длину сериализации переменного элемента,
+    ///     поэтому in-place перезапись всё ещё может нарушить расположение соседних записей.
     /// </remarks>
     public void SetTypedElement(PType tp, object v, long off)
     {
