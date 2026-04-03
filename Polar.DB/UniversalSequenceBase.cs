@@ -13,12 +13,11 @@ namespace Polar.DB;
 ///     Класс поддерживает добавление элементов в логический конец последовательности,
 ///     чтение по смещению, последовательный обход и операции обслуживания,
 ///     такие как обновление внутреннего состояния, очистка и сортировка.
-///     Логический конец последовательности хранится отдельно в <see cref="AppendOffset" />
-///     и не должен отождествляться с текущим значением <see cref="Stream.Position" />.
+///     В нормализованном состоянии логический конец последовательности хранится в <see cref="AppendOffset" />
+///     и совпадает с физической длиной потока <see cref="Stream.Length" />.
 /// </remarks>
 public class UniversalSequenceBase
 {
-
     /// <summary>
     ///     Описывает полярный тип элемента, используемый для сериализации и десериализации.
     /// </summary>
@@ -38,7 +37,7 @@ public class UniversalSequenceBase
     ///     но не считается источником истины для логического конца последовательности.
     /// </remarks>
     protected Stream
-        fs; // Стрим - среда для последовательности. Сначала 8 байтов длина, потом подряд бинарные развертки элементов 
+        fs; // Стрим - среда для последовательности. Сначала 8 байтов длина, потом подряд бинарные развертки элементов
 
     /// <summary>
     ///     Возвращает поток-носитель последовательности.
@@ -52,6 +51,7 @@ public class UniversalSequenceBase
     ///     <see cref="AppendOffset" /> и количества элементов.
     /// </remarks>
     internal Stream Media => fs;
+
     /// <summary>
     ///     Выполняет бинарное чтение из потока последовательности.
     /// </summary>
@@ -86,11 +86,9 @@ public class UniversalSequenceBase
     ///     В нормализованном состоянии совпадает со значением,
     ///     записанным в заголовке потока.
     /// </remarks>
-    private long nelements; // текущее количество элеметов. В "покое" - совпадает со значением в первых 8 байтах 
+    private long nelements; // текущее количество элеметов. В "покое" - совпадает со значением в первых 8 байтах
 
     /// <summary>
-    ///     Восстанавливает логический конец последовательности (append_offset) из содержимого потока,
-    ///     а не из текущей позиции курсора Stream.Position.
     ///     Инициализирует последовательность на указанном потоке
     ///     и подготавливает внутреннее состояние для работы с элементами заданного типа.
     /// </summary>
@@ -102,33 +100,35 @@ public class UniversalSequenceBase
     /// </param>
     /// <remarks>
     ///     Конструктор определяет режим фиксированного или переменного размера элемента,
-    ///     создаёт бинарные reader/writer и восстанавливает внутреннее состояние
-    ///     последовательности по содержимому потока.
+    ///     создаёт бинарные reader/writer и выполняет одноразовый recovery:
+    ///     находит последний валидный элемент, отрезает мусорный хвост,
+    ///     пересчитывает количество элементов и синхронизирует заголовок.
+    ///     После этого устанавливается инвариант:
+    ///     <see cref="AppendOffset" /> == <see cref="Stream.Length" />.
     /// </remarks>
     public UniversalSequenceBase(PType tp_el, Stream media)
     {
-        tp_elem = tp_el;
+        tp_elem = tp_el ?? throw new ArgumentNullException(nameof(tp_el));
         if (tp_elem.HasNoTail) elem_size = tp_elem.HeadSize;
-        fs = media;
+
+        fs = media ?? throw new ArgumentNullException(nameof(media));
         br = new BinaryReader(fs);
         bw = new BinaryWriter(fs);
-        RecalculateAppendOffset();
+
+        RecoverAndNormalizeState();
     }
 
     /// <summary>
-    ///     Восстанавливает логический конец последовательности (append_offset) из содержимого потока,
-    ///     а не из текущей позиции курсора Stream.Position.
-    ///     Пересчитывает количество элементов и логический конец последовательности
-    ///     по текущему содержимому потока.
+    ///     Выполняет стартовый recovery по физическому содержимому потока.
     /// </summary>
     /// <remarks>
-    ///     Метод используется для восстановления внутреннего состояния класса,
-    ///     когда нельзя доверять текущему значению <see cref="Stream.Position" />.
-    ///     Для последовательностей фиксированного размера логический конец вычисляется по формуле,
-    ///     для последовательностей переменного размера — последовательным проходом по данным.
-    ///     После успешного завершения метода поток устанавливается в позицию <see cref="AppendOffset" />.
+    ///     Метод один раз восстанавливает фактический логический конец последовательности,
+    ///     отрезает мусорный хвост, пересчитывает количество валидных элементов
+    ///     и переписывает заголовок с корректным количеством элементов.
+    ///     После успешного завершения выполняется инвариант
+    ///     <see cref="AppendOffset" /> == <see cref="Stream.Length" />.
     /// </remarks>
-    private void RecalculateAppendOffset()
+    private void RecoverAndNormalizeState()
     {
         if (fs.Length == 0L)
         {
@@ -137,40 +137,72 @@ public class UniversalSequenceBase
         }
 
         if (fs.Length < 8L)
-            throw new InvalidDataException("Sequence stream is corrupted: header is shorter than 8 bytes.");
-
-        fs.Position = 0L;
-        nelements = br.ReadInt64();
-
-        if (nelements < 0L) throw new InvalidDataException("Sequence stream is corrupted: negative element count.");
-
-        if (elem_size > 0)
         {
-            AppendOffset = checked(8L + nelements * elem_size);
-
-            if (AppendOffset > fs.Length)
-                throw new InvalidDataException(
-                    "Sequence stream is corrupted: fixed-size payload is shorter than declared element count.");
-
-            fs.Position = AppendOffset;
+            // Частично записанный заголовок считаем мусором и нормализуем в пустую последовательность.
+            Clear();
             return;
         }
 
-        fs.Position = 8L;
+        long recoveredCount;
+        long recoveredAppendOffset;
 
-        for (long i = 0; i < nelements; i++) ByteFlow.Deserialize(br, tp_elem);
+        if (elem_size > 0)
+        {
+            long payloadLength = fs.Length - 8L;
+            recoveredCount = payloadLength / elem_size;
+            recoveredAppendOffset = checked(8L + recoveredCount * elem_size);
+        }
+        else
+        {
+            fs.Position = 8L;
+            recoveredCount = 0L;
+            recoveredAppendOffset = 8L;
 
-        AppendOffset = fs.Position;
+            while (fs.Position < fs.Length)
+            {
+                long recordStart = fs.Position;
 
-        if (AppendOffset > fs.Length)
-            throw new InvalidDataException(
-                "Sequence stream is corrupted: logical append offset is beyond the physical stream length.");
+                try
+                {
+                    ByteFlow.Deserialize(br, tp_elem);
+                    recoveredAppendOffset = fs.Position;
+                    recoveredCount++;
+                }
+                catch (EndOfStreamException)
+                {
+                    fs.Position = recordStart;
+                    break;
+                }
+                catch (IOException)
+                {
+                    fs.Position = recordStart;
+                    break;
+                }
+                catch (InvalidDataException)
+                {
+                    fs.Position = recordStart;
+                    break;
+                }
+            }
+        }
 
+        if (recoveredAppendOffset < 8L || recoveredAppendOffset > fs.Length)
+            throw new InvalidDataException("Sequence stream recovery produced an invalid append offset.");
+
+        if (fs.Length != recoveredAppendOffset)
+            fs.SetLength(recoveredAppendOffset);
+
+        nelements = recoveredCount;
+        AppendOffset = recoveredAppendOffset;
+
+        WriteHeaderElementCount();
+        EnsureAppendOffsetInvariant();
+        fs.Flush();
         fs.Position = AppendOffset;
     }
 
     /// <summary>
-    ///     Делает последовательность с нулевым количеством элементов
+    ///     Делает последовательность с нулевым количеством элементов.
     /// </summary>
     /// <remarks>
     ///     Метод обрезает поток, записывает пустой заголовок,
@@ -180,21 +212,16 @@ public class UniversalSequenceBase
     /// </remarks>
     public void Clear()
     {
-        try
-        {
-            fs.SetLength(0L);
-            fs.Position = 0L;
-            bw.Write(0L);
+        fs.SetLength(0L);
+        fs.Position = 0L;
+        bw.Write(0L);
 
-            nelements = 0L;
-            AppendOffset = 8L;
+        nelements = 0L;
+        AppendOffset = fs.Length;
 
-            fs.Flush();
-        }
-        finally
-        {
-            fs.Position = AppendOffset;
-        }
+        EnsureAppendOffsetInvariant();
+        fs.Flush();
+        fs.Position = AppendOffset;
     }
 
     /// <summary>
@@ -213,12 +240,8 @@ public class UniversalSequenceBase
 
         try
         {
-            fs.Position = 0L;
-            bw.Write(nelements);
-
-            if (AppendOffset > fs.Length)
-                throw new InvalidDataException("Logical append offset is beyond the physical stream length.");
-
+            EnsureAppendOffsetInvariant();
+            WriteHeaderElementCount();
             fs.Flush();
         }
         finally
@@ -242,16 +265,47 @@ public class UniversalSequenceBase
     }
 
     /// <summary>
-    ///     Обновляет внутреннее состояние последовательности по текущему содержимому потока.
+    ///     Обновляет внутреннее состояние последовательности по текущему содержимому потока
+    ///     без полного пересканирования элементов.
     /// </summary>
     /// <remarks>
-    ///     Метод заново восстанавливает количество элементов и логический конец последовательности.
-    ///     Полезен в случаях, когда нужно синхронизировать объект
-    ///     с текущим состоянием потока.
+    ///     После стартового recovery класс живёт с инвариантом
+    ///     <see cref="AppendOffset" /> == <see cref="Stream.Length" />.
+    ///     Поэтому обычный refresh больше не сканирует весь поток,
+    ///     а только перечитывает количество элементов из заголовка
+    ///     и синхронизирует логический конец с физической длиной потока.
+    ///     Для последовательностей фиксированного размера дополнительно
+    ///     проверяется согласованность длины файла и количества элементов.
     /// </remarks>
     public void Refresh()
     {
-        RecalculateAppendOffset();
+        if (fs.Length == 0L)
+        {
+            Clear();
+            return;
+        }
+
+        if (fs.Length < 8L)
+            throw new InvalidDataException("Sequence stream is corrupted: header is shorter than 8 bytes.");
+
+        fs.Position = 0L;
+        nelements = br.ReadInt64();
+
+        if (nelements < 0L)
+            throw new InvalidDataException("Sequence stream is corrupted: negative element count.");
+
+        AppendOffset = fs.Length;
+
+        if (elem_size > 0)
+        {
+            long expectedLength = checked(8L + nelements * elem_size);
+            if (expectedLength != fs.Length)
+                throw new InvalidDataException(
+                    "Sequence stream is corrupted: fixed-size payload length does not match the declared element count.");
+        }
+
+        EnsureAppendOffsetInvariant();
+        fs.Position = AppendOffset;
     }
 
     /// <summary>
@@ -322,7 +376,7 @@ public class UniversalSequenceBase
     /// <remarks>
     ///     Значение отражает не текущую позицию курсора потока,
     ///     а фактический логический конец данных последовательности.
-    ///     Используется всеми append- и read-at/write-at операциями.
+    ///     В нормализованном состоянии совпадает с физической длиной потока.
     /// </remarks>
     public long AppendOffset { get; private set; } = 8L;
 
@@ -360,14 +414,17 @@ public class UniversalSequenceBase
     ///     Метод является безопасной обёрткой над записью в текущую позицию:
     ///     временно переводит поток к нужному смещению,
     ///     выполняет запись и затем восстанавливает исходную позицию.
-    ///     Если запись расширяет логический конец последовательности,
+    ///     Если запись выполняется в хвост и расширяет поток,
     ///     значение <see cref="AppendOffset" /> обновляется.
+    ///     При ошибке хвостовая запись откатывается.
     /// </remarks>
     public void SetElement(object v, long off)
     {
         if (off < 8L || off > AppendOffset) throw new ArgumentOutOfRangeException(nameof(off));
 
         long savedPosition = fs.Position;
+        long originalLength = fs.Length;
+        bool isAppendWrite = off == AppendOffset;
 
         try
         {
@@ -375,7 +432,26 @@ public class UniversalSequenceBase
 
             SetElement(v);
 
-            if (fs.Position > AppendOffset) AppendOffset = fs.Position;
+            if (isAppendWrite)
+            {
+                AppendOffset = fs.Length;
+                EnsureAppendOffsetInvariant();
+            }
+            else if (fs.Position > AppendOffset)
+            {
+                throw new InvalidOperationException(
+                    "In-place write has crossed the logical end of the sequence. Use AppendElement for tail growth.");
+            }
+        }
+        catch
+        {
+            if (isAppendWrite && fs.Length != originalLength)
+            {
+                fs.SetLength(originalLength);
+                AppendOffset = originalLength;
+            }
+
+            throw;
         }
         finally
         {
@@ -400,6 +476,7 @@ public class UniversalSequenceBase
     ///     не в основном типе последовательности, а в произвольном совместимом формате.
     ///     Исходная позиция потока после выполнения восстанавливается.
     ///     При записи в хвост логический конец последовательности обновляется.
+    ///     При ошибке хвостовая запись откатывается.
     /// </remarks>
     public void SetTypedElement(PType tp, object v, long off)
     {
@@ -408,6 +485,8 @@ public class UniversalSequenceBase
         if (off < 8L || off > AppendOffset) throw new ArgumentOutOfRangeException(nameof(off));
 
         long savedPosition = fs.Position;
+        long originalLength = fs.Length;
+        bool isAppendWrite = off == AppendOffset;
 
         try
         {
@@ -415,7 +494,26 @@ public class UniversalSequenceBase
 
             ByteFlow.Serialize(bw, v, tp);
 
-            if (fs.Position > AppendOffset) AppendOffset = fs.Position;
+            if (isAppendWrite)
+            {
+                AppendOffset = fs.Length;
+                EnsureAppendOffsetInvariant();
+            }
+            else if (fs.Position > AppendOffset)
+            {
+                throw new InvalidOperationException(
+                    "In-place write has crossed the logical end of the sequence. Use AppendElement for tail growth.");
+            }
+        }
+        catch
+        {
+            if (isAppendWrite && fs.Length != originalLength)
+            {
+                fs.SetLength(originalLength);
+                AppendOffset = originalLength;
+            }
+
+            throw;
         }
         finally
         {
@@ -438,21 +536,36 @@ public class UniversalSequenceBase
     ///     После успешной записи увеличивает количество элементов
     ///     и переносит логический конец последовательности на новую позицию.
     ///     Исходная позиция потока после выполнения восстанавливается.
+    ///     При ошибке записи выполняется rollback длины файла к предыдущему хвосту.
     /// </remarks>
     public long AppendElement(object v)
     {
         long savedPosition = fs.Position;
         long off = AppendOffset;
+        long originalLength = fs.Length;
 
         try
         {
+            EnsureAppendOffsetInvariant();
+
             fs.Position = off;
             ByteFlow.Serialize(bw, v, tp_elem);
 
-            AppendOffset = fs.Position;
+            AppendOffset = fs.Length;
             nelements += 1;
 
+            EnsureAppendOffsetInvariant();
             return off;
+        }
+        catch
+        {
+            if (fs.Length != originalLength)
+            {
+                fs.SetLength(originalLength);
+            }
+
+            AppendOffset = originalLength;
+            throw;
         }
         finally
         {
@@ -621,7 +734,7 @@ public class UniversalSequenceBase
     /// </remarks>
     public IEnumerable<object> ElementValues(long offset, long number)
     {
-        if (offset < 8L || offset > fs.Length) throw new ArgumentOutOfRangeException(nameof(offset));
+        if (offset < 8L || offset > AppendOffset) throw new ArgumentOutOfRangeException(nameof(offset));
 
         if (number < 0) throw new ArgumentOutOfRangeException(nameof(number));
         long savedPosition = fs.Position;
@@ -741,7 +854,7 @@ public class UniversalSequenceBase
     /// </remarks>
     public IEnumerable<Tuple<long, object>> ElementOffsetValuePairs(long offset, long number)
     {
-        if (offset < 8L || offset > fs.Length) throw new ArgumentOutOfRangeException(nameof(offset));
+        if (offset < 8L || offset > AppendOffset) throw new ArgumentOutOfRangeException(nameof(offset));
 
         if (number < 0) throw new ArgumentOutOfRangeException(nameof(number));
 
@@ -858,5 +971,25 @@ public class UniversalSequenceBase
         for (long i = 0; i < records.LongLength; i++) AppendElement(records[i]);
 
         Flush();
+    }
+
+    /// <summary>
+    ///     Перезаписывает заголовок потока текущим количеством элементов.
+    /// </summary>
+    private void WriteHeaderElementCount()
+    {
+        fs.Position = 0L;
+        bw.Write(nelements);
+    }
+
+    /// <summary>
+    ///     Проверяет основной инвариант последовательности:
+    ///     логический конец должен совпадать с физической длиной потока.
+    /// </summary>
+    private void EnsureAppendOffsetInvariant()
+    {
+        if (AppendOffset != fs.Length)
+            throw new InvalidOperationException(
+                "AppendOffset invariant is broken: logical append offset must match the physical stream length.");
     }
 }
