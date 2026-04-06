@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Polar.DB;
+﻿using Polar.DB;
 
 namespace Polar.Universal
 {
@@ -210,15 +204,17 @@ namespace Polar.Universal
                 }
             }
         }
-        internal IEnumerable<ObjOff> GetAllByValue(string valuesample)
+
+        internal IEnumerable<ObjOff> GetAllByValue(string valueSample)
         {
-            string svalue = ignorecase ? valuesample.ToUpper() : valuesample;
-            var query = dynindex.GetAllByValue(valuesample);
+            string sValueNormalized = ignorecase ? valueSample.ToUpper() : valueSample;
+            var query = dynindex.GetAllByValue(sValueNormalized);
             foreach (var v in query)
             {
                 yield return v; 
             }
-            var qu = GetAllByComp(valuesample, comp_string);
+
+            var qu = GetAllByComp(sValueNormalized, comp_string);
             foreach (var v in qu)
             {
                 yield return v;

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Polar.DB;
+﻿using Polar.DB;
 
 namespace Polar.Universal
 {
@@ -50,9 +44,12 @@ namespace Polar.Universal
                 IComparable key = value;
                 if (valueoffs_dic.TryGetValue(key, out long[] offsets))
                 {
-                    offsets.Append(offset).ToArray();
+                    valueoffs_dic[key] = offsets.Append(offset).ToArray();
                 }
-                else valueoffs_dic.Add(key, new long[] { offset });
+                else
+                {
+                    valueoffs_dic.Add(key, new[] { offset });
+                }
             }
         }
 

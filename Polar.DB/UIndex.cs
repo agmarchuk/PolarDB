@@ -181,11 +181,40 @@ namespace Polar.Universal
                 else break;
             }
         }
-        public void OnAppendElement(object element, long offset)
+        private int LowerBound(HKeyObjOff[] arr, HKeyObjOff item)
         {
-            throw new NotImplementedException("21298");
+            int lo = 0, hi = arr.Length;
+            while (lo < hi)
+            {
+                int mid = lo + ((hi - lo) >> 1);
+                if (complex_comp.Compare(arr[mid], item) < 0)
+                    lo = mid + 1;
+                else
+                    hi = mid;
+            }
+            return lo;
         }
 
+        public void OnAppendElement(object element, long offset)
+        {
+            if (!applicable(element)) return;
+
+            var item = new HKeyObjOff
+            {
+                obj = element,
+                off = offset,
+                hkey = hashFunc != null ? hashFunc(element) : 0
+            };
+
+            int pos = LowerBound(dynset, item);
+
+            var next = new HKeyObjOff[dynset.Length + 1];
+            Array.Copy(dynset, 0, next, 0, pos);
+            next[pos] = item;
+            Array.Copy(dynset, pos, next, pos + 1, dynset.Length - pos);
+
+            dynset = next;
+        }
 
         private long GetFirstNomOffsets(object sample, Comparer<object> comparer)
         {
