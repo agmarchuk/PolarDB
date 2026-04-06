@@ -103,12 +103,11 @@ namespace Factograph.Data.Adapters
             }));
 
             // Создаем последовательность R-записей
-            records = new USequence(tp_rec, GenStream,
+            records = new USequence(tp_rec, dbfolder + "state.bin", GenStream,
                 rec => (string)((object[])rec)[1] == "deleted",
                 rec => (string)((object[])rec)[0],
                 str => Hashfunctions.HashRot13((string)str),
-                true)
-            { StateFile = dbfolder + "state.bin" };
+                true);
             Func<object, IEnumerable<string>> skey = obj =>
             {
                 object[] props = (object[])((object[])obj)[2];
@@ -303,7 +302,7 @@ namespace Factograph.Data.Adapters
                 {
                     wrd = Normalize(w);
                 }
-                var qu = records.GetAllByValue(1, wrd).Select(r => new { obj = r, wrd = wrd })
+                var qu = records.GetAllByValue(1, wrd, rec => new IComparable[]    { (string)((object[])rec)[0] }).Select(r => new { obj = r, wrd = wrd })
                     .ToArray();
                 return qu;
             })

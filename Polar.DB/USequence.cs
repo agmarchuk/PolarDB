@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Polar.DB;
+﻿using Polar.DB;
 
 namespace Polar.Universal
 {
@@ -76,8 +70,10 @@ namespace Polar.Universal
                 // =========== Зафиксируем состояние в файле. Запомним текущее число элементов и офсет следующего ====
                 FileStream statefile = new FileStream(stateFileName, FileMode.OpenOrCreate, FileAccess.Write);
                 BinaryWriter writer = new BinaryWriter(statefile);
+                // В state сохраняем именно логический конец уже зафиксированных данных,
+                // а не текущую позицию курсора внутри stream.
                 writer.Write(sequence.Count());
-                writer.Write(sequence.ElementOffset());
+                writer.Write(sequence.AppendOffset);
                 statefile.Close();
             }
         }
@@ -197,8 +193,21 @@ namespace Polar.Universal
 
         public void Build()
         {
-            this.primaryKeyIndex.Build();
+            sequence.Flush();
+
+            primaryKeyIndex.Build();
             foreach (var ind in uindexes) ind.Build();
+
+            primaryKeyIndex.Flush();
+            foreach (var ind in uindexes) ind.Flush();
+
+            if (stateFileName != null)
+            {
+                using var statefile = new FileStream(stateFileName, FileMode.OpenOrCreate, FileAccess.Write);
+                using var writer = new BinaryWriter(statefile);
+                writer.Write(sequence.Count());
+                writer.Write(sequence.AppendOffset);
+            }
         }
     }
 }

@@ -55,6 +55,7 @@ Console.WriteLine();
 // Более экономным, как правило, является использование последовательностей
 
 string dbpath = @"D:/Home/data/GetStarted/";
+// string dbpath = @"D:/projects/iis/SypCassete/data/"; 
 Stream filestream = new FileStream(dbpath + "file0.bin", FileMode.OpenOrCreate, FileAccess.ReadWrite);
 UniversalSequenceBase usequence = new UniversalSequenceBase(tp_person, filestream);
 
@@ -290,7 +291,7 @@ if (records.uindexes.Length == 2)
     }
     Console.WriteLine();
     // Поиск по возрасту (использует индекс ages_ind)
-    var results2 = records.GetAllByValue(1, 99);
+    var results2 = records.GetAllByValue(1, 99, o => new IComparable [] {(int)((object[])o)[2]});
     foreach (var re in results2)
     {
         Console.WriteLine(tp_rec.Interpret(re));

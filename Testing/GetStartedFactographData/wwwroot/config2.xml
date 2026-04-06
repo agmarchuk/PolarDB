@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<config>
+
+  <database connectionstring="upi:D:\projects\iis\SypCassete\data\bin\"/>
+  <LoadCassette>D:\projects\iis\SypCassete</LoadCassette>
+</config>

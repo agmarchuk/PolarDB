@@ -136,7 +136,7 @@ namespace Polar.DB
             {
                 case PTypeEnumeration.fstring:
                     {
-                        return new object[] { PType.ToInt(this.vid), ((PTypeFString)this).Size };
+                        return new object[] { PType.ToInt(this.vid), ((PTypeFString)this).Length };
                     }
                 case PTypeEnumeration.record:
                     {
@@ -147,10 +147,15 @@ namespace Polar.DB
                 case PTypeEnumeration.sequence:
                     {
                         PTypeSequence pts = (PTypeSequence)this;
-                        return new object[] { PType.ToInt(this.vid),
-                        new object[] {
-                            new object[] {"growing", new object[] { PType.ToInt(PTypeEnumeration.boolean), null } },
-                            new object[] {"Type", pts.ElementType.ToPObject(level - 1) } } };
+                        return new object[]
+                        {
+                            PType.ToInt(this.vid),
+                            new object[]
+                            {
+                                pts.Growing,
+                                pts.ElementType.ToPObject(level - 1)
+                            }
+                        };
                     }
                 case PTypeEnumeration.union:
                     {
@@ -173,7 +178,7 @@ namespace Polar.DB
                 case 3: return new PType(PTypeEnumeration.integer);
                 case 4: return new PType(PTypeEnumeration.longinteger);
                 case 5: return new PType(PTypeEnumeration.real);
-                case 6: return new PType(PTypeEnumeration.fstring);
+                case 6: return new PTypeFString((int)uni[1]);
                 case 7: return new PType(PTypeEnumeration.sstring);
                 case 8:
                     {
@@ -188,10 +193,21 @@ namespace Polar.DB
                     }
                 case 9:
                     {
-                        object[] growing_type = (object[])uni[1];
-                        return new PTypeSequence(FromPObject(growing_type[1]), (bool)growing_type[0]);
+                        object[] payload = (object[])uni[1];
+                        bool growing = (bool)payload[0];
+                        PType elementType = FromPObject(payload[1]);
+                        return new PTypeSequence(elementType, growing);
                     }
-                // case 10: не реализован вариант объединения
+                case 10:
+                    {
+                        object[] variantsDef = (object[])uni[1];
+                        var query = variantsDef.Select(vd =>
+                        {
+                            object[] v = (object[])vd;
+                            return new NamedType((string)v[0], FromPObject(v[1]));
+                        });
+                        return new PTypeUnion(query.ToArray());
+                    }
                 case 11:
                     {
                         return new PType(PTypeEnumeration.@byte);
@@ -382,6 +398,7 @@ namespace Polar.DB
             : base(PTypeEnumeration.sequence)
         {
             this.elementtype = elementtype;
+            this.growing = growing;
             //this.style = style;
         }
         private PType elementtype;

@@ -1,9 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Polar.DB;
 
 namespace Polar.Universal
@@ -145,28 +139,27 @@ namespace Polar.Universal
         /// <returns></returns>
         private long GetFirstNom(int hkey)
         {
-            long start = 0, end = hkeys.Count() - 1, right_equal = -1;
-            // Сжимаем диапазон
-            while (end - start > 1)
+            long count = hkeys.Count();
+            if (count == 0) return -1;
+
+            long left = 0;
+            long right = count;
+            // интервал [left, right)
+            while (left < right)
             {
-                // Находим середину
-                long middle = (start + end) / 2;
-                int middle_value = (int)hkeys.GetByIndex(middle);
-                if (middle_value < hkey)
-                {  // Займемся правым интервалом
-                    start = middle;
-                }
-                else if (middle_value > hkey)
-                {  // Займемся левым интервалом
-                    end = middle;
-                }
+                long middle = left + (right - left) / 2; // более безопасная форма  (start + end) / 2;
+                int middleValue = (int)hkeys.GetByIndex(middle);
+
+                if (middleValue < hkey)
+                    // Займемся правым интервалом
+                    left = middle + 1; // сам middle уже не нужно
                 else
-                {  // Середина дает РАВНО
-                    end = middle;
-                    right_equal = middle;
-                }
+                    // Займемся левым интервалом, middle может быть подходящим номером значения, но не самым левым. 
+                    right = middle;
             }
-            return right_equal;
+
+            if (left >= count) return -1;
+            return (int)hkeys.GetByIndex(left) == hkey ? left : -1;
         }
 
         /// <summary>

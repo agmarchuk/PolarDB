@@ -1,7 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net7.0;net8.0;net10.0</TargetFrameworks>
+    <LangVersion>10.0</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Version>1.1.0</Version>
   </PropertyGroup>
@@ -11,6 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Polar.DB\Polar.DB.csproj" />
     <ProjectReference Include="..\Polar.Cells\Polar.Cells.csproj" />
     <ProjectReference Include="..\Polar.DB\Polar.DB.csproj" />
   </ItemGroup>
