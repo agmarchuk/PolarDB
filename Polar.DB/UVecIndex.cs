@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Polar.DB;
+﻿using Polar.DB;
 
 namespace Polar.Universal
 {
@@ -195,56 +188,94 @@ namespace Polar.Universal
 
         public void OnAppendElement(object element, long offset)
         {
-            IEnumerable<IComparable> keys = keysFunc(element);
-            dynindex.OnAppendValues(keys.ToArray(), offset);
+            var keys = keysFunc(element)
+                .Select(k => ignorecase ? ((string)k).ToUpper() : k)
+                .ToArray();
+
+            dynindex.OnAppendValues(keys, offset);
         }
 
         private static IEnumerable<long> LRange(long start, long numb)
         {
             for (long ii = start; ii < start + numb; ii++) yield return ii;
         }
-        public IEnumerable<ObjOff> GetAllByValue(IComparable valuesample)
+
+        private long FindFirstStaticIndexByHash(int hkey)
         {
-            if (ignorecase) { valuesample = ((string)valuesample).ToUpper(); }
-            var hashofvaluesample = hashOfKey(valuesample);
-            // Сначала из динамического индекса
-            var query = dynindex.GetAllByValue(valuesample);
-            foreach (var v in query)
+            long count = hkeys.Count();
+            if (count == 0) return -1;
+
+            long left = 0;
+            long right = count; // [left, right)
+
+            while (left < right)
             {
-                yield return v;
+                long mid = left + (right - left) / 2;
+                int midValue = (int)hkeys.GetByIndex(mid);
+
+                if (midValue < hkey)
+                    left = mid + 1;
+                else
+                    right = mid;
             }
-            // Определяем начальный индекс
+
+            if (left >= count)
+                return -1;
+
+            return (int)hkeys.GetByIndex(left) == hkey ? left : -1;
+        }
+
+        private IEnumerable<ObjOff> GetStaticByHash(int hashofvaluesample)
+        {
             if (hkeys_arr != null)
             {
                 int ind = Array.BinarySearch(hkeys_arr, hashofvaluesample);
-                if (ind >= 0)
+                if (ind < 0)
+                    yield break;
+
+                while (ind > 0 && hkeys_arr[ind - 1] == hashofvaluesample)
+                    ind--;
+
+                while (ind < hkeys_arr.Length && hkeys_arr[ind] == hashofvaluesample)
                 {
-                    // Выдаем это решение
                     long off = (long)offsets.GetByIndex(ind);
                     object rec = sequence.GetByOffset(off);
                     yield return new ObjOff(rec, off);
-                    // Идем влево
-                    int i = ind - 1;
-                    while (i >= 0)
-                    {
-                        if (hkeys_arr[i] != hashofvaluesample) break;
-                        off = (long)offsets.GetByIndex(i);
-                        rec = sequence.GetByOffset(off);
-                        yield return new ObjOff(rec, off);
-                        i--;
-                    }
-                    // Идем вправо
-                    i = ind + 1;
-                    while (i < hkeys_arr.Length)
-                    {
-                        if (hkeys_arr[i] != hashofvaluesample) break;
-                        off = (long)offsets.GetByIndex(i);
-                        rec = sequence.GetByOffset(off);
-                        yield return new ObjOff(rec, off);
-                        i++;
-                    }
+                    ind++;
                 }
+
+                yield break;
             }
+
+            long first = FindFirstStaticIndexByHash(hashofvaluesample);
+            if (first < 0)
+                yield break;
+
+            long count = hkeys.Count();
+            for (long i = first; i < count; i++)
+            {
+                int current = (int)hkeys.GetByIndex(i);
+                if (current != hashofvaluesample)
+                    yield break;
+
+                long off = (long)offsets.GetByIndex(i);
+                object rec = sequence.GetByOffset(off);
+                yield return new ObjOff(rec, off);
+            }
+        }
+
+        public IEnumerable<ObjOff> GetAllByValue(IComparable valuesample)
+        {
+            if (ignorecase)
+                valuesample = ((string)valuesample).ToUpper();
+
+            int hashofvaluesample = hashOfKey(valuesample);
+
+            foreach (var v in dynindex.GetAllByValue(valuesample))
+                yield return v;
+
+            foreach (var v in GetStaticByHash(hashofvaluesample))
+                yield return v;
         }
         /// <summary>
         /// Определение номера первого индекса последовательности hkeys, с которого значения РАВНЫ hkey (хешу от ключа)
