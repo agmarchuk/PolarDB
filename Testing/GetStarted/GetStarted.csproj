@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net7.0;net8.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net10.0</TargetFrameworks>
 
     <LangVersion>10.0</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -10,7 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Polar.DB\Polar.DB.csproj" />
+	  <PackageReference Include="Polar.DB" Version="2.1.0" />
+	  <!--ProjectReference Include="..\..\Polar.DB\Polar.DB.csproj" /-->
   </ItemGroup>
 
 </Project>
